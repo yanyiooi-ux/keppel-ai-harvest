@@ -16,7 +16,7 @@ export default function AomPage() {
     {
       id: "card-repeat",
       title: "Repeat comfort complaint: 5th from Level 23",
-      detail: `${repeat.count} comfort complaints from ${ticket2318.tenant} on Floor ${ticket2318.floor} in 21 days. Opposite fixes on the floor (setpoint up then down). The pill has switched from quick fix to find the cause. The FM chief engineer has been called.`,
+      detail: `${repeat.count} comfort complaints from ${ticket2318.tenant} on Floor ${ticket2318.floor} in 21 days. Opposite fixes on the floor (setpoint up then down). The pill has switched from quick fix to find the cause. The FM chief engineer has been called. Who pays: locked until the cause is written down.`,
       ruleIds: ["TS-CC-09", "TS-CC-24"],
       colour: "amber" as const,
       who: "FM chief engineer recommends. AOM decides on money and the tenant conversation.",
@@ -24,7 +24,7 @@ export default function AomPage() {
     {
       id: "card-colder-floor",
       title: "Tenant asks to run the floor colder",
-      detail: "Northwind Advisory's office manager asked the helpdesk to set the boardroom to 20 deg C. This is a commercial request, not a technical fix. The AOM must check the lease and the tenant handbook before any change.",
+      detail: "Northwind Advisory's office manager asked the helpdesk to set the boardroom to 22 deg C. This is a commercial request, not a technical fix. The AOM must check the lease and the tenant handbook before any change.",
       ruleIds: ["TS-CC-25", "TS-CC-02"],
       colour: "amber" as const,
       who: "AOM within their limit, the asset manager above it.",
@@ -44,6 +44,14 @@ export default function AomPage() {
       ruleIds: ["TS-CC-23"],
       colour: "amber" as const,
       who: "Building manager. No cost or fault decision yet.",
+    },
+    {
+      id: "card-updates",
+      title: "Pill updates",
+      detail: "No updates. The pill is at v1.0 (approved). No new evidence, no chief engineer correction, and the 80 percent counter has not triggered. When a correction comes in, it becomes a draft v1.1 and golden tests run before it goes live.",
+      ruleIds: [],
+      colour: "green" as const,
+      who: "HQ pill owner signs any new version.",
     },
   ];
 

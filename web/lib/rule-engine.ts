@@ -9,7 +9,7 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { Pill, Colour, ChecklistStep } from "./pill";
+import type { Pill, ChecklistStep } from "./pill";
 
 // ---- Types ----
 

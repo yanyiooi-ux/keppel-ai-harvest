@@ -12,6 +12,8 @@ interface TechClientProps {
   activeSteps: ChecklistStep[];
   activeNote: string;
   rules: Rule[];
+  nudgeAllowed: boolean;
+  nudgeReason: string;
 }
 
 export function TechClient({
@@ -22,6 +24,8 @@ export function TechClient({
   activeSteps,
   activeNote,
   rules,
+  nudgeAllowed,
+  nudgeReason,
 }: TechClientProps) {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [openRuleId, setOpenRuleId] = useState<string | null>(null);
@@ -85,6 +89,40 @@ export function TechClient({
           </span>
         </div>
       )}
+
+      {/* First-complaint nudge banner */}
+      {nudgeAllowed && !repeat.isRepeat && (
+        <div
+          className="card"
+          style={{
+            marginBottom: "12px",
+            background: "var(--g-bg)",
+            color: "var(--g-ink)",
+            borderColor: "var(--g)",
+          }}
+        >
+          <strong>Green nudge available.</strong> {nudgeReason}{" "}
+          <span className="mono" style={{ fontSize: "12px", opacity: 0.8 }}>
+            (TS-CC-21)
+          </span>
+        </div>
+      )}
+
+      {/* Ticket selector */}
+      <div className="card" style={{ marginBottom: "12px" }}>
+        <div className="eyebrow">Open a ticket</div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "6px" }}>
+          <a className="btn" href="/tech?ticket=2301" style={{ fontSize: "12px", textDecoration: "none" }}>
+            2301 (first complaint)
+          </a>
+          <a className="btn" href="/tech?ticket=2318" style={{ fontSize: "12px", textDecoration: "none" }}>
+            2318 (repeat, default)
+          </a>
+          <a className="btn" href="/tech?ticket=2401" style={{ fontSize: "12px", textDecoration: "none" }}>
+            2401 (Building B)
+          </a>
+        </div>
+      </div>
 
       {/* Red stop banner */}
       {redStop.isRed && (
@@ -190,7 +228,7 @@ export function TechClient({
                                 lineHeight: 1.5,
                               }}
                             >
-                              <strong>AI wording:</strong> {rule.because}
+                              <strong>why (from the pill):</strong> {rule.because}
                               <div style={{ marginTop: "4px", fontSize: "11px", color: "var(--muted)" }}>
                                 Label: {rule.label}. Approver: {rule.approver}
                               </div>
@@ -249,7 +287,7 @@ export function TechClient({
       </div>
 
       <p className="made-up" style={{ marginTop: "12px", textAlign: "center" }}>
-        All tickets, tenants and readings are made up for the demo. AI wording is labelled AI wording.
+        All tickets, tenants and readings are made up for the demo. Rule text is from the pill.
         A named person signs every change.
       </p>
     </main>

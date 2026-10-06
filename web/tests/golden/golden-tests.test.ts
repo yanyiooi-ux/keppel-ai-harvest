@@ -236,6 +236,34 @@ describe("Golden tests", () => {
       expect(repeat.relatedRuleIds).toContain("TS-CC-09");
     });
   });
+
+  describe("GT-21: Ticket 2301 via /tech?ticket=2301, repeat off, green nudge", () => {
+    it("ticket 2301 at its own time has repeat flag off", () => {
+      const ticket = getTicket("2301");
+      // Use 2301's own reported time plus 20 minutes, same as the page does
+      const ticketTime = new Date(ticket.reportedAt);
+      ticketTime.setMinutes(ticketTime.getMinutes() + 20);
+      const repeat = computeRepeatFlag(allTickets, ticket, ticketTime);
+      expect(repeat.isRepeat).toBe(false);
+      expect(repeat.count).toBe(1);
+    });
+
+    it("ticket 2301 gets the green 1 deg C nudge as its first fix step", () => {
+      const ticket = getTicket("2301");
+      const ticketTime = new Date(ticket.reportedAt);
+      ticketTime.setMinutes(ticketTime.getMinutes() + 20);
+      const repeat = computeRepeatFlag(allTickets, ticket, ticketTime);
+      const red = checkRedStop(pill, {});
+      const nudge = canNudge(repeat, red, {
+        hadSetpointChangeInLast30Days: false,
+        changeAmount: 1,
+        isAiMakingChange: false,
+        pillVersion: "1.0",
+      });
+      expect(nudge.allowed).toBe(true);
+      expect(nudge.ruleIds).toContain("TS-CC-21");
+    });
+  });
 });
 
 describe("v1.1 reserved rule (TS-CC-27)", () => {

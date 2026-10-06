@@ -111,7 +111,7 @@ export function AomClient({ cards, rules, pillVersion }: AomClientProps) {
                             lineHeight: 1.5,
                           }}
                         >
-                          <strong>AI wording:</strong> {rule.because}
+                          <strong>why (from the pill):</strong> {rule.because}
                           <div style={{ marginTop: "4px", fontSize: "11px", color: "var(--muted)" }}>
                             Label: {rule.label}. Approver: {rule.approver}
                           </div>
@@ -157,7 +157,7 @@ export function AomClient({ cards, rules, pillVersion }: AomClientProps) {
       </div>
 
       <p className="made-up" style={{ marginTop: "12px", textAlign: "center" }}>
-        All decisions are role-played for the demo. A named person signs every change. AI wording is labelled AI wording.
+        All decisions are role-played for the demo. A named person signs every change. Rule text is from the pill.
       </p>
     </main>
   );
