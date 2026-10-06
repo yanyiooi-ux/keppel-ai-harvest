@@ -3,15 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { DEMO_STEPS, getStoredStep, setStoredStep, clearDemoProgress } from "./SkillTreeMap";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const spring = { duration: 0.4, bounce: 0 };
-
-// --- Guided demo panel ---
-// Side panel on desktop, bottom sheet on phone.
-// Shows step N of 6, what you are seeing, who this is, what to click.
-// Next moves Pip and opens the right screen.
-// Progress survives a refresh until Reset demo.
 
 interface GuideContent {
   whatYouSee: string;
@@ -28,7 +22,7 @@ const GUIDE: GuideContent[] = [
   {
     whatYouSee: "The technician's phone checklist. Ticket 2318 is a repeat complaint from Level 23. The repeat flag is ON, so no setpoint nudge is allowed.",
     whoThisIs: "You are the FM technician, on site with a phone.",
-    whatToClick: "Read the repeat flag banner, then scroll the checklist. Tap a 'show because' button to see why.",
+    whatToClick: "Read the repeat flag banner, then scroll the checklist. Tap a 'show why' button to see why.",
   },
   {
     whatYouSee: "Green steps the technician just does. Amber steps need a named person's yes. Red means stop and call someone. The never-list is at the bottom.",
@@ -52,18 +46,36 @@ const GUIDE: GuideContent[] = [
   },
 ];
 
+const OPEN_EVENT = "pill-desk-open-guide";
+
 export function GuidedDemoPanel() {
   const router = useRouter();
+  const pathname = usePathname();
   const [step, setStep] = useState(1);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setStep(getStoredStep());
+    const saved = getStoredStep();
+    if (saved > 1) {
+      setStep(saved);
+      setIsOpen(true);
+    }
+
+    const openHandler = () => {
+      setStep(1);
+      setIsOpen(true);
+    };
+    window.addEventListener(OPEN_EVENT, openHandler);
+
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener(OPEN_EVENT, openHandler);
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
   const goToStep = (newStep: number) => {
@@ -73,12 +85,15 @@ export function GuidedDemoPanel() {
     if (clamped > 1) {
       const route = DEMO_STEPS[clamped - 1].route;
       router.push(route);
+    } else {
+      router.push("/");
     }
   };
 
   const handleReset = () => {
     clearDemoProgress();
     setStep(1);
+    setIsOpen(false);
     router.push("/");
   };
 
@@ -91,24 +106,25 @@ export function GuidedDemoPanel() {
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 50,
+        zIndex: 90,
         borderRadius: "var(--radius-lg) var(--radius-lg) 0 0",
         padding: "20px",
-        maxHeight: "60vh",
+        maxHeight: "55vh",
         overflowY: "auto",
       }
     : {
         position: "fixed",
-        top: "80px",
+        top: "72px",
         right: "24px",
-        width: "340px",
+        width: "320px",
+        maxHeight: "calc(100vh - 96px)",
+        overflowY: "auto",
         zIndex: 50,
         padding: "20px",
       };
 
   return (
     <>
-      {/* Toggle button when collapsed */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -144,13 +160,12 @@ export function GuidedDemoPanel() {
         )}
       </AnimatePresence>
 
-      {/* The panel itself */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={isMobile ? { y: 300 } : { x: 400, opacity: 0 }}
+            initial={isMobile ? { y: 300 } : { x: 360, opacity: 0 }}
             animate={isMobile ? { y: 0 } : { x: 0, opacity: 1 }}
-            exit={isMobile ? { y: 300 } : { x: 400, opacity: 0 }}
+            exit={isMobile ? { y: 300 } : { x: 360, opacity: 0 }}
             transition={spring}
             style={{
               ...panelStyle,
@@ -164,18 +179,9 @@ export function GuidedDemoPanel() {
               gap: "16px",
             }}
           >
-            {/* Header */}
-            <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: "0.6875rem",
-                  color: "var(--violet)",
-                }}>
+                <div style={{ fontFamily: "var(--mono)", fontSize: "0.6875rem", color: "var(--violet)" }}>
                   Step {step} of 6
                 </div>
                 <div style={{
@@ -209,7 +215,6 @@ export function GuidedDemoPanel() {
               </button>
             </div>
 
-            {/* Progress dots */}
             <div style={{ display: "flex", gap: "6px" }}>
               {DEMO_STEPS.map((s) => (
                 <div
@@ -226,62 +231,33 @@ export function GuidedDemoPanel() {
               ))}
             </div>
 
-            {/* Guide content */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <div>
-                <div style={{
-                  fontSize: "0.6875rem",
-                  color: "var(--muted)",
-                  fontFamily: "var(--mono)",
-                  marginBottom: "4px",
-                }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--muted)", fontFamily: "var(--mono)", marginBottom: "4px" }}>
                   What you are seeing
                 </div>
-                <div style={{
-                  fontSize: "0.8125rem",
-                  color: "var(--ink)",
-                  lineHeight: "1.5",
-                }}>
+                <div style={{ fontSize: "0.8125rem", color: "var(--ink)", lineHeight: "1.5" }}>
                   {guide.whatYouSee}
                 </div>
               </div>
-
               <div>
-                <div style={{
-                  fontSize: "0.6875rem",
-                  color: "var(--muted)",
-                  fontFamily: "var(--mono)",
-                  marginBottom: "4px",
-                }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--muted)", fontFamily: "var(--mono)", marginBottom: "4px" }}>
                   Who this is
                 </div>
-                <div style={{
-                  fontSize: "0.8125rem",
-                  color: "var(--ink-dim)",
-                }}>
+                <div style={{ fontSize: "0.8125rem", color: "var(--ink-dim)" }}>
                   {guide.whoThisIs}
                 </div>
               </div>
-
               <div>
-                <div style={{
-                  fontSize: "0.6875rem",
-                  color: "var(--muted)",
-                  fontFamily: "var(--mono)",
-                  marginBottom: "4px",
-                }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--muted)", fontFamily: "var(--mono)", marginBottom: "4px" }}>
                   What to click
                 </div>
-                <div style={{
-                  fontSize: "0.8125rem",
-                  color: "var(--ink-dim)",
-                }}>
+                <div style={{ fontSize: "0.8125rem", color: "var(--ink-dim)" }}>
                   {guide.whatToClick}
                 </div>
               </div>
             </div>
 
-            {/* Buttons */}
             <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
               <button
                 onClick={() => goToStep(step - 1)}

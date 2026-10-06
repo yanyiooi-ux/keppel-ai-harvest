@@ -1,234 +1,269 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei";
 import * as THREE from "three";
 
-// --- Pip: a voxel pill character built from box meshes ---
+// ===================================================================
+// Pip: a voxel pill character built from box meshes.
 // No image files, no model downloads. Just box shapes.
+//
+// The model is built in a small coordinate space:
+//   - body is 4 cubes tall, 2 wide, 2 deep
+//   - centered at origin so the camera always frames it
+//   - one cube = 0.5 units
+// ===================================================================
 
-const CUBE = 0.5; // size of each voxel cube
+const C = 0.5; // one voxel cube edge length
 
-// Voxel positions for the pill body (a blocky capsule)
-const BODY_VOXELS: [number, number, number][] = [
-  // Top cap (3x3x1)
-  ...[-1, 0, 1].flatMap(x => [-1, 0, 1].map(y => [x, y, 1] as [number, number, number])),
-  // Middle rows (3x3x2)
-  ...[-1, 0, 1].flatMap(x => [-1, 0, 1].flatMap(y => [[x, y, 0] as [number, number, number], [x, y, -1] as [number, number, number]])),
-  // Bottom cap (3x3x1)
-  ...[-1, 0, 1].flatMap(x => [-1, 0, 1].map(y => [x, y, -2] as [number, number, number])),
-];
+// Pill body: a 2x2x4 block (width x depth x height)
+// Centered at origin, so y ranges from -1 to +1
+function BodyVoxels(): [number, number, number][] {
+  const pos: [number, number, number][] = [];
+  for (let x = -0.5; x <= 0.5; x += 1) {
+    for (let z = -0.5; z <= 0.5; z += 1) {
+      for (let y = -1.5; y <= 1.5; y += 1) {
+        pos.push([x * C, y * C, z * C]);
+      }
+    }
+  }
+  return pos;
+}
 
-// Eyes (two small cubes on the front face, z=1.5)
-const EYES: [number, number, number][] = [
-  [-0.5, 0.3, 0.75],
-  [0.5, 0.3, 0.75],
-];
+const BODY = BodyVoxels();
 
-// Hard hat (yellow) - a single wider voxel on top
-const HARD_HAT: [number, number, number] = [0, 1.2, 0];
+// Eyes: two small white cubes on the +Z face
+const EYE_L: [number, number, number] = [-0.2, 0.15, 0.55];
+const EYE_R: [number, number, number] = [0.2, 0.15, 0.55];
 
-// Stamp (held to the side)
-const STAMP: [number, number, number] = [1.5, 0, 0.5];
+export type PipVariant = 1 | 2 | 3 | 4 | 5 | 6 | "happy" | "worried" | "stop";
 
-// Notebook (held to the side)
-const NOTEBOOK: [number, number, number] = [1.5, -0.2, 0.5];
+interface PipProps {
+  variant: PipVariant;
+  versionLabel?: string;
+  position?: [number, number]; // [x, y] in screen px for overlay positioning
+}
 
-// Badge (on the chest, flips version)
-const BADGE_POS: [number, number, number] = [0, 0, 0.76];
-
-type PipProps = {
-  variant: 1 | 2 | 3 | 4 | 5 | 6 | "happy" | "worried" | "stop";
-  versionLabel?: string; // for variant 5
-};
-
-function VoxelGroup({
-  positions,
+// --- A single voxel box ---
+function Voxel({
+  pos,
   color,
-  scale = 1,
+  size = C,
 }: {
-  positions: [number, number, number][];
+  pos: [number, number, number];
   color: string;
-  scale?: number;
+  size?: number;
 }) {
   return (
-    <>
-      {positions.map((pos, i) => (
-        <mesh key={i} position={pos} scale={scale * CUBE}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
-      ))}
-    </>
+    <mesh position={pos}>
+      <boxGeometry args={[size, size, size]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
   );
 }
 
-function Pip3D({ variant, versionLabel = "v1.0" }: PipProps) {
+// --- The 3D Pip model ---
+function Pip3D({
+  variant,
+  versionLabel = "v1.0",
+}: {
+  variant: PipVariant;
+  versionLabel?: string;
+}) {
   const groupRef = useRef<THREE.Group>(null);
-  const [hoverY, setHoverY] = useState(0);
 
-  // Gentle hover bob, can be interrupted (animate from where it is now)
+  // Gentle hover bob — animate from current position (interruptible)
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    const targetY = Math.sin(t * 2) * 0.05;
+    const targetY = Math.sin(t * 1.5) * 0.04;
     groupRef.current.position.y = THREE.MathUtils.lerp(
       groupRef.current.position.y,
       targetY,
-      0.1
+      0.08
     );
-    setHoverY(groupRef.current.position.y);
   });
 
   const bodyColor = "#8B7CFF";
-  const hatColor = "#F59E0B"; // amber for hard hat
-  const eyeColor = "#FFFFFF";
-  const stampColor = "#38BDF8";
-  const notebookColor = "#1A1D23";
-
-  // Traffic light for variant 3
-  const lightColor =
-    variant === 3
-      ? variant === "stop" as any
-        ? "#EF4444"
-        : "#F59E0B"
-      : null;
+  const eyeWhite = "#FFFFFF";
+  const pupil = "#07080C";
 
   return (
     <group ref={groupRef}>
       {/* Body */}
-      <VoxelGroup positions={BODY_VOXELS} color={bodyColor} />
-
-      {/* Eyes */}
-      <VoxelGroup positions={EYES} color={eyeColor} scale={0.6} />
-
-      {/* Pupils (dark) */}
-      {EYES.map((pos, i) => (
-        <mesh key={`pupil-${i}`} position={[pos[0], pos[1], pos[2] + 0.08]} scale={0.3 * CUBE}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#07080C" />
-        </mesh>
+      {BODY.map((p, i) => (
+        <Voxel key={`b-${i}`} pos={p} color={bodyColor} />
       ))}
 
-      {/* Hard hat for variant 2 (daily use) */}
-      {variant === 2 && (
-        <mesh position={HARD_HAT} scale={CUBE * 1.4}>
-          <boxGeometry args={[1, 0.5, 1]} />
-          <meshStandardMaterial color={hatColor} />
-        </mesh>
-      )}
+      {/* Eyes */}
+      <Voxel pos={EYE_L} color={eyeWhite} size={0.18} />
+      <Voxel pos={EYE_R} color={eyeWhite} size={0.18} />
+      {/* Pupils */}
+      <mesh position={[EYE_L[0], EYE_L[1], EYE_L[2] + 0.1]}>
+        <boxGeometry args={[0.08, 0.08, 0.05]} />
+        <meshStandardMaterial color={pupil} />
+      </mesh>
+      <mesh position={[EYE_R[0], EYE_R[1], EYE_R[2] + 0.1]}>
+        <boxGeometry args={[0.08, 0.08, 0.05]} />
+        <meshStandardMaterial color={pupil} />
+      </mesh>
 
-      {/* Notebook for variant 1 (capture) */}
+      {/* Variant 1: notebook in hand */}
       {variant === 1 && (
-        <mesh position={NOTEBOOK} scale={[CUBE * 0.8, CUBE * 1.2, CUBE * 0.3]}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color={notebookColor} />
+        <mesh position={[0.6, -0.2, 0]}>
+          <boxGeometry args={[0.3, 0.4, 0.08]} />
+          <meshStandardMaterial color="#1A1D23" />
         </mesh>
       )}
 
-      {/* Traffic light for variant 3 (safety) */}
-      {variant === 3 && (
-        <mesh position={[0.8, 0.8, 0]} scale={CUBE * 0.8}>
-          <boxGeometry args={[0.5, 1.5, 0.5]} />
-          <meshStandardMaterial color="#0D0F14" />
-        </mesh>
-      )}
-      {variant === 3 && (
-        <mesh position={[0.8, 1.1, 0.15]} scale={CUBE * 0.3}>
-          <sphereGeometry args={[0.5, 8, 8]} />
-          <meshStandardMaterial
-            color={
-              variant === "stop" as any ? "#EF4444" : "#F59E0B"
-            }
-            emissive={
-              variant === "stop" as any ? "#EF4444" : "#F59E0B"
-            }
-            emissiveIntensity={0.5}
-          />
+      {/* Variant 2: yellow hard hat on top */}
+      {variant === 2 && (
+        <mesh position={[0, 1.1, 0]}>
+          <boxGeometry args={[0.7, 0.3, 0.7]} />
+          <meshStandardMaterial color="#F59E0B" />
         </mesh>
       )}
 
-      {/* Big stamp for variant 4 (decide) */}
+      {/* Variant 3: traffic light beside */}
+      {variant === 3 && (
+        <>
+          <mesh position={[0.7, 0.2, 0]}>
+            <boxGeometry args={[0.15, 0.6, 0.15]} />
+            <meshStandardMaterial color="#0D0F14" />
+          </mesh>
+          <mesh position={[0.7, 0.45, 0.12]}>
+            <sphereGeometry args={[0.08, 8, 8]} />
+            <meshStandardMaterial
+              color="#F59E0B"
+              emissive="#F59E0B"
+              emissiveIntensity={0.6}
+            />
+          </mesh>
+        </>
+      )}
+
+      {/* Variant 4: big stamp in hand */}
       {variant === 4 && (
-        <mesh position={STAMP} scale={[CUBE * 0.6, CUBE * 1.5, CUBE * 0.6]}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color={stampColor} />
+        <mesh position={[0.6, 0, 0]}>
+          <boxGeometry args={[0.25, 0.5, 0.25]} />
+          <meshStandardMaterial color="#38BDF8" />
         </mesh>
       )}
 
-      {/* Badge for variant 5 (learn) - version flip */}
+      {/* Variant 5: version badge on chest, flips colour */}
       {variant === 5 && (
-        <mesh position={BADGE_POS} scale={[CUBE * 1.2, CUBE * 0.7, CUBE * 0.2]}>
-          <boxGeometry args={[1, 1, 1]} />
+        <mesh position={[0, 0.05, 0.55]}>
+          <boxGeometry args={[0.4, 0.2, 0.05]} />
           <meshStandardMaterial
             color={versionLabel === "v1.1" ? "#22C55E" : "#8B7CFF"}
             emissive={versionLabel === "v1.1" ? "#22C55E" : "#8B7CFF"}
-            emissiveIntensity={0.3}
+            emissiveIntensity={0.4}
           />
         </mesh>
       )}
 
-      {/* Second Pip trail for variant 6 (reuse) */}
+      {/* Variant 6: second Pip (cyan) walking to Building B */}
       {variant === 6 && (
-        <group position={[1.8, 0, -0.5]}>
-          <VoxelGroup positions={BODY_VOXELS} color="#38BDF8" />
-          <VoxelGroup positions={EYES} color={eyeColor} scale={0.6} />
-          {EYES.map((pos, i) => (
-            <mesh key={`pupil2-${i}`} position={[pos[0] + 1.8, pos[1], pos[2] - 0.5 + 0.08]} scale={0.3 * CUBE}>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial color="#07080C" />
-            </mesh>
+        <group position={[1.2, 0, 0.3]}>
+          {BODY.map((p, i) => (
+            <Voxel key={`b2-${i}`} pos={p} color="#38BDF8" />
           ))}
+          <Voxel pos={EYE_L} color={eyeWhite} size={0.18} />
+          <Voxel pos={EYE_R} color={eyeWhite} size={0.18} />
+          <mesh position={[EYE_L[0] + 1.2, EYE_L[1], EYE_L[2] + 0.3 + 0.1]}>
+            <boxGeometry args={[0.08, 0.08, 0.05]} />
+            <meshStandardMaterial color={pupil} />
+          </mesh>
+          <mesh position={[EYE_R[0] + 1.2, EYE_R[1], EYE_R[2] + 0.3 + 0.1]}>
+            <boxGeometry args={[0.08, 0.08, 0.05]} />
+            <meshStandardMaterial color={pupil} />
+          </mesh>
         </group>
       )}
     </group>
   );
 }
 
-// --- SVG fallback for no-WebGL or reduced motion ---
-function PipSVG({ variant }: PipProps) {
-  // A simple isometric voxel-style SVG
-  const bodyColor = "#8B7CFF";
-  const eyeColor = "#FFFFFF";
+// ===================================================================
+// SVG fallback — a clear isometric voxel Pip, same size as the 3D
+// ===================================================================
+function PipSVG({ variant, size = 160 }: { variant: PipVariant; size?: number }) {
+  const body = "#8B7CFF";
   const accent =
     variant === 2 ? "#F59E0B" :
     variant === 3 ? "#EF4444" :
     variant === 4 ? "#38BDF8" :
     variant === 5 ? "#22C55E" :
-    variant === 6 ? "#38BDF8" :
-    "#8B7CFF";
+    variant === 6 ? "#38BDF8" : "#8B7CFF";
 
+  // Isometric voxel art
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      {/* Body: stacked isometric cubes */}
-      <g transform="translate(60, 30)">
-        {/* Top face */}
-        <polygon points="0,-12 20,0 0,12 -20,0" fill={bodyColor} opacity="0.9" />
-        {/* Left face */}
-        <polygon points="-20,0 0,12 0,40 -20,28" fill={bodyColor} opacity="0.7" />
-        {/* Right face */}
-        <polygon points="20,0 0,12 0,40 20,28" fill={bodyColor} opacity="0.8" />
-        {/* Eyes */}
-        <rect x="-8" y="14" width="5" height="5" fill={eyeColor} rx="1" />
-        <rect x="3" y="14" width="5" height="5" fill={eyeColor} rx="1" />
-        {/* Pupils */}
-        <rect x="-6" y="16" width="2" height="2" fill="#07080C" />
-        <rect x="5" y="16" width="2" height="2" fill="#07080C" />
+    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      {/* Body: 3 stacked isometric cubes */}
+      <g transform="translate(50, 20)">
+        {/* Top face of top cube */}
+        <polygon points="0,6 18,12 0,18 -18,12" fill={body} opacity="0.95" />
+        <polygon points="0,18 18,12 18,30 0,36" fill={body} opacity="0.75" />
+        <polygon points="0,18 -18,12 -18,30 0,36" fill={body} opacity="0.85" />
+        {/* Middle cube */}
+        <polygon points="0,30 18,36 0,42 -18,36" fill={body} opacity="0.95" />
+        <polygon points="0,42 18,36 18,54 0,60" fill={body} opacity="0.75" />
+        <polygon points="0,42 -18,36 -18,54 0,60" fill={body} opacity="0.85" />
+        {/* Bottom cube */}
+        <polygon points="0,54 18,60 0,66 -18,60" fill={body} opacity="0.95" />
+        <polygon points="0,66 18,60 18,78 0,84" fill={body} opacity="0.75" />
+        <polygon points="0,66 -18,60 -18,78 0,84" fill={body} opacity="0.85" />
+        {/* Eyes on middle cube, right face */}
+        <rect x="4" y="40" width="4" height="4" fill="#FFFFFF" rx="0.5" />
+        <rect x="12" y="44" width="4" height="4" fill="#FFFFFF" rx="0.5" />
+        <rect x="5" y="41.5" width="2" height="2" fill="#07080C" />
+        <rect x="13" y="45.5" width="2" height="2" fill="#07080C" />
       </g>
-      {/* Accent indicator */}
-      <circle cx="85" cy="45" r="6" fill={accent} opacity="0.8" />
+      {/* Accent indicator (hat, stamp, badge, second pip) */}
+      {variant === 2 && (
+        <polygon points="50,18 68,24 50,30 32,24" fill={accent} opacity="0.95" />
+      )}
+      {variant === 4 && (
+        <rect x="62" y="40" width="8" height="14" fill={accent} rx="1" opacity="0.9" />
+      )}
+      {variant === 5 && (
+        <rect x="44" y="44" width="12" height="6" fill={accent} rx="1" opacity="0.9" />
+      )}
+      {variant === 6 && (
+        <g transform="translate(72, 38)">
+          <polygon points="0,6 12,10 0,14 -12,10" fill={accent} opacity="0.95" />
+          <polygon points="0,14 12,10 12,22 0,26" fill={accent} opacity="0.75" />
+          <polygon points="0,14 -12,10 -12,22 0,26" fill={accent} opacity="0.85" />
+        </g>
+      )}
+      {variant === 3 && (
+        <g transform="translate(70, 50)">
+          <rect x="0" y="0" width="6" height="16" fill="#0D0F14" rx="1" />
+          <circle cx="3" cy="4" r="2.5" fill={accent} />
+        </g>
+      )}
     </svg>
   );
 }
 
-// --- Main exported component ---
-export function PipCharacter(props: PipProps) {
-  const [hasWebGL, setHasWebGL] = useState(true);
+// ===================================================================
+// Main exported component
+// height prop controls the canvas height (default 160px)
+// ===================================================================
+export function PipCharacter({
+  variant,
+  versionLabel,
+  height = 160,
+}: {
+  variant: PipVariant;
+  versionLabel?: string;
+  height?: number;
+}) {
+  const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    // Check WebGL support
     try {
       const canvas = document.createElement("canvas");
       const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
@@ -237,7 +272,6 @@ export function PipCharacter(props: PipProps) {
       setHasWebGL(false);
     }
 
-    // Check reduced motion
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mq.matches);
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
@@ -245,21 +279,39 @@ export function PipCharacter(props: PipProps) {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Fallback to SVG if no WebGL or reduced motion
-  if (!hasWebGL || reducedMotion) {
+  // Still checking WebGL — show SVG immediately (no "Loading..." stuck)
+  if (hasWebGL === null) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <PipSVG {...props} />
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height }}>
+        <PipSVG variant={variant} size={height} />
       </div>
     );
   }
 
+  // Fallback to SVG if no WebGL or reduced motion
+  if (!hasWebGL || reducedMotion) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height }}>
+        <PipSVG variant={variant} size={height} />
+      </div>
+    );
+  }
+
+  // 3D Canvas
+  // Camera: orthographic, positioned to frame the ~2.5 unit tall model.
+  // zoom=55 makes each unit ~55px. Model is ~2.5 units tall → ~137px.
+  // With camera at [4,3,4] looking at [0,0,0], the model fills the frame.
   return (
-    <Canvas style={{ width: "100%", height: "200px" }}>
-      <OrthographicCamera makeDefault position={[3, 3, 3]} zoom={40} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-      <Pip3D {...props} />
-    </Canvas>
+    <div style={{ width: "100%", height, position: "relative" }}>
+      <Canvas
+        style={{ width: "100%", height: "100%" }}
+        dpr={[1, 2]}
+      >
+        <OrthographicCamera makeDefault position={[4, 3, 4]} zoom={55} />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[3, 5, 3]} intensity={0.6} />
+        <Pip3D variant={variant} versionLabel={versionLabel} />
+      </Canvas>
+    </div>
   );
 }

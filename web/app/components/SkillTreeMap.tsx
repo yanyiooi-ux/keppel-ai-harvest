@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 
 // --- The 6 steps of the demo, matching the approved plan ---
 
@@ -11,7 +12,7 @@ export interface DemoStep {
   title: string;
   oneLine: string;
   who: string;
-  roleColour: "green" | "amber" | "red" | "violet";
+  roleColour: "green" | "amber" | "red" | "violet" | "cyan";
   route: string;
 }
 
@@ -67,12 +68,12 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Reuse",
     oneLine: "Building B is offered v1.1, its AOM accepts or says 'not here'.",
     who: "HQ pill owner, Building B AOM",
-    roleColour: "green",
+    roleColour: "cyan",
     route: "/hq",
   },
 ];
 
-// --- LocalStorage helpers for demo progress ---
+// --- LocalStorage helpers ---
 
 const STORAGE_KEY = "pill-desk-demo-step";
 
@@ -92,39 +93,50 @@ export function clearDemoProgress() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// --- Spring config (Apple rules) ---
+// --- Spring config ---
 const spring = { duration: 0.4, bounce: 0 };
-const springAfterDrag = { duration: 0.4, bounce: 0.2 };
+const hopSpring = { duration: 0.5, bounce: 0.2 }; // bounce only on hop (flick)
 
-// --- Skill tree node component ---
+// --- Dynamic import Pip (no SSR) ---
+const PipCharacter = dynamic(
+  () => import("./PipCharacter").then((m) => m.PipCharacter),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ width: 80, height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--b-bg)" }} />
+      </div>
+    ),
+  }
+);
+
+// --- Skill tree node ---
 
 interface SkillTreeNodeProps {
   step: DemoStep;
   status: "done" | "current" | "locked";
   onClick?: () => void;
-  isLast: boolean;
 }
 
-function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
+function SkillTreeNode({ step, status, onClick }: SkillTreeNodeProps) {
   const isDone = status === "done";
   const isCurrent = status === "current";
   const isLocked = status === "locked";
 
-  const glowColour = isDone
-    ? "var(--g-glow)"
-    : isCurrent
-    ? "var(--accent-glow)"
-    : "transparent";
-
-  const nodeColour = isDone
+  const ringColour = isDone
     ? "var(--g)"
     : isCurrent
     ? "var(--violet)"
     : "var(--locked)";
 
-  const nodeSize = isCurrent ? 56 : 48;
+  const ringBg = isLocked
+    ? "var(--panel-solid)"
+    : isDone
+    ? "rgba(34, 197, 94, 0.12)"
+    : "rgba(139, 124, 255, 0.12)";
 
-  // Role chip colour
+  const ringOpacity = isLocked ? 0.5 : 1;
+
   const chipClass =
     step.roleColour === "green" ? "g" :
     step.roleColour === "amber" ? "a" :
@@ -137,7 +149,7 @@ function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
       alignItems: "center",
       gap: "8px",
       position: "relative",
-      zIndex: isCurrent ? 2 : 1,
+      zIndex: isCurrent ? 3 : 1,
     }}>
       <motion.button
         onClick={onClick}
@@ -153,24 +165,20 @@ function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
         transition={spring}
         whileTap={{ scale: 0.97 }}
         style={{
-          width: nodeSize,
-          height: nodeSize,
+          width: 48,
+          height: 48,
           borderRadius: "50%",
-          border: isLocked ? "1px solid var(--line)" : `2px solid ${nodeColour}`,
-          background: isLocked
-            ? "var(--panel-solid)"
-            : isDone
-            ? "rgba(34, 197, 94, 0.1)"
-            : "rgba(139, 124, 255, 0.1)",
-          color: nodeColour,
-          fontSize: "1.25rem",
+          border: isLocked ? "1px solid var(--line)" : `2px solid ${ringColour}`,
+          background: ringBg,
+          color: ringColour,
+          fontSize: "1.125rem",
           fontWeight: 700,
           fontFamily: "var(--font-head)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: isLocked ? "default" : "pointer",
-          opacity: isLocked ? 0.4 : 1,
+          opacity: ringOpacity,
           position: "relative",
         }}
         aria-label={`Step ${step.num}: ${step.title}`}
@@ -178,28 +186,24 @@ function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
         {isDone ? "✓" : step.num}
         {isCurrent && (
           <motion.span
-            animate={{ opacity: [0.5, 1, 0.5] }}
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
             transition={{ duration: 2, repeat: Infinity }}
             style={{
               position: "absolute",
-              inset: -4,
+              inset: -5,
               borderRadius: "50%",
               border: "2px solid var(--violet)",
-              opacity: 0.4,
               pointerEvents: "none",
             }}
           />
         )}
       </motion.button>
-      <div style={{
-        textAlign: "center",
-        maxWidth: "100px",
-      }}>
+      <div style={{ textAlign: "center", maxWidth: "110px" }}>
         <div style={{
           fontFamily: "var(--font-head)",
           fontSize: "0.75rem",
           fontWeight: 600,
-          color: isLocked ? "var(--muted)" : "var(--ink)",
+          color: "var(--ink)",
           letterSpacing: "-0.01em",
         }}>
           {step.title}
@@ -208,7 +212,6 @@ function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
           fontSize: "0.625rem",
           padding: "2px 6px",
           marginTop: "4px",
-          opacity: isLocked ? 0.5 : 1,
         }}>
           {step.who}
         </span>
@@ -216,8 +219,6 @@ function SkillTreeNode({ step, status, onClick, isLast }: SkillTreeNodeProps) {
     </div>
   );
 }
-
-// --- Path connector between nodes ---
 
 function PathConnector({ active }: { active: boolean }) {
   return (
@@ -230,13 +231,45 @@ function PathConnector({ active }: { active: boolean }) {
         : "var(--line)",
       borderRadius: "2px",
       boxShadow: active ? "0 0 8px var(--accent-glow)" : "none",
-      alignSelf: "center",
-      marginTop: "-20px",
+      alignSelf: "flex-start",
+      marginTop: "22px",
     }} />
   );
 }
 
-// --- Skill tree map (the main path of 6 nodes) ---
+function VerticalConnector({ active }: { active: boolean }) {
+  return (
+    <div style={{
+      width: "3px",
+      height: "32px",
+      background: active
+        ? "linear-gradient(180deg, var(--violet), var(--cyan))"
+        : "var(--line)",
+      borderRadius: "2px",
+      boxShadow: active ? "0 0 8px var(--accent-glow)" : "none",
+    }} />
+  );
+}
+
+function BuildingBIcon() {
+  return (
+    <div style={{
+      width: 40,
+      height: 40,
+      borderRadius: "var(--radius-sm)",
+      background: "rgba(56, 189, 248, 0.12)",
+      border: "1px solid var(--border)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "1.2rem",
+    }}>
+      B
+    </div>
+  );
+}
+
+// --- Skill tree map with Pip ON the current node ---
 
 interface SkillTreeMapProps {
   currentStep: number;
@@ -246,6 +279,11 @@ interface SkillTreeMapProps {
 export function SkillTreeMap({ currentStep, onStepClick }: SkillTreeMapProps) {
   const steps = DEMO_STEPS;
   const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [pipPos, setPipPos] = useState({ x: 0, y: 0 });
+  const [pipHeight, setPipHeight] = useState(120);
+  const [pipWidth, setPipWidth] = useState(80);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -254,82 +292,140 @@ export function SkillTreeMap({ currentStep, onStepClick }: SkillTreeMapProps) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  useEffect(() => {
+    const updatePipPos = () => {
+      const container = containerRef.current;
+      const node = nodeRefs.current[currentStep - 1];
+      if (!container || !node) return;
+      const containerRect = container.getBoundingClientRect();
+      const nodeRect = node.getBoundingClientRect();
+      const x = nodeRect.left - containerRect.left + nodeRect.width / 2;
+      const y = nodeRect.top - containerRect.top - 75;
+      setPipPos({ x, y });
+      setPipHeight(isMobile ? 100 : 120);
+      setPipWidth(isMobile ? 70 : 80);
+    };
+    const timer = setTimeout(updatePipPos, 50);
+    window.addEventListener("resize", updatePipPos);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updatePipPos);
+    };
+  }, [currentStep, isMobile]);
+
+  const setNodeRef = (index: number) => (el: HTMLDivElement | null) => {
+    nodeRefs.current[index] = el;
+  };
+
+  const pipVariant = currentStep as 1 | 2 | 3 | 4 | 5 | 6;
+
   if (isMobile) {
-    // Vertical path on mobile
     return (
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "0",
-        padding: "16px 0",
-      }}>
-        {steps.map((step, i) => (
-          <div key={step.num} style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "0",
-          }}>
-            <SkillTreeNode
-              step={step}
-              status={
-                step.num < currentStep ? "done" :
-                step.num === currentStep ? "current" : "locked"
-              }
-              onClick={onStepClick ? () => onStepClick(step.num) : undefined}
-              isLast={i === steps.length - 1}
-            />
-            {i < steps.length - 1 && (
-              <div style={{
-                width: "3px",
-                height: "32px",
-                background: step.num < currentStep
-                  ? "linear-gradient(180deg, var(--violet), var(--cyan))"
-                  : "var(--line)",
-                borderRadius: "2px",
-                boxShadow: step.num < currentStep ? "0 0 8px var(--accent-glow)" : "none",
-              }} />
-            )}
-          </div>
-        ))}
+      <div ref={containerRef} style={{ position: "relative", padding: "70px 0 20px" }}>
+        <motion.div
+          animate={{ x: pipPos.x - pipWidth / 2, y: pipPos.y }}
+          transition={hopSpring}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: pipWidth,
+            zIndex: 5,
+            pointerEvents: "none",
+          }}
+        >
+          <PipCharacter variant={pipVariant} height={pipHeight} />
+        </motion.div>
+
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0,
+        }}>
+          {steps.map((step, i) => (
+            <div key={step.num}>
+              <div ref={setNodeRef(i)}>
+                <SkillTreeNode
+                  step={step}
+                  status={
+                    step.num < currentStep ? "done" :
+                    step.num === currentStep ? "current" : "locked"
+                  }
+                  onClick={onStepClick ? () => onStepClick(step.num) : undefined}
+                />
+              </div>
+              {i < steps.length - 1 && (
+                <VerticalConnector active={step.num < currentStep} />
+              )}
+              {i === steps.length - 1 && currentStep === 6 && (
+                <>
+                  <VerticalConnector active={true} />
+                  <BuildingBIcon />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  // Horizontal path on desktop
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "0",
-      padding: "24px 16px",
-      overflowX: "auto",
-    }}>
-      {steps.map((step, i) => (
-        <div key={step.num} style={{
-          display: "flex",
-          alignItems: "flex-start",
-          flex: i < steps.length - 1 ? "1 1 auto" : "0 0 auto",
-        }}>
-          <SkillTreeNode
-            step={step}
-            status={
-              step.num < currentStep ? "done" :
-              step.num === currentStep ? "current" : "locked"
-            }
-            onClick={onStepClick ? () => onStepClick(step.num) : undefined}
-            isLast={i === steps.length - 1}
-          />
-          {i < steps.length - 1 && (
-            <PathConnector active={step.num < currentStep} />
-          )}
-        </div>
-      ))}
+    <div ref={containerRef} style={{ position: "relative", padding: "70px 16px 20px" }}>
+      <motion.div
+        animate={{ x: pipPos.x - pipWidth / 2, y: pipPos.y }}
+        transition={hopSpring}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: pipWidth,
+          zIndex: 5,
+          pointerEvents: "none",
+        }}
+      >
+        <PipCharacter variant={pipVariant} height={pipHeight} />
+      </motion.div>
+
+      <div style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 0,
+        overflowX: "auto",
+      }}>
+        {steps.map((step, i) => (
+          <div key={step.num} style={{
+            display: "flex",
+            alignItems: "flex-start",
+            flex: i < steps.length - 1 ? "1 1 auto" : "0 0 auto",
+          }}>
+            <div ref={setNodeRef(i)}>
+              <SkillTreeNode
+                step={step}
+                status={
+                  step.num < currentStep ? "done" :
+                  step.num === currentStep ? "current" : "locked"
+                }
+                onClick={onStepClick ? () => onStepClick(step.num) : undefined}
+              />
+            </div>
+            {i < steps.length - 1 && (
+              <PathConnector active={step.num < currentStep} />
+            )}
+            {i === steps.length - 1 && currentStep === 6 && (
+              <>
+                <PathConnector active={true} />
+                <div style={{ alignSelf: "flex-start", marginTop: "12px" }}>
+                  <BuildingBIcon />
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
-// --- Export helpers ---
 
 export { getStoredStep, setStoredStep };
