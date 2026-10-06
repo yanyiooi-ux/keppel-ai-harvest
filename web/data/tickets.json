@@ -1,0 +1,148 @@
+[
+  {
+    "id": "2301",
+    "label": "made up for the demo",
+    "building": "tower-a",
+    "buildingName": "Tower A",
+    "floor": 23,
+    "tenant": "Northwind Advisory",
+    "zone": "core",
+    "complaint": "too cold",
+    "timeOfDay": "morning",
+    "complaintHour": "09:00",
+    "reportedAt": "2026-09-15T09:05:00+08:00",
+    "intake": {
+      "where": "open area near the lift core",
+      "when": "mornings, around 9am",
+      "sinceWhen": "about 2 weeks"
+    },
+    "fix": {
+      "action": "setpoint_up",
+      "amount": 1,
+      "fixerRole": "technician",
+      "note": "Raised zone setpoint by 1 deg C, tenant informed."
+    },
+    "status": "closed_attended",
+    "previousChangesOnFloor": false
+  },
+  {
+    "id": "2305",
+    "label": "made up for the demo",
+    "building": "tower-a",
+    "buildingName": "Tower A",
+    "floor": 23,
+    "tenant": "Northwind Advisory",
+    "zone": "west",
+    "complaint": "too hot",
+    "timeOfDay": "afternoon",
+    "complaintHour": "15:00",
+    "reportedAt": "2026-09-19T15:10:00+08:00",
+    "intake": {
+      "where": "west glass boardroom",
+      "when": "afternoons, 2 to 5pm",
+      "sinceWhen": "about 1 week"
+    },
+    "fix": {
+      "action": "setpoint_down",
+      "amount": 1,
+      "fixerRole": "technician",
+      "note": "Lowered zone setpoint by 1 deg C, tenant informed."
+    },
+    "status": "closed_attended",
+    "previousChangesOnFloor": true
+  },
+  {
+    "id": "2310",
+    "label": "made up for the demo",
+    "building": "tower-a",
+    "buildingName": "Tower A",
+    "floor": 23,
+    "tenant": "Northwind Advisory",
+    "zone": "core",
+    "complaint": "too cold",
+    "timeOfDay": "morning",
+    "complaintHour": "09:00",
+    "reportedAt": "2026-09-24T09:15:00+08:00",
+    "intake": {
+      "where": "open area near the lift core",
+      "when": "mornings, around 9am",
+      "sinceWhen": "keeps coming back"
+    },
+    "fix": {
+      "action": "setpoint_up",
+      "amount": 1,
+      "fixerRole": "technician",
+      "note": "Raised zone setpoint by 1 deg C again."
+    },
+    "status": "closed_attended",
+    "previousChangesOnFloor": true
+  },
+  {
+    "id": "2315",
+    "label": "made up for the demo",
+    "building": "tower-a",
+    "buildingName": "Tower A",
+    "floor": 23,
+    "tenant": "Northwind Advisory",
+    "zone": "west",
+    "complaint": "too hot",
+    "timeOfDay": "afternoon",
+    "complaintHour": "15:00",
+    "reportedAt": "2026-09-29T15:05:00+08:00",
+    "intake": {
+      "where": "west glass boardroom",
+      "when": "afternoons, 2 to 5pm",
+      "sinceWhen": "keeps coming back"
+    },
+    "fix": {
+      "action": "setpoint_down",
+      "amount": 1,
+      "fixerRole": "technician",
+      "note": "Lowered zone setpoint by 1 deg C again."
+    },
+    "status": "closed_attended",
+    "previousChangesOnFloor": true
+  },
+  {
+    "id": "2318",
+    "label": "made up for the demo",
+    "building": "tower-a",
+    "buildingName": "Tower A",
+    "floor": 23,
+    "tenant": "Northwind Advisory",
+    "zone": "core",
+    "complaint": "too cold",
+    "timeOfDay": "morning",
+    "complaintHour": "09:00",
+    "reportedAt": "2026-10-06T09:10:00+08:00",
+    "intake": {
+      "where": "open area near the lift core",
+      "when": "mornings, around 9am",
+      "sinceWhen": "keeps coming back"
+    },
+    "fix": null,
+    "status": "open",
+    "previousChangesOnFloor": true
+  },
+  {
+    "id": "2401",
+    "label": "made up for the demo",
+    "building": "building-b",
+    "buildingName": "Building B",
+    "floor": 12,
+    "tenant": "Meridian Partners",
+    "zone": "core",
+    "complaint": "too cold",
+    "timeOfDay": "morning",
+    "complaintHour": "09:00",
+    "reportedAt": "2026-10-05T09:00:00+08:00",
+    "intake": {
+      "where": "open area near the east columns",
+      "when": "mornings, around 9am",
+      "sinceWhen": "about 1 week"
+    },
+    "fix": null,
+    "status": "open",
+    "previousChangesOnFloor": false
+  }
+]

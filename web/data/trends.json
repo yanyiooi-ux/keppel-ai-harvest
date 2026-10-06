@@ -1,0 +1,44 @@
+{
+  "label": "made up for the demo",
+  "building": "tower-a",
+  "floor": 23,
+  "zones": {
+    "core": {
+      "description": "Open area near the lift core. Coldest from 8 to 10am. VAV damper sits low because the zone cannot turn its air down below minimum airflow.",
+      "readings": [
+        { "hour": 8, "temp": 22.1, "damperPct": 30 },
+        { "hour": 9, "temp": 22.3, "damperPct": 25 },
+        { "hour": 10, "temp": 23.0, "damperPct": 35 },
+        { "hour": 11, "temp": 23.5, "damperPct": 40 },
+        { "hour": 12, "temp": 23.8, "damperPct": 45 },
+        { "hour": 13, "temp": 24.0, "damperPct": 50 },
+        { "hour": 14, "temp": 24.2, "damperPct": 55 },
+        { "hour": 15, "temp": 24.3, "damperPct": 60 },
+        { "hour": 16, "temp": 24.1, "damperPct": 50 },
+        { "hour": 17, "temp": 23.8, "damperPct": 45 },
+        { "hour": 18, "temp": 23.5, "damperPct": 40 }
+      ],
+      "pattern": "cold_mornings"
+    },
+    "west": {
+      "description": "West glass boardroom. Stuffy and warm when full in the afternoon. VAV damper sits at 100% from 2 to 5pm on 9 of 14 days, a capacity limit.",
+      "readings": [
+        { "hour": 8, "temp": 23.0, "damperPct": 40 },
+        { "hour": 9, "temp": 23.2, "damperPct": 45 },
+        { "hour": 10, "temp": 23.5, "damperPct": 50 },
+        { "hour": 11, "temp": 24.0, "damperPct": 55 },
+        { "hour": 12, "temp": 24.5, "damperPct": 65 },
+        { "hour": 13, "temp": 25.0, "damperPct": 80 },
+        { "hour": 14, "temp": 25.8, "damperPct": 100 },
+        { "hour": 15, "temp": 26.2, "damperPct": 100 },
+        { "hour": 16, "temp": 26.0, "damperPct": 100 },
+        { "hour": 17, "temp": 25.5, "damperPct": 95 },
+        { "hour": 18, "temp": 25.0, "damperPct": 85 }
+      ],
+      "pattern": "hot_afternoons",
+      "damperFullOpenHours": "14:00-17:00",
+      "damperFullOpenDays": 9,
+      "damperFullOpenOutOfDays": 14
+    }
+  }
+}

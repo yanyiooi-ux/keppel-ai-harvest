@@ -1,0 +1,305 @@
+/* Pill Desk globals: Utilitarian look (STYLE.md option B) */
+/* Every colour, font, border, radius, shadow and spacing value is a CSS variable. */
+
+:root {
+  /* Colours */
+  --bg: #E9E9E4;
+  --panel: #F7F7F4;
+  --ink: #111111;
+  --muted: #4A4A4A;
+  --line: #CFCFC7;
+  --border: #A9A9A0;
+  --top-bg: #111111;
+  --top-ink: #F7F7F4;
+  --accent: #111111;
+  --accent-ink: #F7F7F4;
+
+  /* Status fills */
+  --g: #2E7D32;
+  --g-bg: #2E7D32;
+  --g-ink: #FFFFFF;
+  --a: #E8A317;
+  --a-bg: #E8A317;
+  --a-ink: #111111;
+  --r: #B3261E;
+  --r-bg: #B3261E;
+  --r-ink: #FFFFFF;
+  --b: #111111;
+  --b-bg: #111111;
+  --b-ink: #F7F7F4;
+
+  /* Type: loaded via next/font in layout.tsx */
+  --font: var(--font-ibm-plex-sans, 'IBM Plex Sans', system-ui, sans-serif);
+  --mono: var(--font-ibm-plex-mono, 'IBM Plex Mono', ui-monospace, monospace);
+
+  /* Shape */
+  --radius: 0;
+  --radius-sm: 0;
+  --chip-radius: 0;
+
+  /* Shadows: none in Utilitarian */
+  --shadow: none;
+  --btn-shadow: none;
+
+  /* Borders and rules */
+  --border-val: 1px solid var(--border);
+  --rule-val: 1px solid var(--line);
+
+  /* Spacing */
+  --gap: 12px;
+  --pad: 16px;
+
+  /* Headings */
+  --head-weight: 600;
+  --h1: 24px;
+  --label-case: uppercase;
+  --label-spacing: 0.06em;
+
+  /* Top bar */
+  --top-border: 1px solid var(--line);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 14px 28px;
+  background: var(--top-bg);
+  color: var(--top-ink);
+  border-bottom: var(--top-border);
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 17px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.brand small {
+  font-weight: 400;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tabs a {
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: var(--chip-radius);
+  opacity: 0.8;
+  font-family: var(--mono);
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+}
+
+.tabs a.on {
+  opacity: 1;
+  font-weight: 700;
+  background: var(--top-ink);
+  color: var(--top-bg);
+}
+
+.who {
+  margin-left: auto;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reset-btn {
+  background: transparent;
+  color: var(--top-ink);
+  border: 1px solid var(--top-ink);
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+  font-weight: 600;
+  border-radius: var(--chip-radius);
+}
+
+/* Page layout */
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.page-narrow {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+/* Headings */
+.eyebrow {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+  font-family: var(--mono);
+}
+
+h1 {
+  font-size: var(--h1);
+  font-weight: var(--head-weight);
+  margin: 2px 0 0;
+  line-height: 1.15;
+}
+
+/* Cards */
+.card {
+  background: var(--panel);
+  border: var(--border-val);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.chip {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--chip-radius);
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+}
+
+.chip.g { background: var(--g-bg); color: var(--g-ink); }
+.chip.a { background: var(--a-bg); color: var(--a-ink); }
+.chip.r { background: var(--r-bg); color: var(--r-ink); }
+.chip.b { background: var(--b-bg); color: var(--b-ink); }
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--ink);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--btn-shadow);
+  min-height: 44px;
+  font-family: var(--mono);
+  text-transform: var(--label-case);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.btn.pri {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Placeholder pages */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.placeholder h1 {
+  font-size: var(--h1);
+}
+
+.placeholder .desc {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.placeholder .pill-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+  padding: 4px 10px;
+  background: var(--b-bg);
+  color: var(--b-ink);
+  border-radius: var(--chip-radius);
+}
+
+.made-up {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  text-transform: var(--label-case);
+  letter-spacing: var(--label-spacing);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .topbar {
+    padding: 12px 16px;
+  }
+  .who {
+    display: none;
+  }
+  .page {
+    padding: 16px;
+  }
+}

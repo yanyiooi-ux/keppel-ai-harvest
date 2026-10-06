@@ -1,0 +1,32 @@
+[
+  {
+    "id": "tower-a",
+    "name": "Tower A",
+    "type": "office",
+    "label": "made up for the demo",
+    "floors": [
+      {
+        "floor": 23,
+        "tenant": "Northwind Advisory",
+        "fitOutCompletedMonths": 8,
+        "leaseEndsInMonths": 10,
+        "zones": ["core", "west"]
+      }
+    ]
+  },
+  {
+    "id": "building-b",
+    "name": "Building B",
+    "type": "office",
+    "label": "made up for the demo",
+    "floors": [
+      {
+        "floor": 12,
+        "tenant": "Meridian Partners",
+        "fitOutCompletedMonths": 4,
+        "leaseEndsInMonths": 24,
+        "zones": ["core", "east"]
+      }
+    ]
+  }
+]
