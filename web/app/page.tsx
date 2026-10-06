@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import HomeClient from "./HomeClient";
+
+export const dynamic = "force-dynamic";
 
 export default function Home() {
-  redirect("/tech");
+  return <HomeClient />;
 }

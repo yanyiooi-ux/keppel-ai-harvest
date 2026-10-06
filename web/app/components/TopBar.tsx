@@ -58,11 +58,9 @@ export function TopBar() {
       <div className="topbar-actions">
         <label className="who">
           <span
-            className="mono"
             style={{
-              fontSize: "12px",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              fontSize: "0.75rem",
+              color: "var(--ink-dim)",
             }}
           >
             Building
@@ -71,12 +69,14 @@ export function TopBar() {
             defaultValue={initialBuilding}
             onChange={(e) => switchBuilding(e.target.value)}
             style={{
-              background: "var(--top-ink)",
-              color: "var(--top-bg)",
-              border: "1px solid var(--top-ink)",
-              padding: "4px 8px",
-              fontFamily: "var(--mono)",
-              fontSize: "12px",
+              background: "var(--panel-solid)",
+              color: "var(--ink)",
+              border: "1px solid var(--border)",
+              padding: "8px 10px",
+              fontFamily: "var(--font)",
+              fontSize: "0.8125rem",
+              borderRadius: "var(--radius-sm)",
+              minHeight: "44px",
             }}
           >
             {BUILDINGS.map((b) => (

@@ -1,16 +1,12 @@
 # The look
 
-**Current look: B. Utilitarian**
+**Current look: Neon Quest**
 
-(To switch, change the line above to `A. Bento Box` or `C. Neo-Brutalism` before prompt P2, or ask CodeBuddy to
-"switch the look to A" later: the tokens live in `web/app/globals.css`.)
-
-Open `style-samples.html` in a browser and click the tabs to see all three on the same screen: the AOM's
-"Needs your decision" page and the technician's phone checklist.
+(Changed 6 Oct 2026 from B. Utilitarian. The decision is in `docs/decisions/2026-10-06-new-look.md`.)
 
 ## Rules for every look
 - Green, amber and red always mean the same thing: green the technician just does it, amber needs a named yes, red
-  means stop and call someone. Status is never shown by colour alone: always a word ("Amber · needs your yes") and a
+  means stop and call someone. Status is never shown by colour alone: always a word ("Amber - needs your yes") and a
   mark.
 - Buttons and tap targets at least 44 px tall on the phone. Text contrast at least 4.5 to 1. Visible keyboard focus.
 - The technician screen is designed at 390 px wide first. The AOM screen is designed at 1440 px wide first. Neither
@@ -18,32 +14,70 @@ Open `style-samples.html` in a browser and click the tabs to see all three on th
 - Every colour, font, border, radius, shadow and spacing value is a CSS variable. No hardcoded colours in components.
 - Rule ids, pill versions and signatures are always visible where advice is shown.
 
-## B. Utilitarian (current)
-- **Feel:** a control room or an engineering manual. Rule ids, versions and signatures are the visual heroes.
-- **Colours:** ground `#E9E9E4`, panels `#F7F7F4`, ink `#111111`, muted `#4A4A4A`, lines `#CFCFC7`, borders
-  `#A9A9A0`, top bar `#111111` with `#F7F7F4` text.
-- **Status fills:** green `#2E7D32` with white text, amber `#E8A317` with black text, red `#B3261E` with white text,
-  info and updates `#111111` with `#F7F7F4` text.
-- **Type:** IBM Plex Sans for text (15 px body, headings 600). IBM Plex Mono, uppercase, letter-spacing 0.06em, for
-  ids, versions, labels, buttons and section numbers ("01 SAFETY").
-- **Shape:** square corners everywhere, 1 px borders and hairline rules, no shadows, 12 px gaps, 16 px card padding.
-  Card status shows as a full-width coloured band across the top of the card.
+## Neon Quest (current)
+
+### Feel
+An Apple product mixed with a game map: dark, a skill tree path, a voxel character (Pip) walking the whole flow, and
+diagrams so simple a kid gets it. Every screen answers: where am I, where can I go next, how do I get back.
+
+### Colours
+- Ground: near-black `#07080C` with a faint grid and a few still stars (no full-screen moving background).
+- Path: violet `#8B7CFF` to cyan `#38BDF8`.
+- Panels: dark glass `rgba(17, 20, 27, 0.72)`, `backdrop-filter: blur(20px) saturate(180%)`, `1px` border `#232836`
+  with a brighter top edge. The active panel gets a soft violet glow.
+- Status fills (always with a word, never colour only): green `#22C55E`, amber `#F59E0B`, red `#EF4444`. Tinted
+  backgrounds, not full fills, so text stays readable.
+- Locked items: `#374151`, dimmed.
+
+### Type
+- Sora for headings (700, letter-spacing `-0.02em`, line-height `1.05`).
+- Inter for text (400/500/600, letter-spacing `0`, line-height `1.5`, sizes in rem).
+- JetBrains Mono for rule ids, versions and labels.
+
+### Shape
+- Card corners `16px`, button corners `10px`, pill-shaped chips (`999px`), large radius `24px`.
+- Soft shadow `0 2px 8px rgba(0,0,0,.2), 0 8px 32px rgba(0,0,0,.12)`. Active glow `0 0 24px var(--violet-glow)`.
+- No hard divider lines under sticky bars. Use a soft fade.
+
+### The character, Pip
+- A voxel pill made of small cubes, a blocky capsule with eyes. Built in code with @react-three/fiber and
+  @react-three/drei from box shapes. No image files, no model downloads.
+- Isometric camera, soft light. Pip hops node to node along the path with a spring.
+- Pip changes per step (notebook, hard hat, traffic light, stamp, version badge, splits in two).
+- On other screens Pip is a small voxel avatar that reacts (happy, worried, stop pose).
+- The 3D scene loads only in the browser (dynamic import, no server render). If WebGL is missing or reduced motion
+  is on, a still SVG picture of Pip shows instead.
+
+### The skill tree
+- One thick glowing path joining 6 big round nodes. Done = green glow with a tick. Current = soft pulse. Locked =
+  dim.
+- On a 390px phone the path runs top to bottom and nothing scrolls sideways.
+
+### Apple design rules (followed exactly)
+- Every button reacts on press, not on release: scale `0.97` in `100ms`.
+- Springs for all movement with framer-motion: bounce `0` and duration `0.4` by default. Bounce `0.2` only after a
+  drag or flick.
+- Any animation can be interrupted: always animate from where it is now, never block clicks during a transition.
+- Things leave the same way they came in. Panels and popovers grow out of the button that opened them.
+- Only animate transform and opacity.
+- Glass: never light glass on light glass, text on glass slightly bolder, no hard divider lines under sticky bars,
+  use a soft fade.
+- Dim the background only for things that block, like a confirm. The demo guide does not block, so no dim.
+- Big headings: letter-spacing `-0.02em`, line-height `1.05`. Body: letter-spacing `0`, line-height `1.5`, sizes in
+  rem.
+- Every screen answers: where am I, where can I go next, how do I get back.
+- Labels say exactly what they do ("Start demo", not "OK").
+- 4 kinds of feedback: status, done, warning, error. Done gets a small happy moment, not confetti everywhere.
+- Tap targets at least `44px`.
+- `prefers-reduced-motion`: swap moves for short fades. `prefers-reduced-transparency`: solid panels, no blur.
+  `prefers-contrast more`: solid panels with clear borders.
+
+## B. Utilitarian (previous)
+- Ground `#E9E9E4`, panels `#F7F7F4`, ink `#111111`, IBM Plex Sans/Mono, square corners, no shadows. Replaced 6 Oct
+  2026.
 
 ## A. Bento Box
-- **Feel:** a modern dashboard. Calm and familiar.
-- **Colours:** ground `#F4F5F7`, panels `#FFFFFF`, ink `#1A1D23`, muted `#5B6270`, lines `#E6E8EC`, accent blue
-  `#2F6FED` (white text).
-- **Status:** tinted chips. Green `#1F9D55` on `#E7F6EE`, amber `#8A4B05` on `#FEF3E2`, red `#9B1C1C` on `#FDECEC`,
-  info `#1D4BB0` on `#EAF0FE`.
-- **Type:** Inter, body 15 px, headings 650.
-- **Shape:** 16 px card corners, 10 px button corners, pill-shaped chips, no borders, soft shadow
-  `0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06)`, 16 px gaps, 20 px padding.
+- Calm dashboard. Not used.
 
 ## C. Neo-Brutalism
-- **Feel:** bold and memorable on stage.
-- **Colours:** ground cream `#FFF6E0`, panels `#FFFFFF`, ink `#000000`, top bar `#FFD23F`.
-- **Status fills (black text):** green `#7BD389`, amber `#FFD23F`, red `#FF6B6B`, info `#A0C4FF`. Whole cards take
-  their status fill.
-- **Type:** Space Grotesk, bold headings, large sizes (page title 32 px).
-- **Shape:** square corners, 3 px pure black borders, hard shadow `5px 5px 0 #000` on cards and `3px 3px 0 #000` on
-  buttons, 22 px gaps. Borders are always black, never a brand colour.
+- Bold and memorable on stage. Not used.
