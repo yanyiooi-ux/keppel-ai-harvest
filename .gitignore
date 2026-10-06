@@ -1,0 +1,89 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.env
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+secrets.*
+
+# Not ours to publish (handbook text, team-only material). Backstop in case a handbook copy lands elsewhere.
+private/
+*handbook*.pdf
+*handbook*.txt
+
+# Proof: raw material is checked by a person before it is committed
+# Screenshots land in _inbox first; move them to screenshots/ after checking them.
+proof/_inbox/
+# Raw chat exports hold everything the chat saw (rules, memories, file contents). Local backup only.
+proof/chat-exports/*
+!proof/chat-exports/README.md
+
+# Videos are too big for git (GitHub rejects files over 100 MB). Upload them and link them instead.
+*.mp4
+*.mov
+*.mkv
+*.webm
+
+# CodeBuddy: personal and machine-specific files
+CODEBUDDY.local.md
+.codebuddy/settings.local.json
+.codebuddy/models.json
+.codebuddy/worktrees/
+.codebuddy/sandbox/
+.codebuddy/integration/
+.codebuddy/teams/
+.codebuddy/memory/
+.codebuddy/agent-memory/
+# .codebuddy/plans/ IS committed on purpose: saved plans show how we built with CodeBuddy.
+
+# Other AI tools and editors (personal settings)
+.claude/
+CLAUDE.local.md
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Dependencies and build output
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+dist/
+build/
+out/
+.next/
+.cache/
+.turbo/
+.vercel/
+coverage/
+.eslintcache
+*.tsbuildinfo
+
+# Logs and OS clutter
+*.log
+.DS_Store
+._*
+.AppleDouble
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Pill Desk app: demo state and runtime versions are local, the seed is committed
+web/data/state.json
+web/data/runtime/
