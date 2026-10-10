@@ -1201,6 +1201,7 @@ red_stops:
       duty FM chief engineer
     rules:
       - TS-CC-03
+    id: RS-01
   - trigger: Burning or electrical smell at a grille or unit with no smoke, or a
       breaker that tripped along with the smell.
     action: Leave the system off. Do not turn it back on to test it. Note where the
@@ -1208,6 +1209,7 @@ red_stops:
     who_to_call: FM control room and FM chief engineer, plus the building LEW if electrical
     rules:
       - TS-CC-03
+    id: RS-02
   - trigger: A heater, plug, cord or socket that looks scorched, melted or
       discoloured, smells of burning, or that someone reports as warm.
     action: Stop. Do not touch it, do not pull the plug, and do not touch the metal
@@ -1216,6 +1218,7 @@ red_stops:
     rules:
       - TS-CC-03
       - TS-CC-07
+    id: RS-03
   - trigger: Water dripping from the ceiling or pooling near lights, floor power
       boxes, or electrical or comms rooms.
     action: Keep away from the electrics, clear the area, and do not climb under the
@@ -1226,18 +1229,21 @@ red_stops:
     rules:
       - TS-CC-03
       - TS-CC-08
+    id: RS-04
   - trigger: Someone is hurt, faints, has chest pain, or cannot breathe properly.
     action: Call 995 for an ambulance, give first aid, and inform the building
       control room.
     who_to_call: SCDF on 995, the building first aider or CERT, and the FM control room
     rules:
       - TS-CC-04
+    id: RS-05
   - trigger: AHU keeps tripping, a smoke detector trips in the return air, or a fire
       damper seems shut.
     action: Do not bypass, wedge or override anything to get air back.
     who_to_call: FM chief engineer and Fire Safety Manager
     rules:
       - TS-CC-05
+    id: RS-06
   - trigger: The trend points to the chiller or chilled water plant, or a
       refrigerant leak is suspected.
     action: Do not touch the refrigerant circuit. Never add, bleed or release
@@ -1246,12 +1252,14 @@ red_stops:
     rules:
       - TS-CC-05
       - TS-CC-26
+    id: RS-07
   - trigger: A zone's VAV damper sits fully open for hours on sunny afternoons, or
       no approved rule covers the case.
     action: Stop all setpoint advice. Escalate.
     who_to_call: FM chief engineer
     rules:
       - TS-CC-26
+    id: RS-08
   - trigger: A step needs ceiling access, but there is no named yes, no safe access,
       no isolation, or the person would be working alone.
     action: Stop. Do the BMS and floor-level checks only until access and isolation
@@ -1259,6 +1267,7 @@ red_stops:
     who_to_call: FM chief engineer or the building's permit issuer
     rules:
       - TS-CC-08
+    id: RS-09
   - trigger: Anyone asks the AI to write to the BMS, quote a price, admit fault, or
       show another tenant's data.
     action: The AI refuses and shows who may decide. A person makes any approved
@@ -1266,6 +1275,7 @@ red_stops:
     who_to_call: FM chief engineer for settings, AOM for cost or fault
     rules:
       - TS-CC-06
+    id: RS-10
 tenant_tips:
   - text: If the boardroom feels warm in the afternoon, lowering the blinds can help
       while we look into it.

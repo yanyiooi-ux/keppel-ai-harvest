@@ -1,4 +1,4 @@
-import { loadPill } from "@/lib/pill";
+import { loadAndCheckPill } from "@/lib/pill";
 import { loadTickets, computeRepeatFlag, checkRedStop, getActiveChecklist, canNudge } from "@/lib/rule-engine";
 import { TechClient } from "./TechClient";
 
@@ -9,7 +9,7 @@ export default async function TechPage({
 }: {
   searchParams: Promise<{ ticket?: string }>;
 }) {
-  const pill = loadPill("ts-cc", "1.0");
+  const pill = loadAndCheckPill("ts-cc", "1.0");
   const allTickets = loadTickets();
 
   const params = await searchParams;

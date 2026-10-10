@@ -269,7 +269,7 @@ describe("Golden tests", () => {
 describe("v1.1 reserved rule (TS-CC-27)", () => {
   it("blocks the nudge when fit-out in last 12 months, in v1.1 only", () => {
     const repeat = { isRepeat: false, reason: "", count: 1, hasOppositeFixes: false, relatedRuleIds: [] };
-    const red = { isRed: false, trigger: "", action: "", whoToCall: "", relatedRuleIds: [] };
+    const red = { isRed: false, id: "", trigger: "", action: "", whoToCall: "", relatedRuleIds: [] };
 
     // v1.0: nudge allowed even with fit-out (the gate does not exist in v1.0)
     const v10Result = canNudge(repeat, red, {

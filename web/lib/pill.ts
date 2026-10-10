@@ -50,6 +50,7 @@ export interface RedStop {
   action: string;
   who_to_call: string;
   rules: string[];
+  id: string;
 }
 
 export interface TenantTip {
@@ -115,7 +116,10 @@ export function loadPill(pillId: string, version: string): Pill {
  */
 export function loadAndCheckPill(pillId: string, version: string): Pill {
   const pill = loadPill(pillId, version);
-  checkPill(pill);
+  const errors = checkPill(pill);
+  if (errors.length > 0) {
+    throw new Error(errors.join("; "));
+  }
   return pill;
 }
 
@@ -201,14 +205,26 @@ export function checkPill(pill: Pill): string[] {
     }
   }
 
-  // 4. v1.0 must have exactly rules TS-CC-01 to TS-CC-26, not TS-CC-27
+  // 4. Version-aware rule set check
+  // v1.0 must have exactly TS-CC-01 to TS-CC-26, not TS-CC-27.
+  // Any other version must have TS-CC-01 to TS-CC-26, and each extra rule
+  // needs a valid condition (S16 — condition check comes in C3c).
   for (const id of expectedRuleIds) {
     if (!ruleIds.has(id)) {
-      errors.push(`v1.0 must include rule ${id}`);
+      errors.push(`pill must include rule ${id}`);
     }
   }
-  if (ruleIds.has("TS-CC-27")) {
+  if (pill.version === "1.0" && ruleIds.has("TS-CC-27")) {
     errors.push("v1.0 must NOT include TS-CC-27 (reserved for v1.1)");
+  }
+  if (pill.version === "1.0") {
+    // v1.0 must have exactly 26 rules, no extras
+    const extraRules = (pill.rules ?? []).filter(
+      (r) => !expectedRuleIds.includes(r.id)
+    );
+    for (const r of extraRules) {
+      errors.push(`v1.0 must not include extra rule ${r.id}`);
+    }
   }
 
   // 5. Checklist
@@ -246,6 +262,11 @@ export function checkPill(pill: Pill): string[] {
   }
 
   // 6. Red stops
+  const redStopIds = new Set<string>();
+  const expectedRedStopIds = [
+    "RS-01", "RS-02", "RS-03", "RS-04", "RS-05",
+    "RS-06", "RS-07", "RS-08", "RS-09", "RS-10",
+  ];
   for (const rs of pill.red_stops ?? []) {
     if (!rs.trigger) errors.push("a red stop has no trigger");
     if (!rs.action) errors.push("a red stop has no action");
@@ -257,6 +278,26 @@ export function checkPill(pill: Pill): string[] {
         if (!ruleIds.has(rid)) {
           errors.push(`red stop references unknown rule ${rid}`);
         }
+      }
+    }
+    // Red stop id validation (S4 item 1)
+    if (!rs.id) {
+      errors.push("a red stop has no id");
+    } else {
+      if (redStopIds.has(rs.id)) {
+        errors.push(`duplicate red stop id: ${rs.id}`);
+      }
+      redStopIds.add(rs.id);
+      if (pill.version === "1.0" && !expectedRedStopIds.includes(rs.id)) {
+        errors.push(`v1.0 red stop id ${rs.id} is not in RS-01 to RS-10`);
+      }
+    }
+  }
+  // v1.0 must have exactly RS-01 to RS-10
+  if (pill.version === "1.0") {
+    for (const id of expectedRedStopIds) {
+      if (!redStopIds.has(id)) {
+        errors.push(`v1.0 must include red stop ${id}`);
       }
     }
   }

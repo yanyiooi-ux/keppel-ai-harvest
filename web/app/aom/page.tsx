@@ -1,11 +1,11 @@
-import { loadPill } from "@/lib/pill";
+import { loadAndCheckPill } from "@/lib/pill";
 import { loadTickets, computeRepeatFlag } from "@/lib/rule-engine";
 import { AomClient } from "./AomClient";
 
 export const dynamic = "force-dynamic";
 
 export default function AomPage() {
-  const pill = loadPill("ts-cc", "1.0");
+  const pill = loadAndCheckPill("ts-cc", "1.0");
   const allTickets = loadTickets();
   const ticket2318 = allTickets.find((t) => t.id === "2318")!;
   const demoNow = new Date("2026-10-06T09:30:00+08:00");

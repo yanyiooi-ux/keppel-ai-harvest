@@ -9,7 +9,7 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { Pill, ChecklistStep } from "./pill";
+import type { Pill, ChecklistStep, RedStop } from "./pill";
 
 // ---- Types ----
 
@@ -54,6 +54,7 @@ export interface RepeatFlagResult {
 
 export interface RedStopResult {
   isRed: boolean;
+  id: string;
   trigger: string;
   action: string;
   whoToCall: string;
@@ -184,18 +185,15 @@ export function computeRepeatFlag(
 
 /**
  * Check if a ticket triggers a red stop.
- * Red stops are: safety signs (burning smell, smoke, water, unwell person),
- * plant causes, and capacity limits (damper fully open for hours).
- *
- * In the demo, ticket 2318 does NOT trigger a red stop (it is a repeat
- * comfort complaint, not a safety issue). The red stop check is here
- * for golden tests GT-03, GT-09, GT-10, GT-14, GT-15, GT-18, GT-19.
+ * Each flag maps to one stop by the table in S4 item 3.
+ * Returns the first match in YAML order, plus its id.
  */
 export function checkRedStop(
   pill: Pill,
   context: {
     hasBurningSmell?: boolean;
     hasSmoke?: boolean;
+    hasScorchedPlug?: boolean;
     hasWaterDripping?: boolean;
     someoneUnwell?: boolean;
     ahuTripping?: boolean;
@@ -209,47 +207,40 @@ export function checkRedStop(
     noApprovedRuleCovers?: boolean;
   }
 ): RedStopResult {
+  // Flag → stop id map (S4 item 3)
+  const flagToStopId: { flag: boolean; id: string }[] = [
+    { flag: context.hasSmoke ?? false, id: "RS-01" },
+    { flag: context.hasBurningSmell ?? false, id: "RS-02" },
+    { flag: context.hasScorchedPlug ?? false, id: "RS-03" },
+    { flag: context.hasWaterDripping ?? false, id: "RS-04" },
+    { flag: context.someoneUnwell ?? false, id: "RS-05" },
+    { flag: context.ahuTripping ?? false, id: "RS-06" },
+    { flag: context.chillerCause ?? false, id: "RS-07" },
+    {
+      flag: (context.damperFullyOpenForHours ?? false) || (context.noApprovedRuleCovers ?? false),
+      id: "RS-08",
+    },
+    {
+      flag: (context.ceilingAccessWithoutApproval ?? false) || (context.workingAlone ?? false),
+      id: "RS-09",
+    },
+    {
+      flag:
+        (context.aiAskedToWriteToBms ?? false) ||
+        (context.aiAskedToQuotePrice ?? false) ||
+        (context.aiAskedToAdmitFault ?? false),
+      id: "RS-10",
+    },
+  ];
+
+  // Collect triggered stop ids, then return the first match in YAML order
+  const triggeredIds = new Set(flagToStopId.filter((f) => f.flag).map((f) => f.id));
+
   for (const rs of pill.red_stops) {
-    let triggered = false;
-
-    if (rs.rules.includes("TS-CC-03")) {
-      if (context.hasBurningSmell || context.hasSmoke || context.hasWaterDripping) {
-        triggered = true;
-      }
-    }
-    if (rs.rules.includes("TS-CC-04")) {
-      if (context.someoneUnwell) {
-        triggered = true;
-      }
-    }
-    if (rs.rules.includes("TS-CC-05")) {
-      if (context.ahuTripping || context.chillerCause) {
-        triggered = true;
-      }
-    }
-    if (rs.rules.includes("TS-CC-26")) {
-      if (context.damperFullyOpenForHours || context.noApprovedRuleCovers) {
-        triggered = true;
-      }
-    }
-    if (rs.rules.includes("TS-CC-08")) {
-      if (context.ceilingAccessWithoutApproval || context.workingAlone) {
-        triggered = true;
-      }
-    }
-    if (rs.rules.includes("TS-CC-06")) {
-      if (
-        context.aiAskedToWriteToBms ||
-        context.aiAskedToQuotePrice ||
-        context.aiAskedToAdmitFault
-      ) {
-        triggered = true;
-      }
-    }
-
-    if (triggered) {
+    if (triggeredIds.has(rs.id)) {
       return {
         isRed: true,
+        id: rs.id,
         trigger: rs.trigger,
         action: rs.action,
         whoToCall: rs.who_to_call,
@@ -260,11 +251,28 @@ export function checkRedStop(
 
   return {
     isRed: false,
+    id: "",
     trigger: "",
     action: "",
     whoToCall: "",
     relatedRuleIds: [],
   };
+}
+
+/**
+ * Get one red stop by id. Returns null if not found.
+ */
+export function getRedStop(pill: Pill, id: string): RedStop | null {
+  return pill.red_stops.find((rs) => rs.id === id) ?? null;
+}
+
+/**
+ * Get every red stop whose id is in `ids`, in YAML order.
+ * Each result includes id, trigger, action, who_to_call and rules.
+ */
+export function checkRedStops(pill: Pill, ids: string[]): RedStop[] {
+  const idSet = new Set(ids);
+  return pill.red_stops.filter((rs) => idSet.has(rs.id));
 }
 
 // ---- Never-list check ----
