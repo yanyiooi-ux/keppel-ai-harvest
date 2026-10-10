@@ -10,6 +10,12 @@
 
 import OpenAI from "openai";
 
+/** Max tokens for every AI call (spec S15: 600 so hy3 has room after thinking). */
+export const AI_MAX_TOKENS = 600;
+
+/** Timeout for every AI call in ms (spec S15: 8 s). */
+export const AI_TIMEOUT_MS = 8000;
+
 let cachedClient: OpenAI | null = null;
 
 /**

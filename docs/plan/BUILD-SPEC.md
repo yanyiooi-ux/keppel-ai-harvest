@@ -739,6 +739,12 @@ For every AI sentence shown under a code card or reason:
   `ai.ts`, because `server-only` throws outside Next), and load the env file themselves with `@next/env`'s
   `loadEnvConfig`, passing a no-op logger (`{ info() {}, error() {} }`) so it never prints the file's full path. They
   never print a value. Never `NEXT_PUBLIC_`. `ai-core.ts` never loads the env file itself.
+- **hy3 thinks first (measured 10 Oct):** hy3 streams a `reasoning_content` part before `content`. With `max_tokens`
+  10 it ran out while thinking (finish `length`, no content); with 400 the first content came at about 1.25 s.
+  `enable_thinking: false` did not stop the thinking part. So `ai-core.ts` exports `AI_MAX_TOKENS = 600` and every call
+  uses it; code reads only `content`; `reasoning_content` is never shown, stored, logged or replayed; a call times out
+  8 s after the request; a reply that ends with finish `length` and no content counts as no answer (the fallback
+  shows). `ai:ping` reports "thinking first: yes or no" and the time to the first `content`.
 - **What the AI does, and nothing else:**
 
   | Job | Input | Output | Checks | Fallback |

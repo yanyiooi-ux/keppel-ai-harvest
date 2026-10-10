@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import { AI_MAX_TOKENS } from "../lib/ai-core";
 
 /**
  * T-C1b: test setup proves LLM_API_KEY is empty, REPLAY_MODE is 1,
@@ -17,5 +18,9 @@ describe("ai test setup (T-C1b)", () => {
     expect(() => fetch("https://example.com")).toThrow(
       "network blocked in tests"
     );
+  });
+
+  test("AI_MAX_TOKENS is at least 400", () => {
+    expect(AI_MAX_TOKENS).toBeGreaterThanOrEqual(400);
   });
 });

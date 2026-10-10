@@ -10,11 +10,18 @@
  * - Never prints the key, base URL, header, file path, err.message or the
  *   error object. On error: only the HTTP status and "AI unavailable".
  * - Empty key: print "key: empty" and stop.
- * - No reply in 5 s: say so plainly.
+ * - No reply in 8 s: say so plainly.
  */
 
 import { loadEnvConfig } from "@next/env";
-import { getClient, getModel, hasKey, _resetClient } from "../lib/ai-core";
+import {
+  getClient,
+  getModel,
+  hasKey,
+  _resetClient,
+  AI_MAX_TOKENS,
+  AI_TIMEOUT_MS,
+} from "../lib/ai-core";
 
 // Load the env file with a no-op logger so the file path is never printed.
 loadEnvConfig(process.cwd(), false, { info() {}, error() {} });
@@ -22,7 +29,7 @@ loadEnvConfig(process.cwd(), false, { info() {}, error() {} });
 // The client may have been cached before env loaded; clear it.
 _resetClient();
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = AI_TIMEOUT_MS;
 
 async function main() {
   const model = getModel();
@@ -45,37 +52,64 @@ async function main() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+  let firstChunkTime: number | null = null;
+  let sawReasoning = false;
+  let sawContent = false;
+  let finishReason: string | null = null;
+
   try {
     const stream = await client.chat.completions.create(
       {
         model,
         messages: [{ role: "user", content: "Say OK." }],
         stream: true,
-        max_tokens: 10,
+        max_tokens: AI_MAX_TOKENS,
       },
       { signal: controller.signal }
     );
 
-    let firstChunkTime: number | null = null;
-
     for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta?.content;
-      if (delta && delta.length > 0) {
+      const choice = chunk.choices?.[0];
+      const delta = choice?.delta as
+        | (Record<string, unknown> & {
+            content?: string;
+            reasoning_content?: string;
+          })
+        | undefined;
+
+      if (delta?.reasoning_content && delta.reasoning_content.length > 0) {
+        sawReasoning = true;
+      }
+
+      if (delta?.content && delta.content.length > 0) {
+        sawContent = true;
         if (firstChunkTime === null) {
           firstChunkTime = Date.now() - startTime;
         }
-        break; // we have the first reply
+        break; // we have the first content reply
       }
+
+      if (choice?.finish_reason) {
+        finishReason = choice.finish_reason;
+      }
+    }
+
+    // Ran out while thinking: finish "length" and no content.
+    if (firstChunkTime === null && finishReason === "length" && !sawContent) {
+      console.log(`model: ${model}, ran out while thinking`);
+      return;
     }
 
     if (firstChunkTime === null) {
       console.log(
-        `model: ${model}, no reply in ${TIMEOUT_MS / 1000} s`
+        `model: ${model}, thinking first: ${sawReasoning ? "yes" : "no"}, first reply: none`
       );
       return;
     }
 
-    console.log(`model: ${model}, first reply: ${firstChunkTime} ms`);
+    console.log(
+      `model: ${model}, thinking first: ${sawReasoning ? "yes" : "no"}, first reply: ${firstChunkTime} ms`
+    );
   } catch (err: unknown) {
     // S0 rule 12: only the HTTP status and "AI unavailable". Never
     // err.message, the error object, headers, the base URL or the client
@@ -84,7 +118,7 @@ async function main() {
 
     if (elapsed >= TIMEOUT_MS) {
       console.log(
-        `model: ${model}, no reply in ${TIMEOUT_MS / 1000} s`
+        `model: ${model}, thinking first: ${sawReasoning ? "yes" : "no"}, no reply in ${TIMEOUT_MS / 1000} s`
       );
       return;
     }
