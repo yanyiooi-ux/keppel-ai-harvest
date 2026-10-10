@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { loadPill, checkPill } from "../lib/pill";
+import { parse as parseYaml } from "yaml";
+import { loadPill, checkPill, assertPillOk, loadAndCheckPill } from "../lib/pill";
 import { buildPillYaml } from "../scripts/pill-source";
 import {
   checkRedStop,
@@ -17,16 +18,19 @@ const redStopIds = [
 ];
 
 describe("T-C2a: getRedStop returns each of the 10 stops' own words", () => {
+  // Read the YAML file from disk and parse it, so the tests compare
+  // getRedStop against the file, not the pill compared with itself.
+  const yamlPath = join(process.cwd(), "pills", "ts-cc", "v1.0.yaml");
+  const yamlText = readFileSync(yamlPath, "utf-8");
+  const filePill = parseYaml(yamlText) as { red_stops: { id: string; trigger: string; action: string; who_to_call: string; rules: string[] }[] };
+
   for (const id of redStopIds) {
-    it(`${id} returns its own trigger, action and who_to_call`, () => {
+    it(`${id} returns its own trigger, action and who_to_call (compared with YAML on disk)`, () => {
       const rs = getRedStop(pill, id);
       expect(rs).not.toBeNull();
       expect(rs!.id).toBe(id);
-      expect(rs!.trigger.length).toBeGreaterThan(0);
-      expect(rs!.action.length).toBeGreaterThan(0);
-      expect(rs!.who_to_call.length).toBeGreaterThan(0);
-      // Compare with the YAML: the loaded pill's red stop matches
-      const yamlRs = pill.red_stops.find((r) => r.id === id);
+      const yamlRs = filePill.red_stops.find((r) => r.id === id);
+      expect(yamlRs).toBeDefined();
       expect(rs!.trigger).toBe(yamlRs!.trigger);
       expect(rs!.action).toBe(yamlRs!.action);
       expect(rs!.who_to_call).toBe(yamlRs!.who_to_call);
@@ -110,24 +114,19 @@ describe("T-C2a: checkPill refuses missing or repeated red stop ids", () => {
   });
 });
 
-describe("T-C2a: loadAndCheckPill throws on a broken pill", () => {
-  it("throws when a rule has no sources", async () => {
-    // Dynamically import to test the throw
-    const { loadAndCheckPill } = await import("../lib/pill");
-    // We can't easily write a broken pill file to disk (tests never write the pill),
-    // so we test the throw behavior via checkPill directly.
+describe("T-C2a: assertPillOk throws on a broken pill", () => {
+  it("throws when a rule has no sources, message has 'has no sources'", () => {
     const brokenPill = {
       ...pill,
       rules: pill.rules.map((r, i) =>
         i === 0 ? { ...r, sources: [] } : r
       ),
     };
-    const errors = checkPill(brokenPill);
-    expect(errors.length).toBeGreaterThan(0);
-    // loadAndCheckPill would throw with these errors
-    expect(() => {
-      if (errors.length > 0) throw new Error(errors.join("; "));
-    }).toThrow();
+    expect(() => assertPillOk(brokenPill)).toThrow("has no sources");
+  });
+
+  it("loadAndCheckPill('ts-cc', '1.0') does not throw", () => {
+    expect(() => loadAndCheckPill("ts-cc", "1.0")).not.toThrow();
   });
 });
 
@@ -153,5 +152,28 @@ describe("T-C2a: v1.0 still refuses TS-CC-27", () => {
     };
     const errors = checkPill(brokenPill);
     expect(errors.some((e) => e.includes("TS-CC-27"))).toBe(true);
+  });
+});
+
+describe("T-C2a: non-1.0 red_stops must equal v1.0 exactly", () => {
+  it("v1.1 with RS-04 action changed gets a red stop error", () => {
+    const v11Pill = {
+      ...pill,
+      version: "1.1",
+      red_stops: pill.red_stops.map((rs, i) =>
+        i === 3 ? { ...rs, action: "CHANGED ACTION" } : rs
+      ),
+    };
+    const errors = checkPill(v11Pill);
+    expect(errors.some((e) => e.includes("red stop") && e.includes("RS-04"))).toBe(true);
+  });
+
+  it("v1.1 with same red stops gets no red stop error", () => {
+    const v11Pill = {
+      ...pill,
+      version: "1.1",
+    };
+    const errors = checkPill(v11Pill);
+    expect(errors.filter((e) => e.includes("red stop") || e.includes("RS-"))).toEqual([]);
   });
 });

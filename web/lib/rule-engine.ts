@@ -332,7 +332,7 @@ export function checkNeverList(
  */
 export function canNudge(
   repeatFlag: RepeatFlagResult,
-  redStop: RedStopResult,
+  redStop: Omit<RedStopResult, "id">,
   context: {
     hadSetpointChangeInLast30Days?: boolean;
     changeAmount?: number;

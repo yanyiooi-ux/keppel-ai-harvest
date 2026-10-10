@@ -111,16 +111,23 @@ export function loadPill(pillId: string, version: string): Pill {
 }
 
 /**
- * Load a pill and run all structural checks.
- * Throws if any check fails.
+ * Run all structural checks on a pill and throw if any fail.
+ * The error message joins all errors with "; ".
  */
-export function loadAndCheckPill(pillId: string, version: string): Pill {
-  const pill = loadPill(pillId, version);
+export function assertPillOk(pill: Pill): Pill {
   const errors = checkPill(pill);
   if (errors.length > 0) {
     throw new Error(errors.join("; "));
   }
   return pill;
+}
+
+/**
+ * Load a pill and run all structural checks.
+ * Throws if any check fails.
+ */
+export function loadAndCheckPill(pillId: string, version: string): Pill {
+  return assertPillOk(loadPill(pillId, version));
 }
 
 // ---- Checker ----
@@ -298,6 +305,36 @@ export function checkPill(pill: Pill): string[] {
     for (const id of expectedRedStopIds) {
       if (!redStopIds.has(id)) {
         errors.push(`v1.0 must include red stop ${id}`);
+      }
+    }
+  }
+
+  // S4 item 6: any version's red_stops must equal v1.0's exactly.
+  // Compare count, order, and every field (id, trigger, action, who_to_call, rules).
+  if (pill.version !== "1.0" && pill.red_stops) {
+    const v10 = loadPill(pill.pill_id, "1.0");
+    const v10Stops = v10.red_stops ?? [];
+    if (pill.red_stops.length !== v10Stops.length) {
+      errors.push("red_stops count differs from v1.0");
+    } else {
+      for (let i = 0; i < pill.red_stops.length; i++) {
+        const a = pill.red_stops[i];
+        const b = v10Stops[i];
+        if (a.id !== b.id) {
+          errors.push(`red stop RS-${String(i + 1).padStart(2, "0")} id differs: "${a.id}" vs v1.0 "${b.id}"`);
+        }
+        if (a.trigger !== b.trigger) {
+          errors.push(`red stop ${a.id} trigger differs from v1.0`);
+        }
+        if (a.action !== b.action) {
+          errors.push(`red stop ${a.id} action differs from v1.0`);
+        }
+        if (a.who_to_call !== b.who_to_call) {
+          errors.push(`red stop ${a.id} who_to_call differs from v1.0`);
+        }
+        if (JSON.stringify(a.rules) !== JSON.stringify(b.rules)) {
+          errors.push(`red stop ${a.id} rules differ from v1.0`);
+        }
       }
     }
   }
