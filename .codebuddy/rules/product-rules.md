@@ -7,27 +7,43 @@ enabled: true
 
 # Product rules
 
-These come from the approved plan (`docs/decisions/2026-10-05-approved-plan.md`). Build them into code, not into
-prompts, so a prompt can never talk past them.
+The source of truth is `docs/plan/BUILD-SPEC.md` (the spec). Build rules into code, not into prompts, so a
+prompt can never talk past them.
 
 ## Code decides, the AI words, people sign
-- Rule matching, step order, colours (green, amber, red), the repeat flag, the never-list, version states and the live
-  version pointer are plain TypeScript in `web/lib/`. The model never decides any of them.
-- The model may only: write the "because" wording for a rule, draft a change to a pill from a person's correction,
-  and draft rules from an interview transcript. Every model output is labelled "AI drafted" or "AI wording" on
-  screen and needs a named person to accept it before it counts.
-- If the model fails or is switched off, show the rule's own text and say the AI wording is unavailable. Replay mode
+- Rule matching, step order, colours (green, amber, red), ranks, the repeat flag, the never-list, version states and
+  the live version pointer are plain TypeScript in `web/lib/`. The model never decides any of them.
+- **The AI never ranks. It only words what code decided.**
+- The AI does four jobs (S15), and a person confirms anything that counts:
+  1. **Rank wording:** words a lead's code reason in at most 2 sentences.
+  2. **Tenant replies:** drafts a reply from the approved tips in at most 3 sentences.
+  3. **New solution rule text:** drafts the rule text from the senior manager's fix line; also suggests the fact and
+     effects from the fixed code menu, and the senior manager confirms each part.
+  4. **Chip:** suggests one chip for typed text.
+- Every AI output is labelled "AI drafted" or "AI wording" on screen and needs a named person to confirm it before it
+  counts.
+- If the model fails or is switched off, show the code's own text and say the AI wording is unavailable. Replay mode
   (saved answers) shows a clear banner.
 
-## The pill never changes itself
-- A pill version is Draft, Approved or Retired. A separate live pointer says which version each building uses.
-- Solved cases only add evidence. A change starts from a chief engineer's correction, or from the 80 percent counter
-  (a fix above 80 percent with at least 5 confirmed cases from 2 or more zones). Either way it becomes a draft.
-- Order to go live: golden tests pass, the chief engineer ticks "technically checked", the HQ pill owner signs a
-  numbered core version. A building's site layer is signed by that building's AOM. Rollback moves the pointer back
-  and deletes nothing.
-- Rules about safety, money or wording to tenants never apply silently: each building's AOM must press Accept.
-- Below 5 cases, show "expert rule, low evidence", never a percentage.
+## Approvals
+- **Approvals exist only at A1, A2, A3 and A4.**
+  - A1: Version 1 of the brain (two senior experts, shown as already signed).
+  - A2: A new solution (HQ, after its tests pass).
+  - A3: Outside help or money beyond the senior manager (HQ).
+  - A4: Charging the tenant (AOM).
+- Safety stops are stops, not approvals.
+- No approval needed: the tenant's self-check, the technician's checklist and ticks, applying a fix already in the
+  brain, saving a solved job as a case.
+
+## The 30-day win rule
+- **A fix counts as a win only after 30 days with no repeat at the same spot.**
+- A repeat within 30 days counts as evidence against the last fix (the case is `failed`).
+- The fixer cannot confirm the cause alone; a second person must confirm it.
+- Every closed job has one line of why (3 to 30 words).
+
+## Ranking
+- Ranking is 4 code steps over a made-up case library (S9). The AI never ranks.
+- Below 3 similar cases, the screen says "low confidence, expert rule", never a percentage.
 
 ## Green, amber, red
 - **Green** (technician just does it): intake questions, measuring, reading trends and history, checking the
@@ -43,17 +59,16 @@ prompts, so a prompt can never talk past them.
   scope: a damper fully open for hours (a capacity limit), anything on the chilled-water plant, or no approved rule
   covers the case. No setpoint advice in those cases.
 
+## New solutions and versions
+- A new solution starts from the senior manager solving an escalated job. It becomes the next pill version (a draft).
+- HQ approves it (A2) after its tests pass. It goes to every building at once, with rollback.
+- No per-building Accept. No "not here".
+
 ## Never, for anyone
 - Quote a price or a dollar amount.
 - Admit fault or liability in writing.
 - Show one tenant's data to another tenant.
 - Write to the BMS or any building system. There is no function that does this. Keep it that way.
-
-## "Attended" is not "Fixed"
-- "Attended, relief given" closes a ticket and changes nothing in the pill.
-- "Fixed" needs four things: the chief engineer's cause note, 14 days of the zone trend in band at the complaint
-  hour, a good call-back on day 7 to 14, and no comfort complaint from the same floor and tenant for 30 days. Only the
-  building manager presses "Fixed". A repeat inside 30 days counts as evidence against the last fix.
 
 ## Data
 - Every building, tenant, person, ticket and reading is made up and labelled so: Tower A, Building B, Northwind

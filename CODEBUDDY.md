@@ -13,35 +13,30 @@ Keppel's question: how can an organisation turn the know-how in its experts' hea
 
 Working name: **Pill Desk**. Builder: YY (solo builder; teammates may help with content and the demo).
 
-## Current status (update this section whenever it changes)
+## Current status
 
-- **5 Oct 2026: the plan is locked.** All 13 decisions are approved: `docs/decisions/2026-10-05-approved-plan.md`.
-  A simple explanation of each: `docs/decisions/2026-10-05-plan-explained-simply.md`.
+- **10 Oct 2026: the faster-fix flow is approved.** The spec is `docs/plan/BUILD-SPEC.md` (Version 2). Decisions:
+  `docs/decisions/2026-10-10-faster-fix-flow.md`. The old tour and "ask for a yes" steps are gone.
 - **Product code is allowed**, in `web/` only. Build one feature per chat, Plan mode first.
-- Case study label: **Technical Services**. One pill: **TS-CC, repeat comfort complaints (too cold or too hot) on an
-  office floor**. Demo story: Level 23 of Tower A, tenant Northwind Advisory (all made up), in
-  `docs/problem/level-23-story.md`.
-- Look: `docs/design/STYLE.md` ("Current look" line). Reference page: `docs/design/style-samples.html`.
-- Know-how source: `docs/knowhow/` (public sources and practitioner opinion, every item labelled; no real expert
-  interview yet).
+- Case study: **TS-CC, repeat comfort complaints** on Level 23 of Tower A, tenant Northwind Advisory (all made up).
+- Look: **Ember** (S23). Reference: `docs/design/how-prototype.html` and `docs/design/chat-look-samples.html`.
 - Target: submit **Thu 15 Oct 2026** (official deadline 16 Oct).
 
-## What we are building: a full live demo, six steps
+## What we are building: Pill Desk chats
 
-1. **Capture:** an interview transcript goes in; the AI drafts rules, each linked to the quote it came from; the chief
-   engineer corrects them; Keppel signs v1.0.
-2. **Daily use:** the helpdesk asks 3 intake questions; the app flags "5th comfort complaint from Level 23"; the FM
-   technician works the checklist on a phone, with a "because" card on every step.
-3. **Safety lines:** green steps the technician just does; amber steps need a named person's yes; red means stop and
-   call someone. A never-list the AI cannot cross.
-4. **The AOM screen:** "Needs your decision" cards, each with approve, send back or escalate.
-5. **Learning with undo:** "Attended" is not "Fixed". A chief engineer's correction becomes v1.1, golden tests run, the
-   chief engineer ticks, the HQ pill owner signs, the ticket reruns with the new answer, then rollback to v1.0.
-6. **Reuse:** Building B is offered v1.1 and its AOM accepts or says "not here" with a reason. HQ sees which building
-   runs which version.
+Pill Desk chats around one problem, following YY's 2 Oct flow (S1, S2): tenant self-check, a filled and ranked
+checklist, Solved or Not solved, senior manager, HQ, AOM.
 
-Roadmap only (on the diagram, never built): body cameras and video, real BMS and work-order links, real logins,
-data centres, other languages.
+**The 5 seats** (role-played, no login): Tenant, Technician, Senior manager (FM contractor's chief engineer), HQ
+(Keppel Technical Services lead), AOM Tower A. Building B is a card, not a seat.
+
+**Approvals only at A1 to A4:** A1 version 1 signed, A2 new solution (HQ), A3 outside help (HQ), A4 charge to tenant
+(AOM). Safety stops are stops, not approvals.
+
+**The 4 AI jobs** (S15): rank wording, tenant replies from approved tips, the new solution's rule text, a chip for
+typed text. The AI never ranks. A person confirms anything that counts.
+
+**A fix is a win only after 30 days with no repeat at the same spot.** Below 3 cases, "low confidence, expert rule".
 
 ## Stack
 
