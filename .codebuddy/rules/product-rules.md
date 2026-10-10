@@ -49,15 +49,12 @@ prompt can never talk past them.
 - **Green** (technician just does it): intake questions, measuring, reading trends and history, checking the
   thermostat position and return grilles, notes, and one setpoint nudge of at most 1 °C on a zone with no change in
   the last 30 days, logged.
-- **Amber** (a named yes first, the step stays locked until then): a second temperature change on the same floor in
-  30 days or any change above 1 °C (chief engineer); any BMS override (chief engineer); VAV minimum airflow (chief
-  engineer plus the controls contractor); work inside the tenant's space such as moving a thermostat (tenant's OK plus
-  the AOM); a tenant asking for a colder floor (AOM); any cost, who pays or goodwill (AOM); routine explanations to
-  the tenant (building manager).
+- **Amber** only labels a step that belongs to someone else: the senior manager's step, or "AOM decides" for money and
+  tenant consent. It never locks the technician's work and never asks for a yes. Approvals exist only at A1 to A4.
 - **Red** (stop and show who to call): someone hurt, smoke, a burning smell, a fire alarm, a personal heater with a
-  warm cord or burning smell, water near electrical rooms (duty chief engineer and Fire Safety Manager). Also out of
-  scope: a damper fully open for hours (a capacity limit), anything on the chilled-water plant, or no approved rule
-  covers the case. No setpoint advice in those cases.
+  warm cord or burning smell, water near electrical rooms. Also out of scope: a damper fully open for hours (a capacity
+  limit), anything on the chilled-water plant, or no approved rule covers the case. No setpoint advice in those cases.
+  Who to call always comes word for word from the pill's own red stop (spec S12), never from this list.
 
 ## New solutions and versions
 - A new solution starts from the senior manager solving an escalated job. It becomes the next pill version (a draft).

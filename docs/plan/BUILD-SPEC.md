@@ -1001,7 +1001,8 @@ disagrees with this spec, the spec wins. Every number, rule id, step and sentenc
 the data and the engine.
 
 - **WHY:** the Level 23 story from `tickets.json`: too cold in the core in the mornings, too hot in the west in the
-  afternoons, 5 calls in 21 days, each closed with a dial turn, the cause never fixed. The impact meter (S18).
+  afternoons, 5 calls in 21 days, the first 4 closed with a dial turn and 2318 still open, the cause never fixed. The
+  impact meter (S18).
 - **WHAT:** the 5 seats around one brain, Pip in the middle, Building B as a card; who approves what (A1 to A4); a
   static "who passes what to whom" list (tenant to technician: visit booked; technician to senior manager: not solved
   with everything attached; senior manager to HQ: new solution with tests; HQ to every building: approved version; AOM
