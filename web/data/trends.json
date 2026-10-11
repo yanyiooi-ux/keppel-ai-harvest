@@ -4,19 +4,19 @@
   "floor": 23,
   "zones": {
     "core": {
-      "description": "Open area near the lift core. Coldest from 8 to 10am. VAV damper sits low because the zone cannot turn its air down below minimum airflow.",
+      "description": "Open area near the lift core. Coldest from 8 to 10am. Since the fit-out, the wall thermostat reads about 1.5 deg C warmer than a handheld beside the desks, so the VAV damper sits high and keeps sending cold air.",
       "readings": [
-        { "hour": 8, "temp": 22.1, "damperPct": 30 },
-        { "hour": 9, "temp": 22.3, "damperPct": 25 },
-        { "hour": 10, "temp": 23.0, "damperPct": 35 },
-        { "hour": 11, "temp": 23.5, "damperPct": 40 },
-        { "hour": 12, "temp": 23.8, "damperPct": 45 },
-        { "hour": 13, "temp": 24.0, "damperPct": 50 },
-        { "hour": 14, "temp": 24.2, "damperPct": 55 },
-        { "hour": 15, "temp": 24.3, "damperPct": 60 },
-        { "hour": 16, "temp": 24.1, "damperPct": 50 },
-        { "hour": 17, "temp": 23.8, "damperPct": 45 },
-        { "hour": 18, "temp": 23.5, "damperPct": 40 }
+        { "hour": 8, "temp": 22.1, "sensorTemp": 23.6, "damperPct": 85 },
+        { "hour": 9, "temp": 22.3, "sensorTemp": 23.8, "damperPct": 90 },
+        { "hour": 10, "temp": 23.0, "sensorTemp": 24.5, "damperPct": 80 },
+        { "hour": 11, "temp": 23.5, "sensorTemp": 25.0, "damperPct": 75 },
+        { "hour": 12, "temp": 23.8, "sensorTemp": 25.3, "damperPct": 70 },
+        { "hour": 13, "temp": 24.0, "sensorTemp": 25.5, "damperPct": 70 },
+        { "hour": 14, "temp": 24.2, "sensorTemp": 25.7, "damperPct": 70 },
+        { "hour": 15, "temp": 24.3, "sensorTemp": 25.8, "damperPct": 75 },
+        { "hour": 16, "temp": 24.1, "sensorTemp": 25.6, "damperPct": 70 },
+        { "hour": 17, "temp": 23.8, "sensorTemp": 25.3, "damperPct": 65 },
+        { "hour": 18, "temp": 23.5, "sensorTemp": 25.0, "damperPct": 60 }
       ],
       "pattern": "cold_mornings"
     },

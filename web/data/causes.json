@@ -1,0 +1,103 @@
+{
+  "label": "made up for the demo; brain v1.0 cause list, signed by two role-played senior experts (A1)",
+  "causes": [
+    {
+      "id": "setpoint",
+      "label": "The setpoint is just off (turn the dial)",
+      "symptoms": ["cold", "hot"],
+      "checkStep": 25,
+      "checkMinutes": 5,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": 25,
+      "fixSeat": "technician",
+      "fixRoute": "Technician turns the dial once, at most 1 degree, logged",
+      "tenantSolution": "We adjusted the setting for your area.",
+      "tenantItem": false,
+      "red": false
+    },
+    {
+      "id": "precool",
+      "label": "Morning start-up runs too cold",
+      "symptoms": ["cold"],
+      "checkStep": 17,
+      "checkMinutes": 15,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": null,
+      "fixSeat": "senior-manager",
+      "fixRoute": "Senior manager changes the start-up schedule",
+      "tenantSolution": "We adjusted the morning start-up.",
+      "tenantItem": false,
+      "red": false
+    },
+    {
+      "id": "min-airflow",
+      "label": "Core box held at minimum airflow",
+      "symptoms": ["cold"],
+      "checkStep": 18,
+      "checkMinutes": 20,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": null,
+      "fixSeat": "senior-manager",
+      "fixRoute": "Senior manager with the controls contractor",
+      "tenantSolution": "We adjusted the air box for your area.",
+      "tenantItem": false,
+      "red": false
+    },
+    {
+      "id": "thermostat-spot",
+      "label": "Thermostat in the wrong spot after a fit-out",
+      "symptoms": ["cold", "hot"],
+      "checkStep": 21,
+      "checkMinutes": 20,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": null,
+      "fixSeat": "senior-manager",
+      "fixRoute": "Moved back to the spot on the fit-out drawing, with the tenant's OK",
+      "tenantSolution": "Our contractor will move the wall thermostat back to the spot on your approved fit-out drawing, with your OK.",
+      "tenantItem": true,
+      "red": false
+    },
+    {
+      "id": "sun-west",
+      "label": "Sun heat on the west glass",
+      "symptoms": ["hot"],
+      "checkStep": 23,
+      "checkMinutes": 30,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": null,
+      "fixSeat": "technician",
+      "fixRoute": "Blinds tip now; lasting shading is the AOM's call",
+      "tenantSolution": "Lower the blinds in the afternoon.",
+      "tenantItem": false,
+      "red": false
+    },
+    {
+      "id": "rebalance",
+      "label": "Zoning or air balance after a fit-out",
+      "symptoms": ["cold", "hot"],
+      "checkStep": 29,
+      "checkMinutes": 2880,
+      "checkSeats": ["senior-manager"],
+      "fixStep": null,
+      "fixSeat": "none",
+      "fixRoute": "Specialist air balancing; outside help or money goes to HQ (A3)",
+      "tenantSolution": "A specialist will balance the air on your floor.",
+      "tenantItem": false,
+      "red": false
+    },
+    {
+      "id": "capacity",
+      "label": "West box fully open for hours (capacity limit)",
+      "symptoms": ["hot"],
+      "checkStep": 16,
+      "checkMinutes": 30,
+      "checkSeats": ["technician", "senior-manager"],
+      "fixStep": null,
+      "fixSeat": "senior-manager",
+      "fixRoute": "Out of scope: senior manager (RS-08)",
+      "tenantSolution": "We are looking at the air supply for your floor.",
+      "tenantItem": false,
+      "red": true
+    }
+  ]
+}
