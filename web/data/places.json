@@ -1,0 +1,10 @@
+{
+  "label": "made up for the demo",
+  "acHours": { "start": "08:00", "end": "18:00", "days": [1, 2, 3, 4, 5] },
+  "spots": [
+    { "building": "tower-a", "floor": 23, "zone": "core", "equipment": "VAV-23-C1", "equipmentType": "vav" },
+    { "building": "tower-a", "floor": 23, "zone": "west", "equipment": "VAV-23-W1", "equipmentType": "vav" },
+    { "building": "building-b", "floor": 12, "zone": "core", "equipment": "VAV-12-C1", "equipmentType": "vav" },
+    { "building": "building-b", "floor": 12, "zone": "east", "equipment": "VAV-12-E1", "equipmentType": "vav" }
+  ]
+}
