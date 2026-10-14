@@ -2,6 +2,12 @@ import { leadsForJob } from "../../lib/leads";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
 import * as memory from "../../lib/memory";
+import type { MemoryState } from "../../lib/memory";
+
+/** The alerts S11 routes to Building B's card, the seat alertSeatFor names. */
+export function buildingBAlerts(state: MemoryState) {
+  return state.notices.filter((n) => n.seat === "building-b-card");
+}
 
 /**
  * Building B (S21). Not a seat: it is the proof that the same brain is running
@@ -23,6 +29,8 @@ export function BuildingBCard() {
   const openHere = state.openRedStops.filter(
     (s) => s.clearedAt === null && s.building === job.building
   );
+  // S11: Building B has no AOM seat, so its safety alerts land on this card.
+  const alerts = buildingBAlerts(state);
 
   return (
     <article className="card building-b">
@@ -32,6 +40,13 @@ export function BuildingBCard() {
         Live version v{version}. Ticket {job.id}, {job.tenant}: {job.complaint},{" "}
         {job.intake.when}.
       </p>
+
+      {alerts.map((alert, i) => (
+        <div className="notice" key={`b-alert-${i}`}>
+          <b>{alert.kind.replace(/-/g, " ")}</b>
+          {alert.text}
+        </div>
+      ))}
 
       <ol className="lead-list">
         {leads.map((lead) => (
