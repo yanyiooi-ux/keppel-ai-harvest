@@ -2382,13 +2382,14 @@ a {
   gap: 14px;
   align-items: start;
 }
-
 /* Each chat is a column of fixed height: its messages scroll inside, its
-   chips and text box stay at the bottom. */
+   chips and text box stay at the bottom. The whole column fits on screen
+   under the sticky bar (66 px), so on a 1280 x 720 laptop the judge reads Pip
+   and presses or types without scrolling the page (C10a review). */
 .live-tile {
   display: flex;
   flex-direction: column;
-  height: 780px;
+  height: clamp(420px, calc(100vh - 84px), 780px);
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);

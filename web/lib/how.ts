@@ -304,7 +304,7 @@ export function demoSteps(): DemoStep[] {
     {
       seat: "senior-manager",
       who: SEAT_SHORT["senior-manager"],
-      text: `On ${SEAT_JOB}, Found it on "${thermostat}". Log new solution: type the fix line and the why line (3 to 30 words each), then Log it. Confirm each part: ${PART_TITLES["rule-text"]}, ${part("fact", "fit-out-12m")}, ${part("effect-1", "block:25")}, ${part("effect-2", "put-first:21")}. Run tests, then Send to HQ.`,
+      text: `On ${SEAT_JOB}, Found it on "${thermostat}". Log new solution: type the fix line and the why line (3 to 30 words each), then Log it. For each part, pick this in its box (change the AI's suggestion where it differs), then Confirm: ${PART_TITLES["rule-text"]}, ${part("fact", "fit-out-12m")}, ${part("effect-1", "block:25")}, ${part("effect-2", "put-first:21")}. Run tests, then Send to HQ.`,
     },
     {
       seat: "hq",
@@ -342,7 +342,7 @@ function briefAnswers(story: WhyStory | null, cases: number): string[] {
   return [
     problem,
     "The FM contractor's chief engineer (role-played): when they solve a job that came up, their fix line and why line become a draft rule that is tested before it counts.",
-    `Every closed job becomes a case that ranks the next job (${cases} made-up past cases to start), and an approved rule goes live in every building at once.`,
+    `Every solved job is saved as a case that ranks the next job (${cases} made-up past cases to start), and an approved rule goes live in every building at once.`,
     "The AOM watches the impact meter, gets every safety alert for Tower A, sees the live version and decides every charge to a tenant (A4); a red stop always says who to call.",
     "Code ranks, routes and locks, and only button presses change anything; the AI only words what code decided.",
     "A fix wins only after 30 days with no repeat; a new rule needs passing tests and HQ's approval (A2), goes out as a new version and can be rolled back.",
@@ -475,7 +475,7 @@ export function howView(state: MemoryState, sources: HowSources = loadHowSources
       },
       {
         name: "Show why",
-        text: 'Every lead carries its code reason. Under 3 similar cases it says "low confidence, expert rule" and the senior manager is told.',
+        text: 'Every lead carries its code reason. Under 3 similar cases it says "low confidence, expert rule"; when the top lead is low confidence, or no lead is left, the senior manager is told.',
       },
     ],
     safety: {

@@ -8,6 +8,7 @@ import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
 import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPress } from "./SeniorManagerDesk";
 import { HqDesk, hqHolds } from "./HqDesk";
 import { AomDesk, aomHolds, AOM_DESK_NOTICE_KINDS } from "./AomDesk";
+import { bringIntoView } from "./bring-into-view";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -225,7 +226,7 @@ export function SeatChat({
     const from = followFrom.current;
     if (from === null || items <= from) return;
     followFrom.current = null;
-    root.current?.querySelector(`[data-item="${from}"]`)?.scrollIntoView?.({ block: "start" });
+    bringIntoView(root.current?.querySelector(`[data-item="${from}"]`), "start");
   }, [items]);
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { DeskCardView, LeadCard, StepList } from "./TechnicianDesk";
+import { bringIntoView } from "./bring-into-view";
 import type {
   ManagerDesk,
   ManagerOpenJob,
@@ -247,7 +248,7 @@ function ManagerJob({
   useEffect(() => {
     if (solutionId === seenSolution.current) return;
     seenSolution.current = solutionId;
-    if (solutionId) solutionBox.current?.scrollIntoView?.({ block: "start" });
+    if (solutionId) bringIntoView(solutionBox.current, "start");
   }, [solutionId]);
 
   if (open.locked) {
@@ -385,12 +386,12 @@ function SolutionCard({
   useEffect(() => {
     if (runKey === seenRun.current) return;
     seenRun.current = runKey;
-    if (runKey) runBox.current?.scrollIntoView?.({ block: "center" });
+    if (runKey) bringIntoView(runBox.current, "center");
   }, [runKey]);
   useEffect(() => {
     if (sent === seenSent.current) return;
     seenSent.current = sent;
-    if (sent) sendLine.current?.scrollIntoView?.({ block: "center" });
+    if (sent) bringIntoView(sendLine.current, "center");
   }, [sent]);
 
   // HQ's decision shows on the card too (C8b): a status colour always carries its word.

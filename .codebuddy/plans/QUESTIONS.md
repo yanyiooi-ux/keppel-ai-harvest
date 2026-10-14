@@ -148,3 +148,14 @@ Each question names its part and the spec's exact words. Each one has one it.tod
     S$720 and counting. The demo path ("too cold" attaches to 2318) is not affected. Should a no-visit self-check
     count as a call without a visit, or not count on the meter at all? Test: `web/tests/c9-review.test.ts`, "QUESTION
     C9 review: S18 says "Visits: one per call" ..." (it.todo).
+
+## C10a (from the C10a review)
+
+13. **The live wall at laptop width.** S22 says "Live: the 5 real chats side by side, AOM Tower A first", and
+    `docs/design/how-prototype.html` shows 5 columns from 1280 px and 3 below that. Built in C10a, without a question:
+    at 1280 px the wall is 3 columns by 2 rows (AOM, tenant and technician, then senior manager, HQ and the Building
+    B card), and the 5 chats sit in one row only from about 1790 px. Tried in the C10a review and looked at: 5 in a
+    row at 1280 px leaves each chat about 238 px wide, the chips wrap to 3 rows, the room for the desk shrinks, and
+    the Building B card sits alone on a second row (look sample c10a-fix-how-try5col-1280.png). Not changed. Should
+    the wall show the 5 chats in one row from 1280 px? Test: `web/tests/c10a-review-ui.test.tsx`, "QUESTION C10a
+    review: S22 says "the 5 real chats side by side" ..." (it.todo).
