@@ -49,6 +49,16 @@ export const AI_MAX_TOKENS = 600;
 /** Timeout for every AI call in ms (spec S15: 8 s). */
 export const AI_TIMEOUT_MS = 8000;
 
+/**
+ * Record-time limits (spec S15, record mode). `npm run ai:record` runs offline
+ * before the demo, so it may wait longer and allow more tokens: on the demo's
+ * longer prompts hy3 spent all 600 tokens or all 8 s thinking, and 16 of 16
+ * calls gave no answer. Only the record path uses these. The live app keeps
+ * AI_MAX_TOKENS and AI_TIMEOUT_MS, and on Live falls back to the saved answer.
+ */
+export const AI_RECORD_MAX_TOKENS = 2000;
+export const AI_RECORD_TIMEOUT_MS = 30000;
+
 // ---- The client ----
 
 let cachedClient: OpenAI | null = null;
@@ -116,11 +126,11 @@ export interface StreamingChat {
  * ends with no content (for example finish "length" while still thinking) is
  * no answer.
  */
-export function openAiModelClient(openai: StreamingChat, model: string): ModelClient {
+export function openAiModelClient(openai: StreamingChat, model: string, maxTokens: number = AI_MAX_TOKENS): ModelClient {
   return {
     async complete(messages, signal) {
       const stream = await openai.chat.completions.create(
-        { model, messages, stream: true, max_tokens: AI_MAX_TOKENS },
+        { model, messages, stream: true, max_tokens: maxTokens },
         { signal }
       );
       let content = "";
@@ -140,6 +150,18 @@ export function openAiModelClient(openai: StreamingChat, model: string): ModelCl
 /** The TokenHub client, built only when a live call is really made. */
 export function defaultModelClient(): ModelClient {
   return openAiModelClient(getClient() as unknown as StreamingChat, getModel());
+}
+
+/**
+ * The record path's client (`npm run ai:record` only): the same stream, asking
+ * for AI_RECORD_MAX_TOKENS. The TokenHub client is built only when none is given.
+ */
+export function recordModelClient(openai?: StreamingChat, model?: string): ModelClient {
+  return openAiModelClient(
+    openai ?? (getClient() as unknown as StreamingChat),
+    model ?? getModel(),
+    AI_RECORD_MAX_TOKENS
+  );
 }
 
 type CallResult = { ok: true; content: string | null } | { ok: false; status: number | null };
@@ -542,7 +564,8 @@ export type RecordResult = "passed" | "failed-checks" | "unavailable";
 /**
  * Call the model once for one job and save only the answer text and whether it
  * passed its checks. Ignores REPLAY_MODE and the switch: it always calls. An
- * error saves nothing and prints only its status and "AI unavailable".
+ * error saves nothing and prints only its status and "AI unavailable". It waits
+ * up to the record timeout (AI_RECORD_TIMEOUT_MS), never the live 8 s.
  */
 export async function recordAnswer<T>(
   spec: AiJobSpec<T>,
@@ -550,7 +573,7 @@ export async function recordAnswer<T>(
   opts: { dir?: string; log?: (line: string) => void; timeoutMs?: number } = {}
 ): Promise<RecordResult> {
   const log = opts.log ?? ((line: string) => console.log(line));
-  const reply = await callModel(client, spec.messages, opts.timeoutMs ?? AI_TIMEOUT_MS);
+  const reply = await callModel(client, spec.messages, opts.timeoutMs ?? AI_RECORD_TIMEOUT_MS);
   if (!reply.ok) {
     log(unavailableLine(reply.status, "AI unavailable"));
     return "unavailable";

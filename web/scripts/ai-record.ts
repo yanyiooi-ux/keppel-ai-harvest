@@ -16,7 +16,7 @@
  */
 
 import { loadEnvConfig } from "@next/env";
-import { defaultModelClient, getModel, hasKey, _resetClient } from "../lib/ai-core";
+import { recordModelClient, getModel, hasKey, _resetClient } from "../lib/ai-core";
 import { demoRecordTargets, recordMissing } from "../lib/ai-demo-targets";
 
 // Load the env file with a no-op logger so the file path is never printed.
@@ -56,7 +56,8 @@ async function main() {
   const targets = demoRecordTargets({ fixLine: DEMO_FIX_LINE, whyLine: DEMO_WHY_LINE }, arg as Job | undefined);
   console.log(`answers to check: ${targets.length}`);
 
-  const counts = await recordMissing(targets, defaultModelClient());
+  // The record-time limits (AI_RECORD_MAX_TOKENS, AI_RECORD_TIMEOUT_MS), never the live 600 tokens and 8 s.
+  const counts = await recordMissing(targets, recordModelClient());
   console.log(
     `recorded: ${counts.passed} passed checks, ${counts.failed} failed checks, ${counts.unavailable} unavailable, ${counts.skipped} already saved`
   );
