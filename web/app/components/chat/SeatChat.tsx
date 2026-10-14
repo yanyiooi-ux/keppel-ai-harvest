@@ -7,6 +7,7 @@ import { QuestRail } from "./QuestRail";
 import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
 import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPress } from "./SeniorManagerDesk";
 import { HqDesk, hqHolds } from "./HqDesk";
+import { AomDesk, aomHolds, AOM_DESK_NOTICE_KINDS } from "./AomDesk";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -206,8 +207,10 @@ export function SeatChat({
   // wherever that row sits (C8a review). Otherwise, on the job on the desk the
   // refusal shows in the bar, next to the press that made it, so it is on
   // screen on a phone (C7b, C8a); with no bar, at the end of the chat.
-  // HQ's presses show their refusal in the card that was pressed (C8b).
-  const refusedInRow = managerRowHolds(state?.manager, refused) || hqHolds(state?.hq, refused);
+  // HQ's presses show their refusal in the card that was pressed (C8b), and so
+  // does the AOM's Decide charge (C9).
+  const refusedInRow =
+    managerRowHolds(state?.manager, refused) || hqHolds(state?.hq, refused) || aomHolds(state?.aom, refused);
   const refusedInBar = !refusedInRow && (barIsShown(state?.desk) || managerBarIsShown(state?.manager));
   const refusedText = refused?.message ?? null;
   // Every stored message is one chat item, numbered in screen order. A local
@@ -272,12 +275,17 @@ export function SeatChat({
 
         {state?.hq ? <HqDesk desk={state.hq} press={press} refused={refusedInRow ? refused : null} /> : null}
 
-        {state?.notices.map((notice, i) => (
-          <div className="notice" key={`notice-${i}`}>
-            <b>{notice.kind.replace(/-/g, " ")}</b>
-            {notice.text}
-          </div>
-        ))}
+        {state?.aom ? <AomDesk desk={state.aom} press={press} refused={refusedInRow ? refused : null} /> : null}
+
+        {/* The AOM desk shows its alerts and charge requests itself (C9), so they are not listed twice. */}
+        {state?.notices
+          .filter((notice) => !state.aom || !AOM_DESK_NOTICE_KINDS.includes(notice.kind))
+          .map((notice, i) => (
+            <div className="notice" key={`notice-${i}`}>
+              <b>{notice.kind.replace(/-/g, " ")}</b>
+              {notice.text}
+            </div>
+          ))}
 
         {state?.messages.map((message, i) =>
           message.from === "person" ? (

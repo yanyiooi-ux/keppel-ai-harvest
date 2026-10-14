@@ -17,6 +17,11 @@ import { leadsForJob, dialStanding } from "./leads";
 import { safetyList, safetyCardForStop } from "./safety";
 import { alertSeatFor } from "./permissions";
 import { versionList } from "./versions";
+import { spotKey } from "./places";
+import { callsForState } from "./calls";
+import { impactFor, impactLines } from "./impact";
+import { loadImpactRates, impactLine, costLine } from "./impact-rates";
+import { AOM_SPOT } from "./aom-desk";
 import * as memory from "./memory";
 import type { MemoryState, Job, Notice } from "./memory";
 
@@ -296,6 +301,11 @@ function askedAbout(records: unknown[], notice: Notice, kindOk: (r: { kind?: str
  * decided them; every other notice is listed as before. Reads only.
  */
 function stillWaitsOnSeat(state: MemoryState, notice: Notice): boolean {
+  // The AOM's charge request (A4) stops needing the AOM once decided (C9).
+  if (notice.kind === "charge-request") {
+    const r = askedAbout(state.requests, notice, (x) => x.kind === "A4");
+    return !r || r.status === "open";
+  }
   if (notice.seat !== "hq") return true;
   if (notice.kind === "solution-sent") {
     const s = askedAbout(state.solutions, notice, () => true);
@@ -332,6 +342,21 @@ function chipAnswerCard(
     };
   }
 
+  // Impact (AOM only, S19): the meter (S18) for the job's spot, else the AOM's
+  // home spot, Tower A Level 23, since the AOM seat has no job of its own; and
+  // the job's Not solved impact record with its cost (S3). Code only: amounts
+  // show only in code-made cards (S13 item 9), and this card is never worded.
+  if (chip === "Impact") {
+    const spot = job ? spotKey(job) : AOM_SPOT;
+    const meter = impactFor(spot, callsForState(state), loadImpactRates());
+    const lines = meter ? impactLines(meter) : ["No calls at this spot yet."];
+    if (job?.impact) {
+      const cost = typeof job.impact.cost === "number" ? ` Cost: ${costLine(job.impact.cost, loadImpactRates())}.` : "";
+      lines.push(`Job ${job.id}'s impact record: ${impactLine(job.impact)}.${cost}`);
+    }
+    return { kind: "answer", title: `Impact: ${meter ? meter.place : spot}`, body: lines.join("\n") };
+  }
+
   if (!job) {
     return {
       kind: "answer",
@@ -366,16 +391,6 @@ function chipAnswerCard(
       kind: "answer",
       title: dial.allowed ? "The dial is allowed here" : "The dial is removed here",
       body: dial.reason,
-    };
-  }
-
-  if (chip === "Impact") {
-    return {
-      kind: "answer",
-      title: "Impact",
-      body: job.impact
-        ? `${job.impact.hoursLost} hours lost, ${job.impact.extraVisits} extra visits.`
-        : "No impact record on this job yet.",
     };
   }
 

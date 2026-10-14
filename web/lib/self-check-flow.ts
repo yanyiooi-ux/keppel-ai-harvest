@@ -80,7 +80,8 @@ export interface TenantReplyCard {
 export interface ChargeRequest {
   id: string;
   kind: "A4";
-  status: "open";
+  /** Open until the AOM's Decide charge (C9, charge-flow.ts). */
+  status: "open" | "decided";
   seat: string;
   jobId: string;
   tenant: string;
@@ -88,6 +89,22 @@ export interface ChargeRequest {
   floor: number;
   text: string;
   openedAt: string;
+  /** Set when HQ's Approve opened it (S16 item 9): the found lead and what the tenant will hear. */
+  causeId?: string;
+  tenantSolution?: string;
+  /** The AOM's decision (C9). The amount is there for Tenant pays only. */
+  decision?: ChargeDecision;
+}
+
+/** The AOM's A4 decision (S17). Typed by the AOM; the AI never writes, suggests or sees it. */
+export interface ChargeDecision {
+  choice: "tenant-pays" | "landlord-pays" | "goodwill";
+  amount?: number;
+  reason: string;
+  decidedBy: string;
+  decidedAt: string;
+  /** The tenant's card, word for word, as code posted it. */
+  tenantCard: string;
 }
 
 /**
@@ -471,7 +488,7 @@ export function applyAnswer(
       openedAt: stamp,
     };
     state.requests.push(request);
-    state.notices.push({ seat: request.seat, kind: "charge-request", text: request.text, at: stamp, jobId: target.id });
+    state.notices.push({ seat: request.seat, kind: "charge-request", text: request.text, at: stamp, jobId: target.id, ref: request.id });
   }
 
   // Speak first runs either way (S6): once per spot in 30 days, so 2318 gets no second notice.

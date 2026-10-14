@@ -356,7 +356,7 @@ export function applyApprove(state: MemoryState, seat: string, jobId: string, re
       tenantSolution: cause.tenantSolution,
     };
     state.requests.push(request);
-    state.notices.push({ seat: request.seat, kind: "charge-request", text: request.text, at, jobId: job.id });
+    state.notices.push({ seat: request.seat, kind: "charge-request", text: request.text, at, jobId: job.id, ref: request.id });
     charge = " The AOM has a charge request to decide (A4); the tenant hears nothing until then.";
   }
 

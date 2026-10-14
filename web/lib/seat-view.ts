@@ -15,6 +15,7 @@ import { AI_OFF_LABEL, type AiMode } from "./ai-mode";
 import { technicianDesk, type TechnicianDesk } from "./technician-desk";
 import { managerDesk, type ManagerDesk } from "./senior-manager-desk";
 import { hqDesk, type HqDesk } from "./hq-desk";
+import { aomDesk, type AomDesk } from "./aom-desk";
 
 export type CardColour = "green" | "amber" | "red" | "none";
 
@@ -75,6 +76,8 @@ export interface SeatView {
   manager?: ManagerDesk;
   /** The HQ seat only (C8b): the A1 card, solutions sent to HQ, versions, outside help and the Building B card. */
   hq?: HqDesk;
+  /** The AOM seat only (C9): the impact meter, speak-first flag, charge requests, alerts, live version, impact records. */
+  aom?: AomDesk;
 }
 
 /**
@@ -128,5 +131,6 @@ export function seatView(
   if (seat === "technician") view.desk = technicianDesk(state, realNow, mode, show);
   if (seat === "senior-manager") view.manager = managerDesk(state, realNow, mode, show);
   if (seat === "hq") view.hq = hqDesk(state, realNow, mode);
+  if (seat === "aom-tower-a") view.aom = aomDesk(state, realNow, seat);
   return view;
 }

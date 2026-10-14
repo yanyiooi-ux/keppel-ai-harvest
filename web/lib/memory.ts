@@ -111,7 +111,8 @@ export interface Notice {
   stopId?: string;
   /**
    * The solution (S-n) or A3 request (A3-n) a notice to HQ asks about, so
-   * "What needs me" drops it once HQ has decided it (C8b review).
+   * "What needs me" drops it once HQ has decided it (C8b review); and the A4
+   * request a charge-request notice to the AOM asks about (C9).
    */
   ref?: string;
 }

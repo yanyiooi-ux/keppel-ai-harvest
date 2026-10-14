@@ -1678,6 +1678,118 @@ a {
   overflow-wrap: anywhere;
 }
 
+/* ---------- AOM desk (C9, S18, S21) ---------- */
+
+/* The same phone-first rules: one column, every press at least 44 px tall,
+   a status colour always carries its word. The meter's tabs are only a view. */
+.card .version-line {
+  font-family: var(--font-hud);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.flag-line {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--needs-line);
+  border-radius: var(--r-btn);
+  background: var(--needs);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.flag-line .badge {
+  justify-self: start;
+}
+
+.meter-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+.meter-tab {
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--r-btn);
+  background: var(--card-2);
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: var(--hud-case);
+  cursor: pointer;
+}
+
+.meter-tab[aria-selected="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.card .meter-kind {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.meter-caught {
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.meter-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.meter-rows dt,
+.meter-rows dd {
+  margin: 0;
+  padding: 8px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.meter-rows dt {
+  color: var(--muted);
+  padding-right: 10px;
+}
+
+.meter-rows dd {
+  text-align: right;
+  font-family: var(--font-hud);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.meter-rows .meter-cost {
+  color: var(--accent);
+}
+
+.card .meter-label {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* The decided charge's "Sent to the tenant" label sat flush under the
+   decision lines (render check, 390 px): a little room above it. */
+.card .sent-k {
+  margin-top: 12px;
+}
+
 /* On a phone the seat switcher scrolls sideways instead of stacking, so it
    never pushes the chat off the screen. */
 @media (max-width: 560px) {

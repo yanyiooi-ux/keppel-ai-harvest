@@ -9,8 +9,9 @@
  * (technician-flow.ts); C8a writes the senior manager's log-new-solution,
  * confirm-part, run-tests, send-to-hq, ask-outside-help and clear-stop
  * (senior-manager-flow.ts); C8b writes HQ's approve-solution,
- * decline-solution, rollback and decide-outside-help (hq-flow.ts); the rest
- * pass their checks and say "not built yet", and C9 fills them.
+ * decline-solution, rollback and decide-outside-help (hq-flow.ts); C9 writes
+ * the AOM's decide-charge (charge-flow.ts). tell-tenant-first is cut 2: it
+ * passes its checks and says "not built yet".
  */
 
 import { loadAndCheckPill } from "./pill";
@@ -59,6 +60,7 @@ import {
   decideOutsideHelpRefusal,
   applyDecideOutsideHelp,
 } from "./hq-flow";
+import { decideChargeRefusal, applyDecideCharge } from "./charge-flow";
 import type { NewSolution } from "./ai";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
@@ -534,6 +536,18 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     let result: ActionResult = { ok: false, message: "" };
     memory.update((s) => {
       result = confirmCause(s, seat, caseId, realNow);
+    });
+    return result;
+  }
+
+  // The AOM's charge decision (C9, charge-flow.ts, S17 A4). The gate above has
+  // checked the seat. No AI call: code posts the tenant's card.
+  if (action === "decide-charge") {
+    const refusal = decideChargeRefusal(state, jobId, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyDecideCharge(s, seat, jobId, payload, realNow);
     });
     return result;
   }

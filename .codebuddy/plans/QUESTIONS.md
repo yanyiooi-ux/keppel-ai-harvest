@@ -117,3 +117,15 @@ Each question names its part and the spec's exact words. Each one has one it.tod
    differently here or on question 7, the C7b tests that pin S$420 (`web/tests/c7b.test.ts`) need an old-test edit,
    so that answer needs YY's go for the edit too. Test: `web/tests/c7b-review.test.ts`, "QUESTION C7b review: S13
    item 9 says ..." (it.todo).
+
+## C9
+
+10. **What the tenant hears after an after-hours charge decision.** S17 says "After the decision, code (not the AI)
+    posts the tenant's card: "What we will do: {tenantSolution} Cost: ...". Approved by the AOM (role-played)."", and
+    S10 outcome 3 opens an A4 request "After-hours air-con for {tenant}, Level {floor}". The tenantSolution comes from
+    the found lead in `causes.json` on the HQ Approve path (S16 item 9); the after-hours request has no found lead and
+    the spec gives it no tenantSolution. Built for now: the card uses the request's own words with a full stop, so
+    Landlord pays reads "What we will do: After-hours air-con for Northwind Advisory, Level 23. Cost: no charge to
+    you. Approved by the AOM (role-played)." The demo's charge (the thermostat move after HQ's Approve) is not
+    affected. What should the tenant hear for after-hours air-con? Test: `web/tests/c9.test.ts`, "QUESTION C9: S17
+    says the tenant's card is ..." (it.todo).
