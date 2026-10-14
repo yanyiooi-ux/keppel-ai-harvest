@@ -129,3 +129,22 @@ Each question names its part and the spec's exact words. Each one has one it.tod
     you. Approved by the AOM (role-played)." The demo's charge (the thermostat move after HQ's Approve) is not
     affected. What should the tenant hear for after-hours air-con? Test: `web/tests/c9.test.ts`, "QUESTION C9: S17
     says the tenant's card is ..." (it.todo).
+
+## C9 (from the C9 review)
+
+11. **How long the reason is for Landlord pays and Goodwill.** S17 says "**Tenant pays** (a whole-number amount from
+    1 to 100000, typed by the AOM in a number field, and a reason of 3 words or more); **Landlord pays** (reason);
+    **Goodwill, no charge** (reason, the AOM's own decision)", and T-C9 says only "Goodwill needs a reason". The
+    3-word minimum is written only for Tenant pays. Built for now: every choice needs a reason of 3 words or more,
+    and the AOM's form says "Reason (3 words or more)" for all three, so "Landlord fault" is refused. Should Landlord
+    pays and Goodwill take a shorter reason? An old C9 test pins the 3-word refusal message for a Goodwill press with
+    no reason, so a looser rule must still refuse an empty reason with that message, or that answer needs YY's go for
+    an old-test edit. Test: `web/tests/c9-review.test.ts`, "QUESTION C9 review: S17 says "Tenant pays ..." (it.todo).
+
+12. **A self-check with no visit on the impact meter.** S18 says "Visits | one per call" and "Calls | all calls in the
+    run", and S10 outcomes 2 and 3 (blinds up, after hours) say "No visit". Built for now: the meter replays every
+    call at the spot, a no-visit self-check too, and counts each as one visit, so an after-hours report on Tower A
+    Level 23 ("Somewhere else", job 2319) moves Before from 5 calls, 5 visits, S$600 and counting to 6 calls, 6 visits,
+    S$720 and counting. The demo path ("too cold" attaches to 2318) is not affected. Should a no-visit self-check
+    count as a call without a visit, or not count on the meter at all? Test: `web/tests/c9-review.test.ts`, "QUESTION
+    C9 review: S18 says "Visits: one per call" ..." (it.todo).

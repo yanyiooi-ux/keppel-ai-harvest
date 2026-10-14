@@ -79,13 +79,19 @@ const noneCalled = (id: string) => `There is no open charge request called "${id
 const noneOnJob = (jobId: string) => `There is no open charge request on job ${jobId} (A4).`;
 const alreadyDecided = (id: string) => `Charge request ${id} is already decided (A4).`;
 
-/** The request a press is about: by its id, else the job's newest open one. */
+/**
+ * The request a press is about: by its id, else the job's newest open one.
+ * Only requests routed to the pressing seat count, the same ones its desk
+ * lists: a Building B request goes to the Building B card (alertSeatFor), so
+ * the Tower A AOM never decides it (S17: AOM Tower A only).
+ */
 function requestFor(
   state: MemoryState,
+  seat: string,
   jobId: string | undefined,
   payload: Record<string, unknown> | undefined
 ): { request: ChargeRequest } | { refusal: string } {
-  const all = chargeRequests(state);
+  const all = chargeRequests(state).filter((r) => r.seat === seat);
   const id = typeof payload?.requestId === "string" ? payload.requestId : undefined;
   if (id !== undefined) {
     const request = all.find((r) => r.id === id);
@@ -119,10 +125,11 @@ function oneLine(value: unknown): string {
 /** Why Decide charge is refused, or null. Reads only. */
 export function decideChargeRefusal(
   state: MemoryState,
+  seat: string,
   jobId: string | undefined,
   payload: Record<string, unknown> | undefined
 ): string | null {
-  const found = requestFor(state, jobId, payload);
+  const found = requestFor(state, seat, jobId, payload);
   if ("refusal" in found) return found.refusal;
   const choice = choiceOf(payload?.choice);
   if (!choice) return PICK_WHO;
@@ -145,9 +152,9 @@ export function applyDecideCharge(
   payload: Record<string, unknown> | undefined,
   realNow: Date
 ): FlowResult {
-  const refusal = decideChargeRefusal(state, jobId, payload);
+  const refusal = decideChargeRefusal(state, seat, jobId, payload);
   if (refusal) return { ok: false, message: refusal };
-  const found = requestFor(state, jobId, payload) as { request: ChargeRequest };
+  const found = requestFor(state, seat, jobId, payload) as { request: ChargeRequest };
   const request = found.request;
 
   const choice = choiceOf(payload!.choice)!;

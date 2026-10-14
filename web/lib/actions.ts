@@ -543,7 +543,7 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
   // The AOM's charge decision (C9, charge-flow.ts, S17 A4). The gate above has
   // checked the seat. No AI call: code posts the tenant's card.
   if (action === "decide-charge") {
-    const refusal = decideChargeRefusal(state, jobId, payload);
+    const refusal = decideChargeRefusal(state, seat, jobId, payload);
     if (refusal) return { ok: false, message: refusal };
     let result: ActionResult = { ok: false, message: "" };
     memory.update((s) => {
