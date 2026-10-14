@@ -3,9 +3,9 @@
  *
  * Each target is the same job spec the app runs, built from the same code
  * text, so a recorded answer lands on exactly the replay key the app asks for:
- * rank wording for 2318's leads (technician, before and after each Not this
- * tick, and the senior manager with the two ticks) and for 2401's leads on v1.0
- * and on the v1.1 fixture; the tenant reply for 2318's visit-booked tips
+ * rank wording for 2318's leads (technician and senior manager, each before
+ * and after each Not this tick) and for 2401's leads on v1.0 and on the v1.1
+ * fixture; the tenant reply for 2318's visit-booked tips
  * (TS-CC-09); and the new solution from the fix line and why line it is given.
  *
  * It reads the seed, never the live memory, and runs at the demo clock.
@@ -76,11 +76,15 @@ export function demoRecordTargets(
   const targets: RecordTarget[] = [];
 
   if (!only || only === "rank") {
+    // 2318 through both seats, at each tick state of the demo: before any tick,
+    // after Not this on precool, and after Not this on min-airflow too. The
+    // senior manager hears about 2318 at Reset (speak first, S6), so a "Why?"
+    // there can come before the technician's ticks as well as after them.
+    const tickStates: Tick[][] = [[], [notThis("precool")], [notThis("precool"), notThis("min-airflow")]];
+    for (const seat of ["technician", "senior-manager"]) {
+      for (const ticks of tickStates) targets.push(...rankTargets(state, job2318, seat, ticks, v10));
+    }
     targets.push(
-      ...rankTargets(state, job2318, "technician", [], v10),
-      ...rankTargets(state, job2318, "technician", [notThis("precool")], v10),
-      ...rankTargets(state, job2318, "technician", [notThis("precool"), notThis("min-airflow")], v10),
-      ...rankTargets(state, job2318, "senior-manager", [notThis("precool"), notThis("min-airflow")], v10),
       ...rankTargets(state, job2401, "technician", [], v10),
       ...rankTargets(state, job2401, "technician", [], fixturePill())
     );
