@@ -10,6 +10,14 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { Pill, ChecklistStep, RedStop } from "./pill";
+import {
+  blockingRule,
+  blockedSteps,
+  putFirstSteps,
+  dialBlockReason,
+  SAFETY_STEPS,
+  type FactContext,
+} from "./conditions";
 
 // ---- Types ----
 
@@ -327,8 +335,11 @@ export function checkNeverList(
  * - The change is at most 1 deg C
  * - The AI does not make the change itself
  *
- * In v1.0, the floor checks are NOT a gate for this nudge.
- * In v1.1 (reserved TS-CC-27), a fit-out in the last 12 months blocks the nudge.
+ * The pill decides the rest (S16 item 3): any rule whose condition fact is true
+ * for the job and which blocks step 25 blocks the nudge, with ruleIds set to that
+ * rule's id. A fact is true when `facts` holds it, or, for fit-out-12m, when
+ * hadFitOutInLast12Months is true. `pillVersion` is accepted and ignored: nothing
+ * here keys on a version string or a rule id.
  */
 export function canNudge(
   repeatFlag: RepeatFlagResult,
@@ -339,6 +350,8 @@ export function canNudge(
     isAiMakingChange?: boolean;
     hadFitOutInLast12Months?: boolean;
     pillVersion?: string;
+    pill?: Pill;
+    facts?: string[];
   }
 ): { allowed: boolean; reason: string; ruleIds: string[] } {
   if (repeatFlag.isRepeat) {
@@ -381,13 +394,16 @@ export function canNudge(
     };
   }
 
-  // v1.1 reserved rule: fit-out in last 12 months blocks the nudge
-  if (context.pillVersion === "1.1" && context.hadFitOutInLast12Months) {
-    return {
-      allowed: false,
-      reason: "Zone had a tenant fit-out in the last 12 months. Check where the thermostat sits against the fit-out drawing first. (v1.1 rule, reserved TS-CC-27)",
-      ruleIds: ["TS-CC-27"],
-    };
+  // A rule in the pill whose fact is true and which blocks the dial turn (step 25)
+  if (context.pill) {
+    const blocker = blockingRule(context.pill, factContextOf(context), [25]);
+    if (blocker) {
+      return {
+        allowed: false,
+        reason: dialBlockReason(blocker, context.pill),
+        ruleIds: [blocker.id],
+      };
+    }
   }
 
   return {
@@ -395,6 +411,10 @@ export function canNudge(
     reason: "First complaint, no repeat flag, no red stop, no change on the zone in 30 days. ONE setpoint nudge of at most 1 deg C is allowed, logged.",
     ruleIds: ["TS-CC-21"],
   };
+}
+
+function factContextOf(context: { facts?: string[]; hadFitOutInLast12Months?: boolean }): FactContext {
+  return { facts: context.facts, hadFitOutInLast12Months: context.hadFitOutInLast12Months };
 }
 
 // ---- Step gating ----
@@ -423,6 +443,10 @@ export function getStepGates(
 /**
  * Get the active checklist steps for a ticket, given its context.
  * This determines which steps the technician should follow.
+ *
+ * The pill's conditions apply (S16 item 3): steps 1 to 8 first, in order; then
+ * the put-first steps of every rule whose fact is true; then the rest in order.
+ * Blocked steps are hidden. The safety section is never moved or hidden.
  */
 export function getActiveChecklist(
   pill: Pill,
@@ -430,6 +454,8 @@ export function getActiveChecklist(
     repeatFlag: RepeatFlagResult;
     redStop: RedStopResult;
     canNudgeResult: { allowed: boolean; reason: string; ruleIds: string[] };
+    facts?: string[];
+    hadFitOutInLast12Months?: boolean;
   }
 ): { steps: ChecklistStep[]; note: string } {
   // If a red stop is triggered, only show the red stop steps
@@ -442,12 +468,23 @@ export function getActiveChecklist(
   }
 
   // If the repeat flag is on, skip the first-complaint nudge step
-  const steps = pill.checklist.filter((s) => {
+  const factCtx = factContextOf(context);
+  const blocked = blockedSteps(pill, factCtx);
+  const kept = pill.checklist.filter((s) => {
     if (context.repeatFlag.isRepeat && s.rules.includes("TS-CC-21") && !s.rules.includes("TS-CC-22")) {
       return false;
     }
-    return true;
+    return !blocked.includes(s.step);
   });
+
+  // Order: the safety section, then put-first steps, then the rest in order
+  const putFirst = putFirstSteps(pill, factCtx);
+  const safety = kept.filter((s) => SAFETY_STEPS.includes(s.step));
+  const first = putFirst
+    .map((n) => kept.find((s) => s.step === n))
+    .filter((s): s is ChecklistStep => s !== undefined);
+  const rest = kept.filter((s) => !SAFETY_STEPS.includes(s.step) && !putFirst.includes(s.step));
+  const steps = [...safety, ...first, ...rest];
 
   return {
     steps,

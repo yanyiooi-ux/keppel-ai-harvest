@@ -139,7 +139,8 @@ function seedPath(): string {
   return join(dataDir(), "seed-state.json");
 }
 
-function runtimeDir(): string {
+/** web/data/runtime/, or the test worker's own folder next to its memory file. Drafts live here. */
+export function runtimeDir(): string {
   const override = process.env.PILL_DESK_STATE_FILE;
   return override ? `${override}.runtime` : join(dataDir(), "runtime");
 }

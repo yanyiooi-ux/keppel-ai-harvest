@@ -12,6 +12,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "yaml";
+import { checkCondition, type RuleCondition } from "./conditions";
 
 // ---- Types ----
 
@@ -34,6 +35,8 @@ export interface Rule {
   applies_when: string;
   not_when: string;
   sources: RuleSource[];
+  /** Only rules born from a new solution carry one (S16). It must fit the menu in conditions.ts. */
+  condition?: RuleCondition;
 }
 
 export interface ChecklistStep {
@@ -130,6 +133,14 @@ export function loadAndCheckPill(pillId: string, version: string): Pill {
   return assertPillOk(loadPill(pillId, version));
 }
 
+/**
+ * Load a pill from a file path (a draft or signed version in web/data/runtime/,
+ * or a test fixture) and run all structural checks. Throws if any check fails.
+ */
+export function loadAndCheckPillFile(filePath: string): Pill {
+  return assertPillOk(parse(readFileSync(filePath, "utf-8")) as Pill);
+}
+
 // ---- Checker ----
 
 /**
@@ -215,7 +226,7 @@ export function checkPill(pill: Pill): string[] {
   // 4. Version-aware rule set check
   // v1.0 must have exactly TS-CC-01 to TS-CC-26, not TS-CC-27.
   // Any other version must have TS-CC-01 to TS-CC-26, and each extra rule
-  // needs a valid condition (S16 — condition check comes in C3c).
+  // needs a condition that fits the menu in conditions.ts (S16 item 1).
   for (const id of expectedRuleIds) {
     if (!ruleIds.has(id)) {
       errors.push(`pill must include rule ${id}`);
@@ -231,6 +242,25 @@ export function checkPill(pill: Pill): string[] {
     );
     for (const r of extraRules) {
       errors.push(`v1.0 must not include extra rule ${r.id}`);
+    }
+  } else {
+    // Any later version: each extra rule is TS-CC-27 or higher and carries a condition.
+    for (const r of pill.rules ?? []) {
+      if (!r.id || expectedRuleIds.includes(r.id)) continue;
+      const m = /^TS-CC-(\d{2,})$/.exec(r.id);
+      if (!m || Number(m[1]) < 27) {
+        errors.push(`extra rule ${r.id} must be numbered TS-CC-27 or higher`);
+      }
+      if (r.condition === undefined) {
+        errors.push(`extra rule ${r.id} needs a condition from the menu`);
+      }
+    }
+  }
+  // Any rule that carries a condition must fit the menu, at its own colour.
+  for (const r of pill.rules ?? []) {
+    if (r.condition === undefined) continue;
+    for (const refusal of checkCondition(r.condition, pill, r.colour)) {
+      errors.push(`rule ${r.id} condition refused: ${refusal}`);
     }
   }
 

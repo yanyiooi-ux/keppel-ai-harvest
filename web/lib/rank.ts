@@ -10,7 +10,7 @@
  * Step d: Show why (code reasons, never AI).
  */
 
-import type { Pill, ChecklistStep } from "./pill";
+import type { Pill, ChecklistStep, Rule } from "./pill";
 import type { Ticket, RepeatFlagResult } from "./rule-engine";
 import { canNudge } from "./rule-engine";
 import type { Cause } from "./causes";
@@ -18,6 +18,8 @@ import type { Case } from "./cases";
 import { isSimilar, similarWeight } from "./cases";
 import { outcomeOf } from "./outcome";
 import { spotKey } from "./places";
+import { blockingRule, putFirstRule } from "./conditions";
+import { factLabel } from "./fact-labels";
 
 // ---- Types ----
 
@@ -69,25 +71,12 @@ export interface RankInput {
   now: Date;
 }
 
-// ---- Fact label map (S9 {fact label}) ----
+// ---- Fact labels (S9 {fact label}) come from S5's "Label on screen", in fact-labels.ts ----
 
-const factLabels: Record<string, string> = {
-  "cold-mornings": "cold mornings",
-  "hot-afternoons": "hot afternoons",
-  "cold-other": "cold other times",
-  "hot-other": "hot other times",
-  "core-zone": "core zone",
-  "west-zone": "west zone",
-  "east-zone": "east zone",
-  "repeat": "repeat",
-  "opposite-fixes": "opposite fixes",
-  "fit-out-12m": "fit-out within 12 months",
-  "vav": "VAV",
-  "fcu": "FCU",
-};
-
-function factLabel(factId: string): string {
-  return factLabels[factId] ?? factId;
+/** The first sentence of a text, without its full stop. "v1.1" does not end a sentence. */
+function firstSentence(text: string): string {
+  const end = text.search(/\.(\s|$)/);
+  return end === -1 ? text : text.slice(0, end);
 }
 
 // ---- Time formatting (S9 {time}) ----
@@ -220,16 +209,29 @@ function stepA_remove(input: RankInput): { leads: Lead[]; removed: RemovedLead[]
         hadSetpointChangeInLast30Days: hadSetpointChange,
         changeAmount: 1,
         isAiMakingChange: false,
+        pill: input.livePill,
+        facts: input.job.facts,
       });
 
       if (!nudge.allowed) {
         removed.push({
           causeId: cause.id,
           label: cause.label,
-          reason: `Removed by ${nudge.ruleIds.join(", ")}: ${nudge.reason.split(".")[0]}.`,
+          reason: `Removed by ${nudge.ruleIds.join(", ")}: ${firstSentence(nudge.reason)}.`,
         });
         continue;
       }
+    }
+
+    // 4b. A live rule whose fact is true blocks this cause's check or fix step
+    const blocker = blockingRule(input.livePill, { facts: input.job.facts }, [cause.checkStep, cause.fixStep]);
+    if (blocker) {
+      removed.push({
+        causeId: cause.id,
+        label: cause.label,
+        reason: `Removed by rule ${blocker.id} (v${input.livePill.version}).`,
+      });
+      continue;
     }
 
     // 5. Warranty/contract: tenantItem + fit-out-12m
@@ -296,12 +298,13 @@ function stepB_match(input: RankInput, leads: Lead[]): Lead[] {
 
 // ---- Step c: Order ----
 
-function hasSignedRulePutFirst(input: RankInput, lead: Lead): boolean {
-  // Check if any rule in the live pill has a condition.fact that's true for the job
-  // and a put-first effect on this lead's checkStep.
-  // For v1.0, there are no condition-based rules (those come in C3c/v1.1).
-  // So this always returns false for v1.0.
-  return false;
+/**
+ * The signed rule that puts this lead's check first: a rule in the live pill whose
+ * condition fact is true for the job and which has a put-first effect on the
+ * lead's checkStep. v1.0 has no such rule.
+ */
+function signedRuleFor(input: RankInput, lead: Lead): Rule | undefined {
+  return putFirstRule(input.livePill, { facts: input.job.facts }, lead.checkStep);
 }
 
 function stepC_order(input: RankInput, leads: Lead[]): { leads: Lead[]; ruledOut: Lead[] } {
@@ -326,7 +329,7 @@ function stepC_order(input: RankInput, leads: Lead[]): { leads: Lead[]; ruledOut
   // Assign tiers to the rest
   const tiered = rest.map((lead) => {
     let tier: Tier;
-    if (hasSignedRulePutFirst(input, lead)) {
+    if (signedRuleFor(input, lead)) {
       tier = "signed-rule";
     } else if (lead.N >= 3 && lead.score > 0) {
       tier = "case-backed";
@@ -463,9 +466,10 @@ function buildReason(input: RankInput, lead: Lead, closeCallLead: Lead | null): 
   }
 
   if (lead.tier === "signed-rule") {
-    const ruleId = getStepRuleIds(input.livePill, lead.checkStep)[0] ?? "";
+    const rule = signedRuleFor(input, lead);
+    const ruleId = rule?.id ?? "";
     const version = input.livePill.version;
-    let reason = `Signed expert rule ${ruleId} (v${version}): ${factsStr ? factLabel(relevantFacts[0] || "") : ""} puts this check first.`;
+    let reason = `Signed expert rule ${ruleId} (v${version}): ${factLabel(rule?.condition?.fact ?? "")} puts this check first.`;
     if (lead.N > 0) {
       reason += ` ${lead.W} of ${lead.N} similar cases stayed fixed so far.`;
     }

@@ -267,29 +267,30 @@ describe("Golden tests", () => {
 });
 
 describe("v1.1 reserved rule (TS-CC-27)", () => {
-  it("blocks the nudge when fit-out in last 12 months, in v1.1 only", () => {
+  it("v1.0 allows the nudge with the fit-out fact; the v1.1 fixture blocks it with its own new rule id", async () => {
+    const { loadAndCheckPillFile } = await import("../../lib/pill");
+    const v10 = loadPill("ts-cc", "1.0");
+    const fixture = loadAndCheckPillFile(`${process.cwd()}/tests/fixtures/ts-cc-v1.1.yaml`);
+    const v10Ids = new Set(v10.rules.map((r) => r.id));
+    const newRule = fixture.rules.find((r) => !v10Ids.has(r.id));
+    expect(newRule).toBeDefined();
+
     const repeat = { isRepeat: false, reason: "", count: 1, hasOppositeFixes: false, relatedRuleIds: [] };
     const red = { isRed: false, trigger: "", action: "", whoToCall: "", relatedRuleIds: [] };
-
-    // v1.0: nudge allowed even with fit-out (the gate does not exist in v1.0)
-    const v10Result = canNudge(repeat, red, {
+    const context = {
       hadSetpointChangeInLast30Days: false,
       changeAmount: 1,
       isAiMakingChange: false,
-      hadFitOutInLast12Months: true,
-      pillVersion: "1.0",
-    });
+      facts: ["fit-out-12m"],
+    };
+
+    // v1.0: no rule covers the fit-out, so the nudge is allowed
+    const v10Result = canNudge(repeat, red, { ...context, pill: v10 });
     expect(v10Result.allowed).toBe(true);
 
-    // v1.1: nudge blocked because of fit-out
-    const v11Result = canNudge(repeat, red, {
-      hadSetpointChangeInLast30Days: false,
-      changeAmount: 1,
-      isAiMakingChange: false,
-      hadFitOutInLast12Months: true,
-      pillVersion: "1.1",
-    });
+    // the fixture: its new rule blocks the nudge, and ruleIds holds that rule's id, read from the fixture
+    const v11Result = canNudge(repeat, red, { ...context, pill: fixture });
     expect(v11Result.allowed).toBe(false);
-    expect(v11Result.ruleIds).toContain("TS-CC-27");
+    expect(v11Result.ruleIds).toEqual([newRule!.id]);
   });
 });

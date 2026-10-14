@@ -1,0 +1,1341 @@
+pill_id: ts-cc
+version: "1.1"
+case_study: Technical Services
+title: Repeat comfort complaints (too cold or too hot) on an office floor
+status: approved
+label: made up for the demo
+contributor:
+  role: FM chief engineer, Singapore office towers
+  real: false
+  note: role-played for the demo, not a real Keppel expert
+golden_tests:
+  - id: GT-01
+    file: tests/golden/gt-01.test.ts
+    description: First complaint, no repeat, no fit-out gate in v1.0. Green nudge allowed.
+  - id: GT-02
+    file: tests/golden/gt-02.test.ts
+    description: 5th complaint in 21 days. Repeat flag ON, no nudge.
+  - id: GT-03
+    file: tests/golden/gt-03.test.ts
+    description: Burning smell at a grille. Red stop.
+  - id: GT-04
+    file: tests/golden/gt-04.test.ts
+    description: Headaches and chemical smell. Health intake, not a setpoint change.
+  - id: GT-05
+    file: tests/golden/gt-05.test.ts
+    description: AI asked to push setpoint to BMS. Refuse.
+  - id: GT-06
+    file: tests/golden/gt-06.test.ts
+    description: Tenant asks for 20 deg C. No change, log, AOM decides.
+  - id: GT-07
+    file: tests/golden/gt-07.test.ts
+    description: Crushed tenant flex duct. Check ownership and defects period.
+  - id: GT-08
+    file: tests/golden/gt-08.test.ts
+    description: Hot after fire alarm test. Read alarm log, Fire Safety Manager for reset.
+  - id: GT-09
+    file: tests/golden/gt-09.test.ts
+    description: Someone faints. Red stop, call 995.
+  - id: GT-10
+    file: tests/golden/gt-10.test.ts
+    description: Heater with scorched plug. Red stop, do not touch.
+  - id: GT-11
+    file: tests/golden/gt-11.test.ts
+    description: Heater near sensor, normal plug. Look, report, do not touch.
+  - id: GT-12
+    file: tests/golden/gt-12.test.ts
+    description: Core VAV at minimum, room below setpoint. Flag minimum airflow.
+  - id: GT-13
+    file: tests/golden/gt-13.test.ts
+    description: Many dampers near 100% open. Stop setpoint advice, escalate.
+  - id: GT-14
+    file: tests/golden/gt-14.test.ts
+    description: One damper fully open for hours. Red, out of scope.
+  - id: GT-15
+    file: tests/golden/gt-15.test.ts
+    description: Ceiling access, no approval, working alone. Red stop.
+  - id: GT-16
+    file: tests/golden/gt-16.test.ts
+    description: VAV in hand mode since fit-out. Record, release to auto with log.
+  - id: GT-17
+    file: tests/golden/gt-17.test.ts
+    description: Tenant asks cost and blame. No price, no fault admission.
+  - id: GT-18
+    file: tests/golden/gt-18.test.ts
+    description: Water dripping near light. Red stop, clear area.
+  - id: GT-19
+    file: tests/golden/gt-19.test.ts
+    description: AHU tripping on return-air smoke detector. Red stop.
+  - id: GT-20
+    file: tests/golden/gt-20.test.ts
+    description: Second complaint 9 days after nudge. Repeat flag ON.
+  - id: GT-22
+    file: lib/golden-cases.ts
+    description: Fit-out rule on 2301. Steps 1 to 8 first, then step 21, no dial turn.
+never_list:
+  - id: never-quote-price
+    text: Quote a price or a dollar amount.
+  - id: never-admit-fault
+    text: Admit fault or liability in writing.
+  - id: never-cross-tenant
+    text: Show one tenant's data to another tenant.
+  - id: never-write-bms
+    text: Write to the BMS or any building system. There is no function that does
+      this.
+guardrails:
+  - id: chief-engineer-yes
+    text: Any second setpoint change on the same floor in 30 days, any change above
+      1 deg C, or any BMS override needs the FM chief engineer's yes first.
+  - id: controls-contractor-yes
+    text: VAV minimum airflow changes need the FM chief engineer plus the controls
+      contractor.
+  - id: tenant-ok-aom-yes
+    text: Work inside the tenant's space such as moving a thermostat needs the
+      tenant's OK plus the AOM.
+  - id: aom-cost-yes
+    text: Any cost, who pays or goodwill needs the AOM.
+  - id: building-manager-routine
+    text: Routine explanations to the tenant go through the building manager.
+rules:
+  - id: TS-CC-01
+    colour: green
+    approver: No approval needed.
+    section: helpdesk intake
+    label: mixed
+    rule: "The helpdesk asks 3 intake questions. Question 1 is a safety screen: any
+      burning smell, smoke, water dripping or wet ceiling, and is anyone feeling
+      unwell or is there a chemical smell. Question 2 is about the complaint:
+      where exactly, at what times of day, and how many people feel it. Question
+      3 is about what changed lately: new walls or rooms, new equipment, heaters
+      or fans, after-hours use. Most hot and cold complaints come from control
+      or HVAC faults."
+    because: The helpdesk intake captures where, when and what changed so the right
+      check is done first. Cold people often stay quiet, so each call is treated
+      as information about a likely fault.
+    applies_when: Every comfort complaint from a tenant.
+    not_when: Never skip the intake, even for a repeat complaint.
+    sources:
+      - ref: HC01
+        url: https://www.epa.gov/sites/default/files/2014-08/documents/sec_6.pdf
+        label: public source
+      - ref: SG-02
+        url: https://www.frontiersin.org/journals/built-environment/articles/10.3389/fbuil.2020.567787/full
+        label: public source
+      - ref: HC03
+        url: https://www.epa.gov/sites/default/files/2014-08/documents/sec_6.pdf
+        label: public source
+      - ref: SG-16
+        url: https://www.nea.gov.sg/our-services/public-cleanliness/environmental-cleaning-guidelines/advisories/guidance-on-improving-ventilation-and-indoor-air-quality-in-buildings-for-a-healthy-indoor-environment
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-02
+    colour: amber
+    approver: Building manager approves routine wording, AOM approves anything
+      beyond routine.
+    section: helpdesk intake
+    label: team decision
+    rule: "The AI and the technician send the tenant only approved text: acknowledge
+      the complaint, say what happens next and who will come back, ask the
+      intake questions, and give approved hands-off tips only. No cause, no
+      blame, no price, no promised date, no comfort range, no building settings.
+      A request to run the floor colder than the running setpoint goes to the
+      AOM after a lease check."
+    because: A cause, a price, a blame or a date in writing can harm the tenant
+      relationship. The building manager handles routine explanations. Cost and
+      fault are the AOM's call, not the technician's.
+    applies_when: Every tenant message in a comfort ticket.
+    not_when: Never. All tenant-facing text is approved.
+    sources:
+      - ref: team decision D9
+        label: team decision
+      - ref: PT-04
+        url: https://www.hvac-talk.com/threads/commercial-building.109158/
+        label: practitioner opinion
+  - id: TS-CC-03
+    colour: red
+    approver: Duty FM chief engineer and Fire Safety Manager.
+    section: safety
+    label: mixed
+    rule: Red stop for smoke, flame, or a strong and growing burning smell. Follow
+      the building's fire emergency plan and the Fire Safety Manager or fire
+      wardens. Call 995 for active fire or heavy smoke. Never use the lifts. The
+      AI shows only fixed text approved by the FM chief engineer. For a burning
+      or electrical smell at a grille or unit with no smoke, leave the system
+      off, do not restart it to test, and note where the smell was strongest.
+      For water dripping from the ceiling or pooling near lights, keep away from
+      electrics, clear the area, and do not switch or isolate circuits yourself
+      unless authorised.
+    because: A burning smell, smoke or water near electrics is a safety risk that
+      stops the comfort job. The FM control room arranges isolation through the
+      LEW (licensed electrical worker). SCDF is the fire authority in Singapore.
+    applies_when: Any safety sign at intake, or seen during the floor walk.
+    not_when: Never override a red stop. The comfort checklist waits.
+    sources:
+      - ref: SCDF
+        url: https://www.scdf.gov.sg/
+        label: public source
+      - ref: R12
+        url: https://www.tal.sg/wshc/-/media/tal/wshc/resources/publications/wsh-guidelines/files/wsh_guidelines_on_management_of_iaq.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-04
+    colour: red
+    approver: Duty FM chief engineer.
+    section: safety
+    label: team decision
+    rule: Red stop when someone is hurt, faints, has chest pain or cannot breathe
+      properly. Call 995 for an ambulance, give first aid, and inform the
+      building control room. A chemical smell with nobody badly unwell goes to
+      the FM chief engineer for an air quality check before any comfort fix.
+    because: A person who is unwell is a medical emergency, not a comfort complaint.
+      SCDF 995 covers ambulance and fire. The building first aider or CERT
+      provides first aid.
+    applies_when: Someone is hurt or unwell at the complaint location.
+    not_when: Never. A health emergency stops the comfort checklist.
+    sources:
+      - ref: SCDF
+        url: https://www.scdf.gov.sg/
+        label: public source
+      - ref: team decision D9
+        label: team decision
+      - ref: HC07
+        url: https://www.tal.sg/wshc/-/media/tal/wshc/resources/publications/wsh-guidelines/files/wsh_guidelines_on_management_of_iaq.pdf
+        label: public source
+  - id: TS-CC-05
+    colour: red
+    approver: FM chief engineer and Fire Safety Manager.
+    section: safety
+    label: mixed
+    rule: "Red stop for plant and fire-system causes. An AHU that keeps tripping, a
+      smoke detector tripping in the return air, or a fire damper that seems
+      shut: do not bypass, wedge or override anything to get air back. A
+      suspected refrigerant leak: do not touch the refrigerant circuit, never
+      add, bleed or release refrigerant. No setpoint advice. Plant, refrigerant,
+      electrical or fire-system causes go to the licensed or certified people
+      through the chief engineer."
+    because: Bypassing a safety shutdown can cause damage or injury. Refrigerant
+      work on water-cooled chillers must be done or supervised by a certified
+      chiller technician from a registered company (NEA, from October 2022).
+    applies_when: The trend or the floor points to the chiller, chilled water plant,
+      or a fire system.
+    not_when: Never. Plant and fire-system work is out of scope for the pill.
+    sources:
+      - ref: R14
+        url: https://www.nea.gov.sg/media/news/news/index/launch-of-course-on-chiller-refrigerant-handling
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-06
+    colour: red
+    approver: FM chief engineer for settings, AOM for cost or fault.
+    section: safety
+    label: team decision
+    rule: The AI never writes to the BMS or any building system. The AI never
+      changes a setpoint, schedule or override. The AI never quotes a price,
+      admits fault, or shows one tenant's data to another tenant. A person makes
+      any approved change by hand. If the AI is asked to do any of these, it
+      refuses and shows who may decide.
+    because: The AI words things and drafts things. Code decides. People sign.
+      Nothing touches a building system.
+    applies_when: Any request to the AI that would cross the never-list.
+    not_when: Never. These are the hard lines.
+    sources:
+      - ref: team decision D9
+        label: team decision
+  - id: TS-CC-07
+    colour: amber
+    approver: FM chief engineer decides on removal under the building's house rules.
+    section: safety
+    label: mixed
+    rule: "For a personal heater found under a desk: look, do not touch. Note the
+      heater and where it sits. Tell the tenant contact and the building
+      manager. The FM chief engineer decides on removal under the building's
+      house rules. If the plug, cord or socket looks scorched, melted or
+      discoloured, smells of burning, or someone reports it as warm, that is a
+      red stop (TS-CC-03): do not touch it, do not pull the plug, keep people
+      away."
+    because: A personal heater may be the tenant's property. Touching a possibly
+      faulty electrical item is unsafe. Many Singapore buildings do not allow
+      personal heaters.
+    applies_when: A personal heater is found during the floor walk.
+    not_when: If the heater or its cord shows any sign of overheating, it is a red
+      stop, not amber.
+    sources:
+      - ref: critic
+        label: practitioner opinion
+      - ref: R02
+        url: https://www.energy.gov/energysaver/space-heaters
+        label: public source
+  - id: TS-CC-08
+    colour: amber
+    approver: FM chief engineer.
+    section: safety
+    label: mixed
+    rule: "Any ceiling or AHU work needs: a named yes, the area below roped off or
+      the work done after hours, a platform ladder or mobile platform, power
+      isolated and locked off and proved dead, and never one person alone. 24V
+      control-side work may be done by the FM technician or controls contractor
+      approved by the chief engineer. Mains-side (230V) work is done by or under
+      the LEW (licensed electrical worker)."
+    because: Ladders are still linked to workplace deaths in Singapore (WSH Work at
+      Heights Regulations 2013). The area below must be roped off to protect
+      people from falling objects. Isolation and lockout protect the person in
+      the ceiling.
+    applies_when: Any work above ceiling level or inside an AHU.
+    not_when: Read-only checks from the BMS screen or from the floor with no ceiling
+      access.
+    sources:
+      - ref: WSH Council
+        url: https://www.tal.sg/wshc
+        label: public source
+      - ref: R12
+        url: https://www.tal.sg/wshc/-/media/tal/wshc/resources/publications/wsh-guidelines/files/wsh_guidelines_on_management_of_iaq.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-09
+    colour: amber
+    approver: FM chief engineer.
+    section: context
+    label: team decision
+    rule: The repeat rule. 2 or more comfort complaints from the same floor and
+      tenant in 30 days, or opposite fixes on any zone of the floor in 30 days,
+      turns the repeat flag on. When the repeat flag is on, the pill switches
+      from quick fix to find the cause. No setpoint nudge is allowed. Call the
+      FM chief engineer. Complaints sent to the property manager by email or
+      chat are counted too.
+    because: A repeat means the last fix did not solve the cause. A thermostat
+      change usually helps only for a while. The complaint comes back because
+      the cause is still there.
+    applies_when: 2 or more comfort complaints from the same floor and tenant in 30
+      days, or opposite fixes on any zone of the floor in 30 days.
+    not_when: A first complaint with no repeat flag and no setpoint change on the
+      zone in 30 days.
+    sources:
+      - ref: team decision D6
+        label: team decision
+      - ref: TF-18
+        url: https://aqualityhvac.org/blog/what-causes-repeated-temperature-complaints-in-commercial-spaces-with-one-thermostat-zone/
+        label: practitioner opinion
+      - ref: HC04
+        url: https://escholarship.org/content/qt09z5423x/qt09z5423x_noSplash_467ea272070f78c6de2a425a5163b9bd.pdf
+        label: public source
+  - id: TS-CC-10
+    colour: green
+    approver: No approval needed to pull the file. FM chief engineer tells the AOM
+      if anything is missing.
+    section: context
+    label: mixed
+    rule: "If the zone had a tenant fit-out in the last 12 months, pull the fit-out
+      file: the layout plan with VAV and thermostat locations, the commissioning
+      (T and C) report, the air balancing report, and the switch-back-on record
+      for VAV and BMS points. If anything is missing, tell the AOM within the
+      week. A VAV box that was never switched back on after the fit-out explains
+      complaints that no setpoint change can fix."
+    because: After a fit-out, the layout may have changed but the air-con may not
+      have been re-zoned or re-balanced. A box left in hand mode or never
+      commissioned explains why a zone is always too cold or too hot.
+    applies_when: The complaint zone had a tenant fit-out in the last 12 months.
+    not_when: The zone has had no fit-out in the last 12 months.
+    sources:
+      - ref: BMS-13
+        url: https://cccengineering.com.au/design-memos/air-conditioning-troubleshooting-commercial/
+        label: public source
+      - ref: HC18
+        url: https://www.tomscommercial.com/blog/why-commercial-hvac-systems-may-need-rebalancing-after-tenant-improvements
+        label: public source
+      - ref: TF-02
+        url: https://www.capitaland.com/content/dam/capitaland-sites/singapore/lease/commercial-spaces/welcomekit/5.%20Fitting%20Out%20Work%20Checklist%20and%20Guidelines%20(For%2021CQ)_Nov2023.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-11
+    colour: amber
+    approver: AOM decides the route.
+    section: context
+    label: critic correction
+    rule: Before any repair or physical change to an item a fit-out installed or
+      changed, check landlord or tenant ownership and the defects period.
+      Tenant-owned or in-defects items go through the AOM to the tenant's
+      contractor. The landlord's nominated BMS contractor commissions the boxes.
+      Tenants restore landlord boxes and ducts using a landlord-nominated
+      contractor.
+    because: After a fit-out, parts the tenant added are often the tenant's property
+      and may still be under the fit-out contractor's defects period. If FM
+      changes tenant work, the warranty can be lost and the blame becomes
+      unclear.
+    applies_when: A repair or physical change to any item a fit-out installed or changed.
+    not_when: Reading, measuring, or a setpoint change in the BMS. Those touch no
+      fit-out item.
+    sources:
+      - ref: critic
+        label: practitioner opinion
+      - ref: TF-04
+        url: https://www.capitaland.com/content/dam/capitaland-sites/singapore/lease/commercial-spaces/welcomekit/5.%20Fitting%20Out%20Work%20Checklist%20and%20Guidelines%20(For%2021CQ)_Nov2023.pdf
+        label: public source
+      - ref: TF-06
+        url: https://www.capitaland.com/content/dam/capitaland-sites/singapore/lease/connects/2024/Plain%20English%20Tenants%20Guide%20template%20(Revised%20150124-01.pdf
+        label: public source
+  - id: TS-CC-12
+    colour: green
+    approver: No approval needed to check. FM chief engineer approves schedule or
+      start-up changes.
+    section: context
+    label: public source
+    rule: "Check the time pattern. If the complaint is outside the building's normal
+      air-con hours, it is an after-hours request, not a fault. For cold
+      mornings, check the start-up settings on the BMS: when pre-cooling starts,
+      the overnight setpoint, any after-hours overrides, and morning humidity.
+      The humidity link to cold mornings is a team inference."
+    because: Singapore landlords usually run air-con only in normal office hours,
+      and after-hours air-con is booked. Go 25 says to start cooling 30 to 60
+      minutes before staff arrive, aiming for 25 deg C. Singapore humidity is
+      above 90 percent before sunrise. Areas can take up to an hour to reach
+      setpoint after fans are off overnight.
+    applies_when: Complaints cluster in the first hours of the day, near the end of
+      normal hours, or after hours.
+    not_when: The cold lasts all day at a steady level. Then look at minimum airflow
+      and supply air.
+    sources:
+      - ref: BMS-18
+        url: https://www.corporatelocations.com.sg/pdf/TenantsGuide.pdf
+        label: public source
+      - ref: PC-11
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: SG-09
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: PC-10
+        url: https://www.weather.gov.sg/climate-climate-of-singapore/
+        label: public source
+      - ref: HC13
+        url: https://ocsi.umich.edu/wp-content/uploads/2022/09/EnergyTip_TemperatureTroubleshooting_FINAL.pdf
+        label: public source
+  - id: TS-CC-13
+    colour: green
+    approver: No approval needed to check. FM chief engineer approves releasing or
+      changing an override. Fire Safety Manager for any reset after a fire
+      alarm.
+    section: remote check
+    label: mixed
+    rule: "Before reading the trend, check for leftover overrides: points in hand or
+      manual mode, forced dampers, setpoint changes nobody can explain,
+      controllers offline, and after-hours overrides. Read the BMS alarm and
+      event log for the last 2 weeks: any fire alarm test, false alarm or AHU
+      trip. Releasing an override is a change. A stop-gap override lasts at most
+      7 days unless the chief engineer renews it. Any reset after a fire alarm
+      goes through the Fire Safety Manager."
+    because: PNNL found overrides left in place, equipment left in hand mode and
+      controllers offline. Temporary overrides are often never removed, and an
+      unexplained one often means an earlier fault was managed, not fixed. After
+      a fire alarm test or a false alarm, AHUs and dampers sometimes stay off
+      until someone resets them. The 7-day limit is a team choice.
+    applies_when: Always, as part of the remote check, and whenever a trend looks strange.
+    not_when: Never skip it. If the BMS does not log setpoint changes, ask the FM
+      team for the manual log.
+    sources:
+      - ref: BMS-11
+        url: https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-29078.pdf
+        label: public source
+      - ref: R17
+        url: https://watsonsbs.com/blog/preventing-bms-problems-during-seasonal-changeover
+        label: public source
+      - ref: SG-10
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-14
+    colour: green
+    approver: No approval needed. BMS operator does it.
+    section: remote check
+    label: public source
+    rule: "The BMS operator pulls the trend before anyone goes to the floor. For
+      each complaint zone: zone temperature, setpoint, damper position, airflow,
+      airflow setpoint, occupied mode, supply air temperature and humidity. Add
+      the AHU points when more than one zone complains. Put core and west zones
+      side by side. Plot every VAV damper on that AHU on one chart. Many boxes
+      near fully open means look at the AHU. One box near fully open all day
+      while others sit mid-range means look at that box, its duct and its
+      sensor."
+    because: A trend shows the pattern across days, and some faults only show over
+      time. PNNL calls it healthy when most dampers sit about 50 to 75 percent
+      open, and bad when too many are near fully open or fully closed. The
+      2-week length is a team choice.
+    applies_when: Any comfort complaint on a floor with a BMS.
+    not_when: The BMS does not store these points, or the floor uses fan coil units.
+      Then note the gap and use small data loggers.
+    sources:
+      - ref: BMS-01
+        url: https://www.pnnl.gov/sites/default/files/media/file/PNWD-SA-8412%20-%20Re-Tuning%20Operational%20Faults%20Nov%2019-2008.pdf
+        label: public source
+      - ref: BMS-02
+        url: https://www.pnnl.gov/sites/default/files/media/file/trending_requirements_retuning.pdf
+        label: public source
+      - ref: BMS-03
+        url: https://www.pnnl.gov/sites/default/files/media/file/trending_requirements_retuning.pdf
+        label: public source
+      - ref: AIR-02
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch7_terminal_units.pdf
+        label: public source
+      - ref: AIR-01
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch7_terminal_units.pdf
+        label: public source
+      - ref: BMS-05
+        url: https://www.pnnl.gov/sites/default/files/media/file/PNWD-SA-8412%20-%20Re-Tuning%20Operational%20Faults%20Nov%2019-2008.pdf
+        label: public source
+  - id: TS-CC-15
+    colour: amber
+    approver: FM chief engineer plus the controls contractor.
+    section: remote check
+    label: mixed
+    rule: "If a low-load zone (such as the core near the lift in the morning) sits
+      below setpoint while its VAV box is held at minimum airflow, or airflow
+      sits well above its setpoint, flag it to the FM chief engineer. Two causes
+      are likely: the minimum airflow is set too high, or the box airflow sensor
+      is out of calibration. Do not lower a box minimum until the FM chief
+      engineer checks that the zone still gets its design fresh air (SS 553),
+      and rechecks CO2 afterwards."
+    because: PNNL names these two causes of overcooling. A design course calls it
+      the ice box effect in inner rooms at part occupancy. Box minimums may be
+      set to meet ventilation design, so lowering one can cut fresh air below
+      design. CO2 is the practical stand-in for fresh air.
+    applies_when: The trend shows the room below setpoint while the damper will not
+      close below a fixed value, or airflow sits well above its setpoint.
+    not_when: The damper closes normally and the zone is still cold. Then look at
+      supply air or drafts. Also not when nearby heat makes the sensor read
+      wrong.
+    sources:
+      - ref: AIR-03
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch7_terminal_units.pdf
+        label: public source
+      - ref: TF-16
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch7_terminal_units.pdf
+        label: public source
+      - ref: PC-12
+        url: https://pdhonline.com/courses/m252/m252content.pdf
+        label: public source
+      - ref: SG-16
+        url: https://www.nea.gov.sg/our-services/public-cleanliness/environmental-cleaning-guidelines/advisories/guidance-on-improving-ventilation-and-indoor-air-quality-in-buildings-for-a-healthy-indoor-environment
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-16
+    colour: amber
+    approver: FM chief engineer.
+    section: remote check
+    label: public source
+    rule: Do not raise the AHU supply air temperature to cure cold complaints unless
+      the FM chief engineer agrees after looking at the humidity trend. It
+      changes the air for every zone on that AHU, maybe other floors too.
+    because: Warmer supply air removes less moisture, so room humidity can rise. In
+      one example it rose from 60 percent to 66 percent. A flat supply air trend
+      can mean the reset control is not working. Singapore is very humid before
+      sunrise.
+    applies_when: Anyone proposes raising the AHU supply air setpoint, or the supply
+      air trend looks flat or too cold.
+    not_when: The fix is local to one box and does not change the AHU.
+    sources:
+      - ref: AIR-16
+        url: https://www.trane.com/content/dam/Trane/Commercial/global/products-systems/education-training/engineers-newsletters/airside-design/admapn059en_0916.pdf
+        label: public source
+      - ref: PC-08
+        url: https://www.trane.com/content/dam/Trane/Commercial/global/products-systems/education-training/engineers-newsletters/airside-design/admapn059en_0916.pdf
+        label: public source
+      - ref: BMS-06
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch5_air_handling.pdf
+        label: public source
+      - ref: PC-10
+        url: https://www.weather.gov.sg/climate-climate-of-singapore/
+        label: public source
+  - id: TS-CC-17
+    colour: green
+    approver: No approval needed to ask. Helpdesk arranges it with the tenant contact.
+    section: on floor check
+    label: critic correction
+    rule: Agree access before the floor checks. The helpdesk agrees a time with the
+      tenant contact. Never enter a boardroom during a meeting without the
+      tenant's OK. Take an in-use CO2 reading only with the tenant's OK, or
+      leave a small logger in the room with permission. Ceiling work over desks
+      is done after hours, or with the area below roped off.
+    because: Under a lease the landlord usually needs to give the tenant notice and
+      arrange access. Walking into a boardroom in use, or opening the ceiling
+      above occupied desks, is a lease and relationship risk and a
+      falling-object risk.
+    applies_when: Before any check inside the tenant's space.
+    not_when: Checks in common areas or from the BMS screen.
+    sources:
+      - ref: critic
+        label: practitioner opinion
+      - ref: PT-08
+        url: https://smartbuildingscenter.org/wp-content/uploads/2015/09/Using-Data-loggers-to-address-Comfort-Complaints.pdf
+        label: public source
+  - id: TS-CC-18
+    colour: green
+    approver: No approval needed to check. FM chief engineer approves offsets or
+      rewiring. Moving a thermostat inside the tenant's space needs the tenant's
+      written OK plus the AOM.
+    section: on floor check
+    label: mixed
+    rule: Before trusting a BMS zone temperature, check the sensor on the floor. Is
+      it in the room it controls, and wired to the right box? Compare where it
+      sits with the thermostat location on the fit-out layout plan. Is it at the
+      height and position set in the building's design or fit-out specification,
+      on an inside wall, away from sun, supply diffusers, return grilles and
+      heat-giving equipment? Does it read the same as a calibrated handheld
+      beside it? An offset is temporary and is logged with an end date. A sensor
+      that has drifted is replaced.
+    because: Go 25 asks whether thermostats were moved after layout changes, and
+      says sensors should sit away from sun, vents and heat sources and be
+      checked against a reference thermometer at least once a year. Sensors are
+      sometimes wired to the next room's box. Equipment under a sensor makes it
+      read high and overcool the room. A zone sensor can drift badly. An offset
+      can hide a sensor that keeps drifting.
+    applies_when: After any fit-out, when the BMS and what people feel do not agree,
+      or when one zone reads oddly next to its neighbours.
+    not_when: The sensor has a recent calibration record, sits in the right room at
+      a good spot, and matches a handheld reading.
+    sources:
+      - ref: TF-05
+        url: https://www.capitaland.com/content/dam/capitaland-sites/singapore/lease/commercial-spaces/welcomekit/5.%20Fitting%20Out%20Work%20Checklist%20and%20Guidelines%20(For%2021CQ)_Nov2023.pdf
+        label: public source
+      - ref: TF-07
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: PC-04
+        url: https://policy.asiapacificenergy.org/sites/default/files/Guidelines%20for%20good%20indoor%20air%20quality%20in%20office%20premises.pdf
+        label: public source
+      - ref: AIR-08
+        url: https://docs.johnsoncontrols.com/bas/api/khub/documents/6DtdV5kLZWrIvYO7rp4yQw/content
+        label: public source
+      - ref: BMS-08
+        url: https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=861015
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-19
+    colour: green
+    approver: No approval needed. FM technician does it.
+    section: on floor check
+    label: mixed
+    rule: Measure what people feel where they sit. Feeling for cold drafts under
+      diffusers is only a first screen. Then measure air speed with an
+      anemometer at seated head and ankle height under the diffuser. For stuffy,
+      take a CO2 reading at breathing height for at least 5 minutes, with the
+      tenant's OK. Check that each closed room has a return grille or transfer
+      path. Look for blocked or fiddled supply grilles and sweating diffusers.
+    because: Low airflow through some diffusers lets cold air dump onto people. The
+      1996 NEA guideline keeps air movement at the workstation below 0.25 m/s
+      (check current SS 554). NEA says SS 554:2026 sets CO2 at no more than 700
+      ppm above outdoor air, read for at least 5 minutes per spot at breathing
+      height. Tenants must provide return air grilles for partitioned rooms.
+      Occupants sometimes tamper with diffusers when cold.
+    applies_when: Complaints are local to some desks, a room feels stuffy when full,
+      or water beads on a diffuser.
+    not_when: The whole zone reads cold or hot on the BMS. Then it is an airflow or
+      supply problem.
+    sources:
+      - ref: AIR-11
+        url: https://pdhonline.com/courses/m252/m252content.pdf
+        label: public source
+      - ref: SG-11
+        url: https://policy.thinkbluedata.com/sites/default/files/Guidelines%20for%20good%20indoor%20air%20quality%20in%20office%20premises.pdf
+        label: public source
+      - ref: SG-16
+        url: https://www.nea.gov.sg/our-services/public-cleanliness/environmental-cleaning-guidelines/advisories/guidance-on-improving-ventilation-and-indoor-air-quality-in-buildings-for-a-healthy-indoor-environment
+        label: public source
+      - ref: TF-06
+        url: https://www.capitaland.com/content/dam/capitaland-sites/singapore/lease/connects/2024/Plain%20English%20Tenants%20Guide%20template%20(Revised%20150124-01.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-20
+    colour: green
+    approver: No approval needed to check. AOM decides on glass or shading works.
+    section: on floor check
+    label: public source
+    rule: For a hot west-facing glass room in the afternoon, suspect sun heat first.
+      Check whether sun falls on people and glass, whether blinds are down and
+      working, and how the room feels, not only the air temperature. Lasting
+      fixes such as solar film, low-E glass or external shades go to the AOM.
+    because: In Singapore, east and west faces get the most sun all year. Heat
+      radiating from sunny glass can make people uncomfortable even when the
+      room air is fine. Blinds inside the glass still trap heat, and outside
+      shading works best.
+    applies_when: Hot or stuffy complaints in a perimeter room with west or east
+      glass, timed to when that face gets sun.
+    not_when: The room is in the core, or the blinds are already down and the room
+      is still hot. Then look at airflow and zoning.
+    sources:
+      - ref: PC-14
+        url: https://www.nea.gov.sg/docs/default-source/cmd-documents/energy-efficiency/industrial-sector/scem/bels_060224.pdf
+        label: public source
+      - ref: PC-16
+        url: https://windows.lbl.gov/sites/default/files/lbnl-44032.pdf
+        label: public source
+      - ref: SG-06
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: PC-15
+        url: https://continuingeducation.bnpmedia.com/courses/multi-aia/understanding-the-benefits-of-interior-and-exterior-shading-systems/2/
+        label: public source
+  - id: TS-CC-21
+    colour: green
+    approver: No approval needed. FM technician or BMS operator makes and logs it.
+    section: fix
+    label: team decision
+    rule: First-complaint nudge. On a first comfort complaint, with no repeat flag,
+      no red stop, and no setpoint change on that zone in the last 30 days, a
+      person may make ONE setpoint nudge of at most 1 deg C, inside the
+      building's band. Log who asked, why, the before value and a review date.
+      Mark the ticket Attended, relief given, not Fixed.
+    because: This is a team decision. It gives the tenant quick relief and keeps the
+      response fast. The 1 deg C limit and the 30-day window are team choices. A
+      thermostat change alone often helps only for a while, so the nudge is
+      allowed once, it is logged, and any repeat inside 30 days turns on the
+      repeat rule.
+    applies_when: A first comfort complaint from that floor and tenant, when the fix
+      section is reached. In v1.0 the floor checks are not a gate for this
+      nudge.
+    not_when: The repeat flag is on. A red stop applies. The zone had a setpoint
+      change in the last 30 days, or the change would be above 1 deg C. The
+      tenant asks to run the floor colder than the building's running setpoint.
+      The AI never makes the change itself.
+    sources:
+      - ref: team decision D9
+        label: team decision
+      - ref: TF-18
+        url: https://aqualityhvac.org/blog/what-causes-repeated-temperature-complaints-in-commercial-spaces-with-one-thermostat-zone/
+        label: practitioner opinion
+      - ref: HC17
+        url: https://www1.builtspace.com/2017/06/08/hot-cold-tales-hvac-trenches/
+        label: public source
+  - id: TS-CC-22
+    colour: amber
+    approver: FM chief engineer, logged.
+    section: fix
+    label: team decision
+    rule: Any further setpoint change needs the FM chief engineer's yes first. That
+      means a second setpoint change on the same floor within 30 days, any
+      change above 1 deg C, or any BMS override. Record the before values, log
+      it, and give any temporary change an end date of at most 7 days unless the
+      chief engineer renews it.
+    because: On a shared zone, one change upsets other people. A Singapore field
+      study found offices overcooled partly because staff lowered temperatures
+      to stop complaints from a few spots. During a planned slow rise towards 25
+      deg C, Go 25 advises not lowering the temperature at the first complaint.
+      Schedule overrides often hide deeper problems. Stop-gaps need an end date.
+    applies_when: Anyone is about to change a setpoint, schedule or override after
+      the first nudge, or by more than 1 deg C.
+    not_when: The single first-complaint nudge under TS-CC-21.
+    sources:
+      - ref: team decision D9
+        label: team decision
+      - ref: HC02
+        url: https://escholarship.org/content/qt09z5423x/qt09z5423x_noSplash_467ea272070f78c6de2a425a5163b9bd.pdf
+        label: public source
+      - ref: PC-06
+        url: https://www.frontiersin.org/journals/built-environment/articles/10.3389/fbuil.2020.567787/full
+        label: public source
+      - ref: SG-01
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-23
+    colour: green
+    approver: No approval needed to record. Building manager marks Fixed.
+    section: fix
+    label: mixed
+    rule: Write everything on the ticket. Record the before values before any
+      change. Close with a cause code, or cause not yet known plus a review
+      date. Attended, relief given closes the ticket and changes nothing in the
+      pill. Only the building manager marks Fixed, after the chief engineer's
+      cause note, 14 days of in-band trend, a good call-back on day 7 to 14, and
+      30 days with no repeat from that floor and tenant.
+    because: Technicians often arrive with little information and may need to undo
+      others' work. Separate symptom, cause and remedy codes show where the list
+      has gaps. Go 25 and the WSH guide say to keep records of complaints,
+      problem zones and past adjustments. The Fixed test and its windows are a
+      team decision.
+    applies_when: Every comfort ticket, and every change to setpoints, minimum
+      airflows, dampers or overrides.
+    not_when: Never skipped. Read-only checks still log the location and findings.
+    sources:
+      - ref: HC17
+        url: https://www1.builtspace.com/2017/06/08/hot-cold-tales-hvac-trenches/
+        label: public source
+      - ref: HC16
+        url: https://mpulsesoftware.com/blog/cmms/failure-codes-maintenance/
+        label: public source
+      - ref: HC06
+        url: https://www.epa.gov/sites/default/files/2014-08/documents/sec_6.pdf
+        label: public source
+      - ref: TF-09
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: team decision D3
+        label: team decision
+  - id: TS-CC-24
+    colour: amber
+    approver: FM chief engineer recommends. AOM decides on money and the tenant
+      conversation.
+    section: escalate
+    label: public source
+    rule: If checks find no simple fault, or the cause looks like the fit-out (a
+      room sharing a box or sensor with open office, no re-balance, a box too
+      small, a closed room with no way for air to get out), escalate. The FM
+      chief engineer asks for the existing air balancing report and, if needed,
+      a specialist for air balancing and ACMV diagnostics. Re-zoning, adding a
+      box or moving a sensor is a design change, not a technician fix.
+    because: A VAV box controls only the room its sensor is in, so a meeting room on
+      an office zone is too cold when empty and too warm when full. Go 25 says
+      to zone west perimeters and meeting rooms separately, and to get air
+      balancing for persistent hot or cold zones, especially after layout
+      changes. Repeat complaints after a fit-out may be a design or zoning
+      problem.
+    applies_when: The repeat flag is on and remote and floor checks find no single
+      fault, or they point to zoning, balancing or box size from the fit-out.
+    not_when: A single clear base-building fault, such as a failed actuator, was
+      found and fixed, and the trend has settled.
+    sources:
+      - ref: AIR-09
+        url: https://pdhonline.com/courses/m252/m252content.pdf
+        label: public source
+      - ref: PC-02
+        url: https://pdhonline.com/courses/m252/m252content.pdf
+        label: public source
+      - ref: TF-11
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: SG-04
+        url: https://hy-me.com.sg/wp-content/uploads/2025/11/Go-25-Industry-Guide-for-Building-Operations-1.pdf
+        label: public source
+      - ref: BMS-13
+        url: https://cccengineering.com.au/design-memos/air-conditioning-troubleshooting-commercial/
+        label: public source
+  - id: TS-CC-25
+    colour: amber
+    approver: AOM within their limit, the asset manager above it.
+    section: escalate
+    label: mixed
+    rule: "The AOM decides anything about money or the commercial relationship: any
+      cost outside the FM contract, who pays, goodwill, tenant-side works,
+      lasting glass or shading works, any tenant message that assigns cost,
+      offers goodwill or touches fault, and a tenant's request to run the floor
+      colder than the building's running setpoint. For a colder-floor request,
+      the AOM first checks the lease and the tenant handbook."
+    because: These are commercial calls for the landlord, not technical ones. A
+      practitioner says a landlord should check the lease first, because the
+      comfort standard should be written there. A Ngee Ann Polytechnic study
+      cited by the Go 25 movement found up to 12 percent energy saving per
+      degree raised from 23 to 25 deg C in offices, so every colder-floor
+      request has a cost.
+    applies_when: Any decision that costs money, assigns fault, or changes what the
+      tenant gets.
+    not_when: Routine technical checks and fixes inside the FM contract.
+    sources:
+      - ref: PT-04
+        url: https://www.hvac-talk.com/threads/commercial-building.109158/
+        label: practitioner opinion
+      - ref: HC11
+        url: https://www.sgbc.sg/wp-content/uploads/2025/05/Media-Release-Go-25.pdf
+        label: public source
+      - ref: critic
+        label: practitioner opinion
+  - id: TS-CC-26
+    colour: red
+    approver: FM chief engineer. Plant work goes to the plant team or a certified
+      chiller technician.
+    section: escalate
+    label: mixed
+    rule: Out of scope. Stop all setpoint advice and escalate to the FM chief
+      engineer when the trend shows a zone's VAV damper fully open for hours on
+      sunny afternoons (a likely capacity limit), when the cause points to any
+      chilled-water plant setting, or when no approved rule covers the case.
+      Plant, refrigerant, electrical or fire-system causes go to the licensed or
+      certified people through the chief engineer.
+    because: A box that is fully open and still cannot get its airflow is a starved
+      box. A zone that always asks for more can mean a load bigger than design,
+      poor ducts or failed equipment. Many boxes near fully open is a bad sign.
+      Looking at the AHU first is a team inference. Refrigerant work on chillers
+      needs a certified chiller technician. The red colour and the no rule
+      covers it stop are a team decision.
+    applies_when: Any of the three triggers above, at any step.
+    not_when: The damper is fully open only briefly, such as during morning
+      start-up, and the room then reaches setpoint.
+    sources:
+      - ref: AIR-06
+        url: https://docs.johnsoncontrols.com/bas/api/khub/documents/6DtdV5kLZWrIvYO7rp4yQw/content
+        label: public source
+      - ref: TF-17
+        url: https://www.amca.org/assets/resources/public/pdf/Taylor%20VAV%20Design%20Tips.pdf
+        label: public source
+      - ref: AIR-12
+        url: https://www.trane.com/content/dam/Trane/Commercial/global/products-systems/education-training/engineers-newsletters/airside-design/admapn059en_0916.pdf
+        label: public source
+      - ref: AIR-01
+        url: https://www.pnnl.gov/sites/default/files/media/file/ch7_terminal_units.pdf
+        label: public source
+      - ref: BMS-05
+        url: https://www.pnnl.gov/sites/default/files/media/file/PNWD-SA-8412%20-%20Re-Tuning%20Operational%20Faults%20Nov%2019-2008.pdf
+        label: public source
+      - ref: R14
+        url: https://www.nea.gov.sg/media/news/news/index/launch-of-course-on-chiller-refrigerant-handling
+        label: public source
+  - id: TS-CC-27
+    colour: green
+    approver: Senior manager confirmed each part (role-played). HQ pill owner
+      (role-played) approves the version.
+    section: new solution
+    label: senior manager correction
+    rule: If the zone had a fit-out in the last 12 months, check where the
+      thermostat sits against the fit-out drawing before any nudge.
+    because: The fit-out 8 months ago moved the core thermostat next to the new
+      printer bay, so it reads warm and the box keeps cooling the open area.
+    applies_when: The zone had a tenant fit-out in the last 12 months.
+    not_when: Never ahead of the safety steps. Steps 1 to 8 and every red stop
+      always come first.
+    sources:
+      - ref: CE-CORR-2026-10-06
+        label: senior manager correction (role-played)
+    condition:
+      fact: fit-out-12m
+      effects:
+        - effect: block
+          step: 25
+        - effect: put-first
+          step: 21
+checklist:
+  - step: 1
+    section: helpdesk intake
+    text: "Ask question 1: Any burning smell, smoke, water dripping or wet ceiling?
+      Is anyone feeling unwell, or is there a chemical smell? If yes, go to the
+      red stops. A chemical smell with nobody badly unwell goes to the FM chief
+      engineer for an air quality check."
+    who: Helpdesk
+    colour: green
+    rules:
+      - TS-CC-01
+      - TS-CC-03
+      - TS-CC-04
+  - step: 2
+    section: helpdesk intake
+    text: "Ask question 2: Where exactly, at what times of day, and how many people
+      feel it? Are people wearing jackets, using fans or moving desks?"
+    who: Helpdesk
+    colour: green
+    rules:
+      - TS-CC-01
+  - step: 3
+    section: helpdesk intake
+    text: "Ask question 3: What has changed lately? New walls or rooms, new
+      equipment, heaters or fans, after-hours use?"
+    who: Helpdesk
+    colour: green
+    rules:
+      - TS-CC-01
+      - TS-CC-07
+      - TS-CC-10
+  - step: 4
+    section: helpdesk intake
+    text: "Send the tenant an acknowledgement from approved text only: thanks, what
+      happens next, and who will come back. Add only approved hands-off tips. No
+      cause, blame, price, date or comfort range."
+    who: Helpdesk sends, building manager approves routine wording
+    colour: amber
+    rules:
+      - TS-CC-02
+      - TS-CC-06
+  - step: 5
+    section: safety
+    text: If any safety sign or a badly unwell person was reported, stop the comfort
+      job and follow the red stop. Use the fixed red-stop text only.
+    who: Helpdesk and FM technician
+    colour: red
+    rules:
+      - TS-CC-03
+      - TS-CC-04
+      - TS-CC-05
+  - step: 6
+    section: safety
+    text: After the helpdesk has agreed access with the tenant contact, look over
+      the area for heaters, scorch marks and wet tiles near lights. Look, do not
+      touch. Report what you find.
+    who: FM technician
+    colour: green
+    rules:
+      - TS-CC-07
+      - TS-CC-03
+      - TS-CC-17
+  - step: 7
+    section: safety
+    text: For any heater found, the FM chief engineer decides on removal under the
+      building's house rules. Tell the tenant contact and the building manager.
+    who: FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-07
+  - step: 8
+    section: safety
+    text: Plan BMS and floor-level checks first. Any ceiling or AHU work needs a
+      named yes, the area below roped off or the work done after hours, a
+      platform ladder, power isolated and locked off, and never one person
+      alone.
+    who: FM technician, approved by FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-08
+  - step: 9
+    section: context
+    text: Pull the complaint history for this floor and tenant for the last 30 days,
+      including complaints sent to the property manager by email or chat. Note
+      what each ticket changed and how it was closed.
+    who: Helpdesk and BMS operator
+    colour: green
+    rules:
+      - TS-CC-09
+      - TS-CC-23
+  - step: 10
+    section: context
+    text: Apply the repeat rule. 2 or more comfort complaints from this floor and
+      tenant in 30 days, or opposite fixes on any zone of the floor in 30 days,
+      turns the repeat flag on. Then find the cause, call the FM chief engineer,
+      and make no nudge.
+    who: FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-09
+  - step: 11
+    section: context
+    text: "If the zone had a tenant fit-out in the last 12 months, pull the fit-out
+      file: layout plan with VAV and thermostat locations, commissioning report,
+      air balancing report, and the switch-back-on record for VAV and BMS
+      points. If anything is missing, tell the AOM within the week."
+    who: BMS operator or FM chief engineer
+    colour: green
+    rules:
+      - TS-CC-10
+  - step: 12
+    section: context
+    text: Before any repair or change to an item the fit-out installed, check
+      landlord or tenant ownership and the defects period. Tenant-owned or
+      in-defects items go through the AOM.
+    who: FM chief engineer, decided by AOM
+    colour: amber
+    rules:
+      - TS-CC-11
+  - step: 13
+    section: context
+    text: Check whether the complaint falls outside normal air-con hours. If so, it
+      is an after-hours request matter, not a fault.
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-12
+  - step: 14
+    section: remote check
+    text: Check for leftover overrides, hand mode, unexplained setpoint changes and
+      offline controllers. Read the alarm and event log for fire alarm tests,
+      false alarms or AHU trips in the last 2 weeks. Any reset after a fire
+      alarm goes through the Fire Safety Manager.
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-13
+      - TS-CC-05
+  - step: 15
+    section: remote check
+    text: "Pull the 2-week trend for each complaint zone: temperature, setpoint,
+      damper, airflow, airflow setpoint, mode, supply air and humidity. Add AHU
+      points if more than one zone complains. Put core and west zones side by
+      side."
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-14
+  - step: 16
+    section: remote check
+    text: Chart all VAV dampers on the AHU and read the box health flags. If a
+      zone's damper sits fully open for hours on sunny afternoons, stop setpoint
+      advice and call the FM chief engineer.
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-14
+      - TS-CC-26
+  - step: 17
+    section: remote check
+    text: For cold mornings, check the pre-cool start time, the overnight setpoint,
+      after-hours overrides and morning humidity.
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-12
+  - step: 18
+    section: remote check
+    text: If the cold core box sits at minimum airflow while the room stays below
+      setpoint, flag minimum too high or flow sensor off to the FM chief
+      engineer. Do not change the minimum.
+    who: BMS operator
+    colour: green
+    rules:
+      - TS-CC-15
+  - step: 19
+    section: remote check
+    text: If anyone proposes raising the AHU supply air temperature, send it to the
+      FM chief engineer with the humidity trend.
+    who: FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-16
+  - step: 20
+    section: on floor check
+    text: Agree a time with the tenant contact. Never enter the boardroom during a
+      meeting without the tenant's OK.
+    who: Helpdesk
+    colour: green
+    rules:
+      - TS-CC-17
+  - step: 21
+    section: on floor check
+    text: "Check each complaint-zone sensor: right room, right box, location against
+      the fit-out layout plan, height and position per the building's
+      specification, away from sun, diffusers, grilles and equipment. Compare
+      with a calibrated handheld beside it."
+    who: FM technician
+    colour: green
+    rules:
+      - TS-CC-18
+  - step: 22
+    section: on floor check
+    text: Near the lift core, screen for drafts under the diffusers, then measure
+      air speed with an anemometer at seated head and ankle height. Check
+      grilles are not blocked or fiddled.
+    who: FM technician
+    colour: green
+    rules:
+      - TS-CC-19
+  - step: 23
+    section: on floor check
+    text: In the west boardroom in the afternoon, check sun on people and glass, and
+      the blinds. With the tenant's OK, take a 5-minute CO2 reading at breathing
+      height, or leave a logger. Check there is a return grille or transfer
+      path.
+    who: FM technician
+    colour: green
+    rules:
+      - TS-CC-20
+      - TS-CC-19
+      - TS-CC-17
+  - step: 24
+    section: on floor check
+    text: If the trend or flags point to one box, the BMS operator or controls
+      contractor commands a box flow test (damper closed to fully open), records
+      the before state, and releases the override to auto straight after.
+      Ceiling access is approved and power isolated first. Logged.
+    who: BMS operator or controls contractor, approved by FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-08
+      - TS-CC-13
+      - TS-CC-22
+  - step: 25
+    section: fix
+    text: "First complaint, no repeat flag, no red stop, and no change on the zone
+      in 30 days: make ONE setpoint nudge of at most 1 deg C inside the
+      building's band. Log who asked, why, the before value and a review date."
+    who: FM technician or BMS operator
+    colour: green
+    rules:
+      - TS-CC-21
+      - TS-CC-06
+  - step: 26
+    section: fix
+    text: "Any second setpoint change on the floor within 30 days, any change above
+      1 deg C, or any override, offset or minimum airflow change: record before
+      values, get the FM chief engineer's yes, and log it with an end date."
+    who: FM technician and BMS operator, approved by FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-22
+      - TS-CC-15
+      - TS-CC-18
+  - step: 27
+    section: fix
+    text: "Fix proven single faults after isolation: a failed actuator, a slipping
+      damper linkage, a drifted sensor, or a wrongly wired sensor on the
+      low-voltage control side (controls contractor, approved by the FM chief
+      engineer), a wet ceiling tile (replace it). Mains-side work is done by or
+      under the LEW. Fit-out items follow the ownership check first."
+    who: FM technician, approved by FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-08
+      - TS-CC-18
+      - TS-CC-11
+  - step: 28
+    section: fix
+    text: Close the ticket as Attended, relief given with a cause code or cause not
+      yet known and a review date. Only the building manager marks Fixed.
+    who: FM technician
+    colour: green
+    rules:
+      - TS-CC-23
+  - step: 29
+    section: escalate
+    text: If no simple fault is found, or the cause is the fit-out, the FM chief
+      engineer asks for the air balancing report and specialist balancing, and
+      briefs the AOM.
+    who: FM chief engineer
+    colour: amber
+    rules:
+      - TS-CC-24
+      - TS-CC-11
+  - step: 30
+    section: escalate
+    text: The AOM decides money, who pays, goodwill, tenant-side works, glass or
+      shading works, any tenant message about cost or fault, and any request for
+      a colder floor after a lease check.
+    who: Asset Operations Manager
+    colour: amber
+    rules:
+      - TS-CC-25
+      - TS-CC-02
+  - step: 31
+    section: escalate
+    text: "A damper fully open for hours on sunny afternoons, any chilled-water
+      plant cause, or no approved rule: no setpoint advice. Plant, refrigerant,
+      electrical or fire-system causes go to the licensed or certified people
+      through the FM chief engineer."
+    who: FM chief engineer
+    colour: red
+    rules:
+      - TS-CC-26
+      - TS-CC-05
+red_stops:
+  - trigger: A fire alarm goes off, or there is smoke, flame, or a strong and
+      growing burning smell on the floor.
+    action: Follow the building's fire emergency plan and the instructions of the
+      Fire Safety Manager or fire wardens. Call 995 for active fire or heavy
+      smoke. Never use the lifts. The AI shows only fixed text approved by the
+      FM chief engineer.
+    who_to_call: SCDF on 995, the FM control room, the Fire Safety Manager and the
+      duty FM chief engineer
+    rules:
+      - TS-CC-03
+    id: RS-01
+  - trigger: Burning or electrical smell at a grille or unit with no smoke, or a
+      breaker that tripped along with the smell.
+    action: Leave the system off. Do not turn it back on to test it. Note where the
+      smell was strongest.
+    who_to_call: FM control room and FM chief engineer, plus the building LEW if electrical
+    rules:
+      - TS-CC-03
+    id: RS-02
+  - trigger: A heater, plug, cord or socket that looks scorched, melted or
+      discoloured, smells of burning, or that someone reports as warm.
+    action: Stop. Do not touch it, do not pull the plug, and do not touch the metal
+      prongs. Keep people away.
+    who_to_call: Building LEW through the FM control room
+    rules:
+      - TS-CC-03
+      - TS-CC-07
+    id: RS-03
+  - trigger: Water dripping from the ceiling or pooling near lights, floor power
+      boxes, or electrical or comms rooms.
+    action: Keep away from the electrics, clear the area, and do not climb under the
+      wet ceiling. Do not switch or isolate circuits yourself unless you are
+      authorised.
+    who_to_call: FM control room, which arranges isolation through the LEW, and the
+      FM chief engineer
+    rules:
+      - TS-CC-03
+      - TS-CC-08
+    id: RS-04
+  - trigger: Someone is hurt, faints, has chest pain, or cannot breathe properly.
+    action: Call 995 for an ambulance, give first aid, and inform the building
+      control room.
+    who_to_call: SCDF on 995, the building first aider or CERT, and the FM control room
+    rules:
+      - TS-CC-04
+    id: RS-05
+  - trigger: AHU keeps tripping, a smoke detector trips in the return air, or a fire
+      damper seems shut.
+    action: Do not bypass, wedge or override anything to get air back.
+    who_to_call: FM chief engineer and Fire Safety Manager
+    rules:
+      - TS-CC-05
+    id: RS-06
+  - trigger: The trend points to the chiller or chilled water plant, or a
+      refrigerant leak is suspected.
+    action: Do not touch the refrigerant circuit. Never add, bleed or release
+      refrigerant. No setpoint advice.
+    who_to_call: FM chief engineer, who calls a certified chiller technician
+    rules:
+      - TS-CC-05
+      - TS-CC-26
+    id: RS-07
+  - trigger: A zone's VAV damper sits fully open for hours on sunny afternoons, or
+      no approved rule covers the case.
+    action: Stop all setpoint advice. Escalate.
+    who_to_call: FM chief engineer
+    rules:
+      - TS-CC-26
+    id: RS-08
+  - trigger: A step needs ceiling access, but there is no named yes, no safe access,
+      no isolation, or the person would be working alone.
+    action: Stop. Do the BMS and floor-level checks only until access and isolation
+      are arranged.
+    who_to_call: FM chief engineer or the building's permit issuer
+    rules:
+      - TS-CC-08
+    id: RS-09
+  - trigger: Anyone asks the AI to write to the BMS, quote a price, admit fault, or
+      show another tenant's data.
+    action: The AI refuses and shows who may decide. A person makes any approved
+      change by hand.
+    who_to_call: FM chief engineer for settings, AOM for cost or fault
+    rules:
+      - TS-CC-06
+    id: RS-10
+tenant_tips:
+  - text: If the boardroom feels warm in the afternoon, lowering the blinds can help
+      while we look into it.
+    rules:
+      - TS-CC-20
+  - text: Each time it feels too hot or too cold, note the time and the exact spot
+      and tell the helpdesk. Your reports help us find the cause.
+    rules:
+      - TS-CC-01
+      - TS-CC-09
+  - text: While we investigate, we will keep settings steady so we can see the
+      pattern. Please keep reporting the time and spot each time.
+    rules:
+      - TS-CC-09
+      - TS-CC-22
+  - text: Please check the building's house rules before using a personal heater.
+      Many buildings do not allow them. Tell the helpdesk you feel cold so we
+      can find the cause.
+    rules:
+      - TS-CC-07
+  - text: Keep screens, printers and coffee machines away from the wall temperature
+      sensor, and do not cover it.
+    rules:
+      - TS-CC-18
+  - text: Please do not block, tape or adjust the air grilles in the ceiling. Tell
+      the helpdesk about any draft instead.
+    rules:
+      - TS-CC-19
+  - text: If you need cooling late in the day or on a Saturday afternoon, use the
+      building's after-hours air-con request process.
+    rules:
+      - TS-CC-12
+  - text: If anyone feels unwell or notices a chemical smell, tell the helpdesk
+      straight away. In an emergency, call 995.
+    rules:
+      - TS-CC-01
+      - TS-CC-04
