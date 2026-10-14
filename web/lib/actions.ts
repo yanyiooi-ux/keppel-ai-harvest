@@ -6,8 +6,10 @@
  * the memory. C4 writes the bodies for reset, safety-pick and confirm-cause;
  * C7a writes report and answer (the tenant's self-check, S10); C7b writes the
  * technician's open-job, tick, solved, send-with-cause and not-solved
- * (technician-flow.ts); the rest pass their checks and say "not built yet",
- * and C8a to C9 fill them.
+ * (technician-flow.ts); C8a writes the senior manager's log-new-solution,
+ * confirm-part, run-tests, send-to-hq, ask-outside-help and clear-stop
+ * (senior-manager-flow.ts); the rest pass their checks and say "not built
+ * yet", and C8b to C9 fill them.
  */
 
 import { loadAndCheckPill } from "./pill";
@@ -30,6 +32,23 @@ import {
   notSolvedRefusal,
   postLowConfidenceNotice,
 } from "./technician-flow";
+import {
+  currentSolution,
+  logNewSolutionRefusal,
+  applyLogNewSolution,
+  confirmPartRefusal,
+  applyConfirmPart,
+  planRunTests,
+  runTestsRefusal,
+  applyRunTests,
+  sentRefusal,
+  applySendToHq,
+  askOutsideHelpRefusal,
+  applyAskOutsideHelp,
+  clearStopRefusal,
+  applyClearStop,
+} from "./senior-manager-flow";
+import type { NewSolution } from "./ai";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
 
@@ -71,6 +90,8 @@ export interface ActionResult {
 export interface ActionExtras {
   /** The AI's tenant-reply, worded before the update (action-turn.ts). */
   tenantWording?: AiOutcome<TenantReply>;
+  /** The AI's new-solution draft and suggestion, made before the update (action-turn.ts, C8a). */
+  solutionWording?: AiOutcome<NewSolution>;
 }
 
 /** The stops open on a job's spot right now. */
@@ -392,12 +413,75 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     return result;
   }
 
-  if (action === "send-to-hq") {
-    const draft = (state.solutions as (StoredSolutionGate & { jobId?: string })[]).find(
-      (s) => s.jobId === jobId
-    );
-    const refusal = sendToHqRefusal(draft);
+  // The senior manager's presses (C8a, senior-manager-flow.ts). Each refusal is
+  // worked out on a read and never writes; the press plans again inside the update.
+  if (job && action === "log-new-solution") {
+    const refusal = logNewSolutionRefusal(state, seat, job, payload, realNow);
     if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyLogNewSolution(s, seat, job.id, payload, realNow, extras.solutionWording);
+    });
+    return result;
+  }
+
+  if (job && action === "confirm-part") {
+    const refusal = confirmPartRefusal(state, job, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyConfirmPart(s, seat, job.id, payload, realNow);
+    });
+    return result;
+  }
+
+  if (job && action === "run-tests") {
+    const refusal = runTestsRefusal(state, job);
+    if (refusal) return { ok: false, message: refusal };
+    // The run is pure code on a read; the update only stores it if the draft is unchanged.
+    const plan = planRunTests(state, job, realNow);
+    if (!plan.ok) return { ok: false, message: plan.message };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyRunTests(s, seat, job.id, plan.run, realNow);
+    });
+    return result;
+  }
+
+  if (action === "send-to-hq") {
+    const sent = sentRefusal(state, jobId);
+    if (sent) return { ok: false, message: sent };
+    const refusal = sendToHqRefusal(currentSolution(state, jobId));
+    if (refusal) return { ok: false, message: refusal };
+    if (job) {
+      let result: ActionResult = { ok: false, message: "" };
+      memory.update((s) => {
+        // Plan again on the memory the update reads: the run must still be on this exact draft.
+        const again = sentRefusal(s, job.id) ?? sendToHqRefusal(currentSolution(s, job.id));
+        result = again ? { ok: false, message: again } : applySendToHq(s, seat, job.id, realNow);
+      });
+      return result;
+    }
+  }
+
+  if (job && action === "ask-outside-help") {
+    const refusal = askOutsideHelpRefusal(payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyAskOutsideHelp(s, seat, job.id, payload, realNow);
+    });
+    return result;
+  }
+
+  if (action === "clear-stop") {
+    const refusal = clearStopRefusal(state, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyClearStop(s, seat, payload, realNow);
+    });
+    return result;
   }
 
   if (action === "confirm-cause") {

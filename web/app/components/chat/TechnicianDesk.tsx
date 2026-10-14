@@ -71,7 +71,8 @@ export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null }
   );
 }
 
-function DeskCardView({ card }: { card: DeskCard }) {
+/** One checklist card. The senior manager's desk shows the same cards (C8a). */
+export function DeskCardView({ card }: { card: DeskCard }) {
   return (
     <ChatCard
       from={card.from}
@@ -97,7 +98,8 @@ function DeskCardView({ card }: { card: DeskCard }) {
   );
 }
 
-function LeadCard({
+/** One lead with Found it, Not this or Clear. The senior manager's desk uses it for its own ranked list (C8a). */
+export function LeadCard({
   lead,
   jobId,
   press,
@@ -153,7 +155,7 @@ function LeadCard({
   );
 }
 
-function StepList({ steps }: { steps: DeskStep[] }) {
+export function StepList({ steps }: { steps: DeskStep[] }) {
   return (
     <ol className="step-list">
       {steps.map((step) => (

@@ -380,7 +380,15 @@ function filledValue(step: number, job: Job, recent: Ticket[], repeat: RepeatFla
 
 // ---- Leads, with the rank wording made at the press ----
 
-function deskLead(lead: Lead, job: Job, pill: Pill, state: MemoryState, mode: AiMode | undefined, worded: boolean): DeskLead {
+function deskLead(
+  lead: Lead,
+  job: Job,
+  pill: Pill,
+  state: MemoryState,
+  mode: AiMode | undefined,
+  worded: boolean,
+  seat: string
+): DeskLead {
   const tick = job.ticks.find((t) => t.causeId === lead.causeId)?.type ?? null;
   const out: DeskLead = {
     causeId: lead.causeId,
@@ -400,7 +408,7 @@ function deskLead(lead: Lead, job: Job, pill: Pill, state: MemoryState, mode: Ai
   if (!worded) return out;
   if (mode === "off") return { ...out, aiOff: AI_OFF_LABEL };
 
-  const key = rankWordingSpec(pill, lead, { seat: SEAT, version: pill.version, job }).key;
+  const key = rankWordingSpec(pill, lead, { seat, version: pill.version, job }).key;
   const stored = state.leadWordings?.[key];
   if (!stored) return out;
   out.aiCalls = stored.aiCalls;
@@ -437,7 +445,18 @@ function lockedView(state: MemoryState, job: Job, pill: Pill): OpenJobDesk["lock
   return { cards, lockLines };
 }
 
-function openJobDesk(state: MemoryState, job: Job, realNow: Date, mode: AiMode | undefined): OpenJobDesk {
+/**
+ * One job on a desk: its filled checklist, its ranked leads and the pill steps,
+ * through one seat's eyes. The technician's desk uses it, and so does the
+ * senior manager's (C8a: the same filled checklist, its own ranked list).
+ */
+export function openJobDesk(
+  state: MemoryState,
+  job: Job,
+  realNow: Date,
+  mode: AiMode | undefined,
+  seat: string = SEAT
+): OpenJobDesk {
   const pill = loadAndCheckPill("ts-cc", state.liveVersionByBuilding[job.building] ?? "1.0");
   const base = {
     jobId: job.id,
@@ -465,7 +484,7 @@ function openJobDesk(state: MemoryState, job: Job, realNow: Date, mode: AiMode |
     facts,
   });
 
-  const rank = leadsForJob(state, job, SEAT, realNow);
+  const rank = leadsForJob(state, job, seat, realNow);
   const now = memory.now(state, realNow);
 
   return {
@@ -473,8 +492,8 @@ function openJobDesk(state: MemoryState, job: Job, realNow: Date, mode: AiMode |
     locked: null,
     checklist: checklistCards(state, job, pill, calls, recent, repeat, active.note, now),
     note: active.note,
-    leads: rank.leads.map((lead) => deskLead(lead, job, pill, state, mode, true)),
-    ruledOut: rank.ruledOut.map((lead) => deskLead(lead, job, pill, state, mode, false)),
+    leads: rank.leads.map((lead) => deskLead(lead, job, pill, state, mode, true, seat)),
+    ruledOut: rank.ruledOut.map((lead) => deskLead(lead, job, pill, state, mode, false, seat)),
     removed: rank.removed.map((r) => ({ causeId: r.causeId, label: r.label, reason: r.reason })),
     steps: active.steps.map((s) => {
       const step: DeskStep = {

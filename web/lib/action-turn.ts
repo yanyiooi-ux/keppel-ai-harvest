@@ -2,8 +2,8 @@
  * One button press, start to end: the whole of POST /api/action except reading
  * the request and the AI switch's cookie, so a test runs the route's real code.
  *
- * Every press goes through runAction's gate and body. Two kinds of press have an
- * AI part, and both run it outside memory.update, never inside it (S20):
+ * Every press goes through runAction's gate and body. Three kinds of press have an
+ * AI part, and all run it outside memory.update, never inside it (S20):
  *
  * - The self-check answer that ends with tips (S10): the tenant reply is worded
  *   first (S15), only after the seat and status gate passed, so a refused press
@@ -12,19 +12,27 @@
  * - Open job and a tick (C7b): after the press is stored, the job's live leads
  *   are worded with rank-wording (S15, cut 5 built) and each answer is kept by
  *   its replay key in one more update. The screen shows a wording only under
- *   the reason it worded, and a poll never calls the AI.
+ *   the reason it worded, and a poll never calls the AI. Not solved and Send
+ *   with the cause (C8a) word the job's leads for the senior manager's seat,
+ *   whose own ranked list shows them.
+ * - Log new solution (C8a): the new-solution job (S15) runs before the update,
+ *   the same way as the tenant reply.
  */
 
-import { runAction, type ActionInput, type ActionResult } from "./actions";
+import { runAction, openStopsOnJob, type ActionInput, type ActionResult } from "./actions";
 import { planAnswer, replyToWord } from "./self-check-flow";
+import { logNewSolutionRefusal, solutionToWord } from "./senior-manager-flow";
 import { mayPress } from "./permissions";
 import { leadsForJob } from "./leads";
 import { loadAndCheckPill } from "./pill";
-import { tenantReply, rankWording, type AiDeps, type AiMode } from "./ai";
+import { tenantReply, rankWording, newSolution, type AiDeps, type AiMode } from "./ai";
 import * as memory from "./memory";
 
 /** The presses after which the ranking may have changed, so the leads are worded again. */
 const WORDED_AFTER = ["open-job", "tick"];
+
+/** The presses that bring a job to the senior manager (C8a): its own ranked list is worded for that seat. */
+const ESCALATING = ["not-solved", "send-with-cause"];
 
 export async function actionTurn(
   input: ActionInput,
@@ -44,9 +52,32 @@ export async function actionTurn(
     }
   }
 
+  // Log new solution (C8a): the AI drafts the rule text and suggests the fact
+  // and effects from the code menu (S15 new-solution), only after the seat,
+  // status, safety lock and lines checks passed, so a refused press never
+  // reaches the AI. runAction then plans again inside the update and keeps the
+  // answer only if its replay key is the key of exactly these lines.
+  if (input.action === "log-new-solution" && input.jobId) {
+    const state = memory.read();
+    const job = memory.jobById(state, input.jobId);
+    if (
+      job &&
+      mayPress(input.seat, input.action, job.status).allowed &&
+      openStopsOnJob(state, job).length === 0 &&
+      logNewSolutionRefusal(state, input.seat, job, input.payload, realNow) === null
+    ) {
+      const ask = solutionToWord(state, input.seat, job, input.payload);
+      const solutionWording = await newSolution(ask.pill, ask.fixLine, ask.whyLine, ask.place, mode, deps);
+      return runAction(input, realNow, { solutionWording });
+    }
+  }
+
   const result = runAction(input, realNow);
   if (result.ok && input.jobId && WORDED_AFTER.includes(input.action)) {
     await wordJobLeads(input.jobId, input.seat, mode, deps, realNow);
+  }
+  if (result.ok && input.jobId && ESCALATING.includes(input.action)) {
+    await wordJobLeads(input.jobId, "senior-manager", mode, deps, realNow);
   }
   return result;
 }

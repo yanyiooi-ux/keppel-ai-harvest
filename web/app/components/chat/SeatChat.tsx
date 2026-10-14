@@ -5,6 +5,7 @@ import { PipAvatar } from "../PipAvatar";
 import { ChatCard } from "./ChatCard";
 import { QuestRail } from "./QuestRail";
 import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
+import { SeniorManagerDesk, managerBarIsShown } from "./SeniorManagerDesk";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -69,7 +70,22 @@ type Press = (action: string, job?: string, payload?: Record<string, unknown>) =
  * scrolls Pip's new card into view, so on a phone the press is never silent
  * (C7b). A tick or Open job changes the desk in place and scrolls nothing.
  */
-const FOLLOWED_PRESSES = ["solved", "not-solved", "send-with-cause", "safety-pick"];
+const FOLLOWED_PRESSES = [
+  "solved",
+  "not-solved",
+  "send-with-cause",
+  "safety-pick",
+  // The senior manager's presses whose Pip card is the only word on what
+  // happened (C8a). Run tests and Send to HQ show their result in the new
+  // solution card, which brings it into view itself, next to the bar.
+  "ask-outside-help",
+  "clear-stop",
+];
+
+/** The job on this seat's desk: the technician's open job (C7b) or the senior manager's (C8a). */
+function deskJob(state: SeatState | null): string | undefined {
+  return state?.desk?.open?.jobId ?? state?.manager?.open?.open.jobId;
+}
 
 export function SeatChat({
   seat,
@@ -87,11 +103,12 @@ export function SeatChat({
   const [reporting, setReporting] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const call = useRef(fetcher ?? ((input: string, init?: RequestInit) => fetch(input, init)));
-  // The technician's open job (C7b) wins over the page's default job, so the
-  // chips, typed words and Safety picks are about the job on the desk.
-  const activeJob = state?.desk?.open?.jobId ?? jobId;
-  // The technician's Show job: another in-progress job to put on the desk. A
-  // view only: it rides on the state read and is never a press.
+  // The job on the desk (the technician's open job, C7b, or the senior
+  // manager's, C8a) wins over the page's default job, so the chips, typed words
+  // and Safety picks are about the job on the desk.
+  const activeJob = deskJob(state) ?? jobId;
+  // Show job: another job to put on the desk. A view only: it rides on the
+  // state read and is never a press.
   const showJob = useRef<string | undefined>(undefined);
   const root = useRef<HTMLDivElement>(null);
   // How many chat items there were when a followed press or Safety started.
@@ -102,9 +119,9 @@ export function SeatChat({
     const show = showJob.current;
     const response = await call.current(`/api/state?seat=${seat}${show ? `&show=${encodeURIComponent(show)}` : ""}`);
     const data = (await response.json()) as SeatState;
-    // The server shows only a job the technician may work on; once the asked
-    // job has moved on, the desk is back on the open job.
-    if (show && showJob.current === show && data.desk?.open?.jobId !== show) showJob.current = undefined;
+    // The server shows only a job this seat may work on; once the asked job
+    // has moved on, the desk is back on its own job.
+    if (show && showJob.current === show && deskJob(data) !== show) showJob.current = undefined;
     setState(data);
     // A reply the stored messages now hold is dropped for good, so a later
     // Reset (which empties the log) can never bring it back on its own.
@@ -180,9 +197,9 @@ export function SeatChat({
 
   const storedMessages = state?.messages.length ?? 0;
   const shownReplies = replies.filter((reply) => waiting(reply, storedMessages));
-  // On the technician's open job the refusal shows in the bar, next to the
-  // press that made it, so it is on screen on a phone (C7b).
-  const refusedInBar = barIsShown(state?.desk);
+  // On the job on the desk the refusal shows in the bar, next to the press
+  // that made it, so it is on screen on a phone (C7b, C8a).
+  const refusedInBar = barIsShown(state?.desk) || managerBarIsShown(state?.manager);
   // Every stored message is one chat item, numbered in screen order. A local
   // reply counts as the 2 it is stored as (the seat's words and Pip's cards),
   // so the numbers stay the same once a poll brings the stored copy.
@@ -225,6 +242,16 @@ export function SeatChat({
         {state?.desk ? (
           <TechnicianDesk
             desk={state.desk}
+            press={press}
+            onSafety={() => void say(SAFETY_WORD, true)}
+            onShow={showOnDesk}
+            refused={refusedInBar ? refused : null}
+          />
+        ) : null}
+
+        {state?.manager ? (
+          <SeniorManagerDesk
+            desk={state.manager}
             press={press}
             onSafety={() => void say(SAFETY_WORD, true)}
             onShow={showOnDesk}

@@ -72,6 +72,8 @@ export interface OpenRedStop {
   clearedAt: string | null;
   clearedReason: string | null;
   lockedJobIds: string[];
+  /** Clear stop (C8a, S11): "Safety record: Fire Safety Manager told and agreed (role-played)", where the stop needs it. */
+  safetyRecord?: string;
 }
 
 export interface ChatMessage {
@@ -84,7 +86,15 @@ export interface ChatMessage {
 
 export interface Notice {
   seat: string;
-  kind: "speak-first" | "low-confidence" | "alert" | "charge-request" | "escalated";
+  kind:
+    | "speak-first"
+    | "low-confidence"
+    | "alert"
+    | "charge-request"
+    | "escalated"
+    /** C8a: a new solution sent to HQ (A2), and an outside help request (A3). */
+    | "solution-sent"
+    | "outside-help";
   text: string;
   at: string;
   jobId?: string;

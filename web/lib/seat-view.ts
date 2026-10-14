@@ -13,6 +13,7 @@ import type { SeatId } from "./permissions";
 import type { MemoryState } from "./memory";
 import { AI_OFF_LABEL, type AiMode } from "./ai-mode";
 import { technicianDesk, type TechnicianDesk } from "./technician-desk";
+import { managerDesk, type ManagerDesk } from "./senior-manager-desk";
 
 export type CardColour = "green" | "amber" | "red" | "none";
 
@@ -69,6 +70,8 @@ export interface SeatView {
   notices: { kind: string; text: string }[];
   /** The technician seat only (C7b): the job list and the open job's filled checklist and leads. */
   desk?: TechnicianDesk;
+  /** The senior manager seat only (C8a): the jobs that came up, the new solution, cases to confirm, stops to clear. */
+  manager?: ManagerDesk;
 }
 
 /**
@@ -92,8 +95,9 @@ function forMode(card: SeatCard, mode: AiMode | undefined): SeatCard {
 }
 
 /**
- * `show` is the technician's Show job (C7b): another job it has in progress to
- * put on the desk. A view only; technicianDesk ignores a job it may not show.
+ * `show` is Show job: another job to put on the desk (the technician's, C7b,
+ * or the senior manager's, C8a). A view only; each desk ignores a job it may
+ * not show.
  */
 export function seatView(
   state: MemoryState,
@@ -119,5 +123,6 @@ export function seatView(
       .map((n) => ({ kind: n.kind, text: n.text })),
   };
   if (seat === "technician") view.desk = technicianDesk(state, realNow, mode, show);
+  if (seat === "senior-manager") view.manager = managerDesk(state, realNow, mode, show);
   return view;
 }
