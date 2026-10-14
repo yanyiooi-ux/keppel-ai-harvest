@@ -303,7 +303,8 @@ function RequestCard({ request: r, press, refused }: { request: HqRequestRow; pr
 
 // ---- The Building B card (S21) ----
 
-function BuildingBView({ card, press }: { card: HqBuildingB; press: Press }) {
+/** Exported so /how's live wall shows the very same card (C10a). */
+export function BuildingBView({ card, press }: { card: HqBuildingB; press: Press }) {
   return (
     <div className="desk" data-testid="hq-building-b">
       <h4 className="desk-sub">Building B card</h4>

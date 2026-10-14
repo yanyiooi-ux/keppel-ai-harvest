@@ -1838,3 +1838,678 @@ a {
     font-size: 17px;
   }
 }
+
+/* ---------- The judges' page /how (S22, C10a) ---------- */
+
+/* Why, what and how read as one column; the live wall below uses the full
+   width. Every colour is a token from :root. */
+.how {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+}
+
+.how-hero,
+.how-section,
+.how-live-head,
+.how-close {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.how-hero > p,
+.how-section > p,
+.how-live-head > p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.how-kicker {
+  font-family: var(--font-hud);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+  margin: 0;
+}
+
+.how-hero h1 {
+  font-size: 34px;
+  line-height: 1.15;
+  margin: 8px 0 12px;
+}
+
+.how-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.how-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: var(--hud-case);
+}
+
+.how-nav a:hover,
+.ring-seat:hover {
+  border-color: var(--accent);
+}
+
+.how .how-roleplayed {
+  font-size: 13.5px;
+  color: var(--muted);
+  border-left: 2px solid var(--amber);
+  padding-left: 10px;
+}
+
+.how-section {
+  padding-top: 44px;
+}
+
+.how-section h2,
+.how-live-head h2 {
+  font-size: 26px;
+  line-height: 1.2;
+  margin: 6px 0 10px;
+}
+
+.how-sub {
+  font-family: var(--font-hud);
+  font-size: 14px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+  margin: 28px 0 10px;
+}
+
+/* -- 1. Why -- */
+
+.why-headline {
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 14px 0 8px;
+  color: var(--text);
+}
+
+.why-patterns {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 15px;
+  display: grid;
+  gap: 4px;
+}
+
+.why-patterns b {
+  color: var(--text);
+}
+
+.why-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.why-stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+}
+
+.why-stat b {
+  display: block;
+  font-family: var(--font-hud);
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.why-stat span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.why-calls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+}
+
+.why-call {
+  display: grid;
+  grid-template-columns: 62px 48px minmax(0, 1.3fr) minmax(0, 1.2fr) 150px;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 14px;
+  font-size: 14px;
+}
+
+.why-call + .why-call {
+  border-top: 1px dashed var(--line);
+}
+
+.why-date,
+.why-id {
+  font-family: var(--font-hud);
+  font-weight: 600;
+}
+
+.why-date {
+  color: var(--text);
+}
+
+.why-id {
+  color: var(--lit);
+}
+
+.why-what {
+  color: var(--text);
+}
+
+.why-fix {
+  color: var(--muted);
+}
+
+.why-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.why-next {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.badge.open {
+  color: var(--text);
+}
+
+.why-summary {
+  margin: 12px 0 0;
+}
+
+.why-cause {
+  margin-top: 14px;
+}
+
+.how-meter {
+  margin-top: 18px;
+}
+
+.meter-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.meter-table th,
+.meter-table td {
+  padding: 8px 6px;
+  border-top: 1px dashed var(--line);
+  text-align: right;
+  vertical-align: top;
+}
+
+.meter-table thead th {
+  border-top: 0;
+  font-family: var(--font-hud);
+  font-size: 11.5px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+}
+
+.meter-table th[scope="row"],
+.meter-table thead th:first-child {
+  text-align: left;
+}
+
+.meter-table th[scope="row"] {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.meter-table td {
+  font-family: var(--font-hud);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.meter-table .meter-cost-row td {
+  color: var(--accent);
+}
+
+/* -- 2. What -- */
+
+.brain-ring {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "tenant technician senior"
+    "aom core hq"
+    "b b b";
+  gap: 12px;
+  margin: 16px 0 6px;
+}
+
+.ring-tenant {
+  grid-area: tenant;
+}
+.ring-technician {
+  grid-area: technician;
+}
+.ring-senior-manager {
+  grid-area: senior;
+}
+.ring-hq {
+  grid-area: hq;
+}
+.ring-aom-tower-a {
+  grid-area: aom;
+}
+
+.ring-seat,
+.ring-b,
+.brain-core {
+  display: block;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  color: var(--text);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.brain-core {
+  grid-area: core;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.brain-core b {
+  font-family: var(--font-head);
+  font-size: 17px;
+  margin-top: 6px;
+}
+
+.brain-core span {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.ring-approves {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--font-hud);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+  color: var(--muted);
+}
+
+.ring-approves.has {
+  color: var(--accent);
+}
+
+.ring-b {
+  grid-area: b;
+  border-style: dashed;
+  border-color: var(--line-2);
+}
+
+.ring-b .card-from {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.approval-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+}
+
+.approval-list li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.approval-list li + li {
+  border-top: 1px dashed var(--line);
+}
+
+.approval-id {
+  font-family: var(--font-hud);
+  color: var(--accent);
+}
+
+.approval-what {
+  color: var(--text);
+}
+
+.approval-line {
+  grid-column: 2 / -1;
+  font-size: 13px;
+}
+
+.passes {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+.passes b {
+  color: var(--text);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.passes b::after {
+  content: ":";
+}
+
+/* -- 3. How -- */
+
+.how-roles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  align-items: start;
+}
+
+.how-lines,
+.how-steps,
+.how-questions {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.how-steps b,
+.q-text {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.how-steps span,
+.q-answer {
+  display: block;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.how-questions {
+  gap: 12px;
+  font-size: 14.5px;
+}
+
+.how-safety .stop-list {
+  font-size: 12.5px;
+}
+
+/* -- 4. The live chats -- */
+
+.how-live {
+  margin-top: 56px;
+}
+
+/* The bar stays on screen while the wall scrolls past (S22), at every width. */
+.live-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-panel);
+}
+
+.live-steps {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.live-steps summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-btn);
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: var(--hud-case);
+  cursor: pointer;
+}
+
+/* The open steps lie over the chats, under the bar, so opening them never
+   changes the bar's height or moves the page (render check, 390 px). */
+.live-steps ol {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  margin: 0;
+  padding: 12px 14px 12px 36px;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 9px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-panel);
+}
+
+.live-steps li b {
+  display: block;
+  font-family: var(--font-hud);
+  font-size: 11.5px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+}
+
+.live-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+/* Each chat is a column of fixed height: its messages scroll inside, its
+   chips and text box stay at the bottom. */
+.live-tile {
+  display: flex;
+  flex-direction: column;
+  height: 780px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+
+.live-tile .chat.column {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* No bottom padding: a desk's sticky job bar sits flush on the chips, with no
+   strip of scrolled text showing under it (render check, 1280 px). */
+.live-tile .chat-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 0;
+}
+
+.live-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-height: 44px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.live-b {
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.live-b .desk-sub {
+  margin-top: 0;
+}
+
+.how-close {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.close-line {
+  font-family: var(--font-head);
+  font-weight: var(--head-weight);
+  font-size: 22px;
+  line-height: 1.35;
+  color: var(--text);
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .how-hero h1 {
+    font-size: 26px;
+  }
+  .how-section h2,
+  .how-live-head h2 {
+    font-size: 22px;
+  }
+  .why-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .why-call {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "date id status"
+      "what what what"
+      "fix fix fix";
+    gap: 4px 10px;
+  }
+  .why-date {
+    grid-area: date;
+  }
+  .why-id {
+    grid-area: id;
+  }
+  .why-status {
+    grid-area: status;
+    align-items: flex-end;
+  }
+  .why-what {
+    grid-area: what;
+  }
+  .why-fix {
+    grid-area: fix;
+  }
+  .brain-ring {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "core" "tenant" "technician" "senior" "hq" "aom" "b";
+  }
+  .approval-list li {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+  .approval-who,
+  .approval-where,
+  .approval-line {
+    grid-column: 2;
+  }
+  .how-roles,
+  .how-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .meter-table {
+    font-size: 13px;
+  }
+  .live-tile {
+    height: min(760px, 82vh);
+  }
+  .steps-hint {
+    display: none;
+  }
+  .close-line {
+    font-size: 19px;
+  }
+}
