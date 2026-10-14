@@ -8,9 +8,10 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { Ticket } from "./rule-engine";
-import { allCalls } from "./places";
+import { allCalls, spotKey } from "./places";
 import { speakFirstNotices } from "./speak-first";
-import type { MemoryState, Job } from "./memory";
+import { outcomeOf, type Outcome } from "./outcome";
+import type { MemoryState, Job, RuntimeCase } from "./memory";
 
 /**
  * Every ticket in tickets.json plus the jobs created at runtime.
@@ -28,6 +29,37 @@ export function callsForState(state: MemoryState): Ticket[] {
     (j) => !fileIds.has(j.id) && j.status !== "self-check"
   ) as Ticket[];
   return allCalls({ tickets: runtimeOnly });
+}
+
+/**
+ * The outcome of a case saved at runtime, at `now` (S8): its repeat is the
+ * first call at the same spot after it was fixed. The senior manager's case
+ * list and the confirm-cause press read this same answer, so a fix the spot
+ * already called back on is neither offered nor confirmed (S2: "a pending
+ * case").
+ */
+export function runtimeCaseOutcome(state: MemoryState, c: RuntimeCase, now: Date): Outcome {
+  const spot = spotKey(c);
+  const next = callsForState(state)
+    .filter((t) => spotKey(t) === spot && new Date(t.reportedAt) > new Date(c.fixedAt))
+    .sort((a, b) => new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime())[0];
+  return outcomeOf(
+    {
+      id: c.id,
+      building: c.building,
+      floor: c.floor,
+      zone: c.zone,
+      facts: c.facts ?? [],
+      cause: c.causeId,
+      fix: c.fix ?? c.causeId,
+      why: c.why ?? "",
+      fixedBy: c.fixedBy,
+      confirmedBy: c.confirmedBy,
+      closedAt: c.fixedAt,
+      nextCallAt: next ? next.reportedAt : null,
+    },
+    now
+  ).outcome;
 }
 
 /**

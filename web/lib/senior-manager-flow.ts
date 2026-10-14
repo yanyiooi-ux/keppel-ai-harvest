@@ -734,8 +734,9 @@ export function applyClearStop(
   const record = needsSafetyRecord(def);
   if (record) open.safetyRecord = SAFETY_RECORD_LINE;
 
+  // The typed reason ends its own sentence, so the safety record line reads as the next one.
   const body = [
-    `Cleared by ${seatLabel(seat)}, ${dayMonth(at)} ${at.slice(11, 16)}. Reason: ${reason}`,
+    `Cleared by ${seatLabel(seat)}, ${dayMonth(at)} ${at.slice(11, 16)}. Reason: ${/[.!?]$/.test(reason) ? reason : `${reason}.`}`,
     ...(record ? [`${SAFETY_RECORD_LINE}.`, SAFETY_RECORD_NOTE] : []),
   ].join(" ");
   const version = state.liveVersionByBuilding[open.building] ?? "1.0";

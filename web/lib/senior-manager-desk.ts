@@ -24,9 +24,7 @@ import { factLabel } from "./fact-labels";
 import { MENU_FACTS, BLOCK_STEPS, PUT_FIRST_STEPS } from "./conditions";
 import { openJobDesk, type OpenJobDesk } from "./technician-desk";
 import { sendToHqRefusal } from "./actions";
-import { outcomeOf } from "./outcome";
-import { spotKey } from "./places";
-import { callsForState } from "./calls";
+import { runtimeCaseOutcome } from "./calls";
 import { impactLine, costLine, loadImpactRates } from "./impact-rates";
 import { seatLabel, dayMonth, thirtyDayEnd } from "./technician-flow";
 import {
@@ -166,7 +164,11 @@ export interface ManagerStopRow {
   stopId: string;
   place: string;
   title: string;
+  /** The stop's action, word for word from the pill: the red stop card's body (S11). */
+  action?: string;
   call: string;
+  /** "Red stop RS-xx · pill v{version} · AI calls: 0" (S11). */
+  receipt?: string;
   opened: string;
   needsSafetyRecord: boolean;
   safetyRecordLabel?: string;
@@ -362,34 +364,13 @@ function managerOpenJob(state: MemoryState, job: Job, realNow: Date, mode: AiMod
 // ---- Pending cases (S8, cut 7) and open red stops (S11, cut 6) ----
 
 function caseRows(state: MemoryState, realNow: Date): ManagerCaseRow[] {
-  const calls = callsForState(state);
   const now = memory.now(state, realNow);
   const rows: ManagerCaseRow[] = [];
   for (const c of state.runtimeCases) {
     if (c.confirmedBy) continue;
-    const spot = spotKey(c);
-    const next = calls
-      .filter((t) => spotKey(t) === spot && new Date(t.reportedAt) > new Date(c.fixedAt))
-      .sort((a, b) => new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime())[0];
-    const outcome = outcomeOf(
-      {
-        id: c.id,
-        building: c.building,
-        floor: c.floor,
-        zone: c.zone,
-        facts: c.facts ?? [],
-        cause: c.causeId,
-        fix: c.fix ?? c.causeId,
-        why: c.why ?? "",
-        fixedBy: c.fixedBy,
-        confirmedBy: c.confirmedBy,
-        closedAt: c.fixedAt,
-        nextCallAt: next ? next.reportedAt : null,
-      },
-      now
-    ).outcome;
-    // Confirm cause is for a pending case (S2): a fix the spot already called back on is not.
-    if (outcome === "failed") continue;
+    // Confirm cause is for a pending case (S2): a fix the spot already called
+    // back on is not. The press reads the same outcome on the server.
+    if (runtimeCaseOutcome(state, c, now) === "failed") continue;
     const mine = c.fixedBy === SEAT;
     const row: ManagerCaseRow = {
       id: c.id,
@@ -417,7 +398,9 @@ function stopRows(state: MemoryState): ManagerStopRow[] {
       stopId: open.stopId,
       place: `${buildingName(open.building)}, Level ${open.floor}${open.stopId === "RS-08" ? `, ${open.zone}` : ""}`,
       title: def.trigger,
+      action: def.action,
       call: def.who_to_call,
+      receipt: `Red stop ${open.stopId} · pill v${pill.version} · AI calls: 0`,
       opened: `Raised by ${seatLabel(open.openedBySeat)}, ${timeOf(open.openedAt)}. ${open.lockedJobIds.length} job${open.lockedJobIds.length === 1 ? "" : "s"} locked.`,
       needsSafetyRecord: needs,
     };

@@ -770,6 +770,28 @@ a {
   color: var(--amber);
 }
 
+/* A refused Clear stop or Confirm cause shows in the row that was pressed,
+   full width under its button (C8a review). */
+.desk > .notice.refused,
+.job-form > .notice.refused,
+.job-row > .notice.refused {
+  max-width: 100%;
+  align-self: stretch;
+}
+
+.job-row:has(> .notice.refused) {
+  flex-wrap: wrap;
+}
+
+.job-row:has(> .notice.refused) > span {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.job-row > .notice.refused {
+  flex-basis: 100%;
+}
+
 .compose {
   margin: 2px 12px 0;
   display: flex;
@@ -1426,6 +1448,12 @@ a {
 .job-form textarea,
 .part-row textarea {
   resize: vertical;
+}
+
+/* The rule text box grows with its text, so the senior manager sees every
+   word of the rule before pressing Confirm (C8a review). */
+.part-row textarea {
+  field-sizing: content;
 }
 
 .solution-box:empty {

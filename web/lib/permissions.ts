@@ -204,6 +204,24 @@ const MOVED_ON: Partial<Record<JobStatus, string>> = {
 };
 
 /**
+ * Where a job is, for a refused senior manager press on it (C8a): the presses
+ * that need escalated or new-solution-drafted say why in plain words (S3).
+ */
+const NOT_UP_YET = "That job has not come up to the senior manager yet.";
+const SENIOR_MANAGER_WHERE: Partial<Record<JobStatus, string>> = {
+  reported: NOT_UP_YET,
+  "visit-booked": NOT_UP_YET,
+  "in-progress": NOT_UP_YET,
+  escalated: "That job has no new solution drafted yet: log a new solution first.",
+  "new-solution-drafted": "That job has a new solution drafted: it waits for its tests and HQ's decision (A2).",
+  "outside-help-requested": "That job waits for HQ's decision on outside help (A3).",
+  "approved-and-distributed": MOVED_ON["approved-and-distributed"],
+  "pending-30-day": MOVED_ON["pending-30-day"],
+  won: MOVED_ON.won,
+  failed: MOVED_ON.failed,
+};
+
+/**
  * The seat check and, where the gate is a job status, the status check.
  * Gates that are not a job status ("other") are checked in actions.ts.
  */
@@ -247,6 +265,10 @@ export function mayPress(
       }
       const movedOn = MOVED_ON[jobStatus];
       if (movedOn) return { allowed: false, reason: movedOn };
+    }
+    if (seat === "senior-manager") {
+      const where = SENIOR_MANAGER_WHERE[jobStatus];
+      if (where) return { allowed: false, reason: where };
     }
     return {
       allowed: false,

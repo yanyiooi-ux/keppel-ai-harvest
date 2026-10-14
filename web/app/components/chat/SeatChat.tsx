@@ -5,7 +5,7 @@ import { PipAvatar } from "../PipAvatar";
 import { ChatCard } from "./ChatCard";
 import { QuestRail } from "./QuestRail";
 import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
-import { SeniorManagerDesk, managerBarIsShown } from "./SeniorManagerDesk";
+import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPress } from "./SeniorManagerDesk";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -101,7 +101,9 @@ export function SeatChat({
   const [replies, setReplies] = useState<LocalReply[]>([]);
   const [typed, setTyped] = useState("");
   const [reporting, setReporting] = useState(false);
-  const [refused, setRefused] = useState<string | null>(null);
+  // A refused press: its reason, and what was pressed with what, so the
+  // reason can show in the row that was pressed (C8a review).
+  const [refused, setRefused] = useState<RefusedPress | null>(null);
   const call = useRef(fetcher ?? ((input: string, init?: RequestInit) => fetch(input, init)));
   // The job on the desk (the technician's open job, C7b, or the senior
   // manager's, C8a) wins over the page's default job, so the chips, typed words
@@ -175,7 +177,9 @@ export function SeatChat({
           body: JSON.stringify(body),
         });
         const data = (await response.json()) as { ok?: boolean; message?: string; alreadyShown?: boolean };
-        setRefused(data.ok === false ? data.message ?? "That press was refused." : null);
+        setRefused(
+          data.ok === false ? { action, payload, message: data.message ?? "That press was refused." } : null
+        );
         // A refusal shows where it was pressed, and a pick this chat already
         // shows adds nothing: nothing to scroll to.
         if (data.ok === false || data.alreadyShown) followFrom.current = null;
@@ -197,9 +201,13 @@ export function SeatChat({
 
   const storedMessages = state?.messages.length ?? 0;
   const shownReplies = replies.filter((reply) => waiting(reply, storedMessages));
-  // On the job on the desk the refusal shows in the bar, next to the press
-  // that made it, so it is on screen on a phone (C7b, C8a).
-  const refusedInBar = barIsShown(state?.desk) || managerBarIsShown(state?.manager);
+  // A refused Clear stop or Confirm cause shows in the row that was pressed,
+  // wherever that row sits (C8a review). Otherwise, on the job on the desk the
+  // refusal shows in the bar, next to the press that made it, so it is on
+  // screen on a phone (C7b, C8a); with no bar, at the end of the chat.
+  const refusedInRow = managerRowHolds(state?.manager, refused);
+  const refusedInBar = !refusedInRow && (barIsShown(state?.desk) || managerBarIsShown(state?.manager));
+  const refusedText = refused?.message ?? null;
   // Every stored message is one chat item, numbered in screen order. A local
   // reply counts as the 2 it is stored as (the seat's words and Pip's cards),
   // so the numbers stay the same once a poll brings the stored copy.
@@ -245,7 +253,7 @@ export function SeatChat({
             press={press}
             onSafety={() => void say(SAFETY_WORD, true)}
             onShow={showOnDesk}
-            refused={refusedInBar ? refused : null}
+            refused={refusedInBar ? refusedText : null}
           />
         ) : null}
 
@@ -255,7 +263,8 @@ export function SeatChat({
             press={press}
             onSafety={() => void say(SAFETY_WORD, true)}
             onShow={showOnDesk}
-            refused={refusedInBar ? refused : null}
+            refused={refusedInBar ? refusedText : null}
+            rowRefused={refusedInRow ? refused : null}
           />
         ) : null}
 
@@ -287,10 +296,10 @@ export function SeatChat({
           </div>
         ))}
 
-        {refused && !refusedInBar ? (
+        {refusedText && !refusedInBar && !refusedInRow ? (
           <div className="notice refused" role="status">
             <b>not done</b>
-            {refused}
+            {refusedText}
           </div>
         ) : null}
       </div>

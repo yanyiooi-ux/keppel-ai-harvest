@@ -16,7 +16,7 @@ import { loadAndCheckPill } from "./pill";
 import { safetyCardForStop, alertsForStop, alertNoticeText, locksForStop, safetyList, type SafetyCard } from "./safety";
 import type { DraftTestRun } from "./draft-tests";
 import { spotKey } from "./places";
-import { callsForState, postSpeakFirst } from "./calls";
+import { callsForState, postSpeakFirst, runtimeCaseOutcome } from "./calls";
 import { reportRefusal, startReport, planAnswer, applyAnswer, sgStamp } from "./self-check-flow";
 import type { AiOutcome, TenantReply } from "./ai";
 import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
@@ -284,14 +284,20 @@ function storePickedCard(state: MemoryState, seat: string, result: ActionResult,
   });
 }
 
+export const NOT_PENDING =
+  "Confirm cause is only for a pending case: the spot called again within 30 days, so this fix failed.";
+
 /**
  * Confirm a pending case's cause. Refused for the seat that fixed it,
- * because a cause needs a second person (S8).
+ * because a cause needs a second person (S8), and for a case that is not
+ * pending (S2): checked here on the server, at the demo clock's now, with the
+ * same outcome the senior manager's list reads, not only hidden on screen.
  */
 export function confirmCause(
   state: MemoryState,
   seat: string,
-  caseId: string
+  caseId: string,
+  realNow: Date = new Date()
 ): ActionResult {
   const runtimeCase = state.runtimeCases.find((c) => c.id === caseId);
   if (!runtimeCase) {
@@ -305,6 +311,9 @@ export function confirmCause(
   }
   if (runtimeCase.confirmedBy) {
     return { ok: false, message: "That cause is already confirmed." };
+  }
+  if (runtimeCaseOutcome(state, runtimeCase, memory.now(state, realNow)) === "failed") {
+    return { ok: false, message: NOT_PENDING };
   }
   runtimeCase.confirmedBy = seat;
   return { ok: true, message: `Cause confirmed by ${seat}.` };
@@ -488,7 +497,7 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     const caseId = String(payload?.caseId ?? "");
     let result: ActionResult = { ok: false, message: "" };
     memory.update((s) => {
-      result = confirmCause(s, seat, caseId);
+      result = confirmCause(s, seat, caseId, realNow);
     });
     return result;
   }

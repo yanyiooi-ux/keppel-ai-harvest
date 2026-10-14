@@ -39,9 +39,46 @@ export interface SeniorManagerDeskProps {
   onShow?: (jobId: string) => void;
   /** A refused press's reason, shown in the bar so it is on screen next to the press. */
   refused?: string | null;
+  /** A refused Clear stop or Confirm cause, shown where it was pressed (see managerRowHolds). */
+  rowRefused?: RefusedPress | null;
 }
 
-export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = null }: SeniorManagerDeskProps) {
+/** A refused press: what was pressed, with what, and the server's reason. */
+export interface RefusedPress {
+  action: string;
+  payload?: Record<string, unknown>;
+  message: string;
+}
+
+/** The presses made from a row near the top of the desk, not from the job's bar. */
+const ROW_PRESSES = ["clear-stop", "confirm-cause"];
+
+/**
+ * True when the refused press was a Clear stop or a Confirm cause on this
+ * desk: its reason shows where it was pressed, in that row, or where the list
+ * was when the reload no longer shows the row (a stop someone else cleared, a
+ * case the spot called back on). Never far below in the bar or at the end of
+ * the chat, so it is on screen next to the button on a phone (C8a review).
+ */
+export function managerRowHolds(desk: ManagerDesk | undefined, refused: RefusedPress | null): boolean {
+  return Boolean(desk && refused && ROW_PRESSES.includes(refused.action));
+}
+
+function RowRefusal({ message }: { message: string }) {
+  return (
+    <div className="notice refused" role="status">
+      <b>not done</b>
+      {message}
+    </div>
+  );
+}
+
+export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = null, rowRefused = null }: SeniorManagerDeskProps) {
+  // A refused row press shows in its row; with the row gone, under its list or where the list was.
+  const stopRefused = rowRefused?.action === "clear-stop" ? rowRefused : null;
+  const stopInRow = Boolean(stopRefused && desk.stops.some((s) => s.key === stopRefused.payload?.stop));
+  const caseRefused = rowRefused?.action === "confirm-cause" ? rowRefused : null;
+  const caseInRow = Boolean(caseRefused && desk.cases.some((c) => c.id === caseRefused.payload?.caseId));
   return (
     <section className="desk" aria-label="Senior manager desk">
       <article className="card">
@@ -69,12 +106,21 @@ export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = nul
         <>
           <h4 className="desk-sub">Open red stops</h4>
           {desk.stops.map((stop) => (
-            <StopRow key={stop.key} stop={stop} press={press} />
+            <StopRow
+              key={stop.key}
+              stop={stop}
+              press={press}
+              refused={stopInRow && stopRefused?.payload?.stop === stop.key ? stopRefused.message : null}
+            />
           ))}
         </>
       ) : null}
+      {stopRefused && !stopInRow ? <RowRefusal message={stopRefused.message} /> : null}
 
-      {desk.cases.length > 0 ? <CaseList cases={desk.cases} press={press} /> : null}
+      {desk.cases.length > 0 ? (
+        <CaseList cases={desk.cases} press={press} refused={caseInRow ? caseRefused : null} />
+      ) : null}
+      {caseRefused && !caseInRow ? <RowRefusal message={caseRefused.message} /> : null}
 
       {desk.open ? (
         <ManagerJob
@@ -99,7 +145,7 @@ export function managerBarIsShown(desk: ManagerDesk | undefined): boolean {
 
 // ---- Clear stop (S11, cut 6) ----
 
-function StopRow({ stop, press }: { stop: ManagerStopRow; press: Press }) {
+function StopRow({ stop, press, refused }: { stop: ManagerStopRow; press: Press; refused: string | null }) {
   const [reason, setReason] = useState("");
   const [record, setRecord] = useState(false);
   return (
@@ -109,8 +155,9 @@ function StopRow({ stop, press }: { stop: ManagerStopRow; press: Press }) {
         colourWord="Stop"
         from={`${stop.stopId} · ${stop.place}`}
         title={stop.title}
+        body={stop.action}
         call={stop.call}
-        receipt={`Red stop ${stop.stopId} · AI calls: 0`}
+        receipt={stop.receipt ?? `Red stop ${stop.stopId} · AI calls: 0`}
       >
         <p className="code-line">{stop.opened}</p>
         <form
@@ -136,6 +183,7 @@ function StopRow({ stop, press }: { stop: ManagerStopRow; press: Press }) {
           <button type="submit" className="submit" aria-label={`Clear stop ${stop.stopId}`}>
             Clear stop
           </button>
+          {refused ? <RowRefusal message={refused} /> : null}
         </form>
       </ChatCard>
     </div>
@@ -144,12 +192,12 @@ function StopRow({ stop, press }: { stop: ManagerStopRow; press: Press }) {
 
 // ---- Confirm cause (S8, cut 7) ----
 
-function CaseList({ cases, press }: { cases: ManagerCaseRow[]; press: Press }) {
+function CaseList({ cases, press, refused }: { cases: ManagerCaseRow[]; press: Press; refused: RefusedPress | null }) {
   return (
     <ChatCard from="Cases to confirm (S8)" title="A cause needs a second person before it counts as won.">
       <ul className="job-rows">
         {cases.map((c) => (
-          <li key={c.id} className="job-row">
+          <li key={c.id} className="job-row" data-testid={`case-${c.id}`}>
             <span>
               {c.line}
               {c.why ? <span className="job-status">{`Why: ${c.why}`}</span> : null}
@@ -164,6 +212,7 @@ function CaseList({ cases, press }: { cases: ManagerCaseRow[]; press: Press }) {
                 Confirm cause
               </button>
             ) : null}
+            {refused?.payload?.caseId === c.id ? <RowRefusal message={refused.message} /> : null}
           </li>
         ))}
       </ul>
@@ -440,8 +489,16 @@ function PartRow({
 
   let control: React.ReactNode;
   if (part.id === "rule-text") {
+    // The whole rule text shows before it is confirmed, at 390 px too: the box
+    // grows with its text (CSS field-sizing), and rows is the fallback.
     control = (
-      <textarea id={controlId} value={value} rows={3} disabled={!editable} onChange={(event) => setValue(event.target.value)} />
+      <textarea
+        id={controlId}
+        value={value}
+        rows={Math.max(3, Math.ceil(value.length / 36) + 1)}
+        disabled={!editable}
+        onChange={(event) => setValue(event.target.value)}
+      />
     );
   } else if (part.id === "fact") {
     control = (
