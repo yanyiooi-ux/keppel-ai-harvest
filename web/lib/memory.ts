@@ -116,8 +116,23 @@ function dataDir(): string {
   return join(process.cwd(), "data");
 }
 
+/**
+ * The live memory file. Tests point this at their own copy so parallel test
+ * files cannot clobber each other's demo.
+ */
 function statePath(): string {
-  return join(dataDir(), "state.json");
+  return process.env.PILL_DESK_STATE_FILE ?? join(dataDir(), "state.json");
+}
+
+/**
+ * Every write gets its own temp name. A fixed one races: two writers landing
+ * together would rename the same path, and the loser fails with ENOENT or, on
+ * Windows, EPERM. The 2-second poll and a button press land together often.
+ */
+let writeCounter = 0;
+function tempPath(): string {
+  writeCounter += 1;
+  return `${statePath()}.${process.pid}.${writeCounter}.tmp`;
 }
 
 function seedPath(): string {
@@ -125,7 +140,8 @@ function seedPath(): string {
 }
 
 function runtimeDir(): string {
-  return join(dataDir(), "runtime");
+  const override = process.env.PILL_DESK_STATE_FILE;
+  return override ? `${override}.runtime` : join(dataDir(), "runtime");
 }
 
 /**
@@ -145,7 +161,7 @@ export function read(): MemoryState {
 export function update(fn: (state: MemoryState) => void): MemoryState {
   const state = read();
   fn(state);
-  const temp = statePath() + ".tmp";
+  const temp = tempPath();
   writeFileSync(temp, JSON.stringify(state, null, 2), "utf-8");
   renameSync(temp, statePath());
   return state;
@@ -179,7 +195,7 @@ export function resetToSeed(realNow: Date = new Date()): MemoryState {
     mkdirSync(runtime, { recursive: true });
   }
 
-  const temp = statePath() + ".tmp";
+  const temp = tempPath();
   writeFileSync(temp, JSON.stringify(seed, null, 2), "utf-8");
   renameSync(temp, statePath());
   return seed;

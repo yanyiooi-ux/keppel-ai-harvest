@@ -690,6 +690,179 @@ a {
   color: var(--text);
 }
 
+.page h2 {
+  font-size: 15px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+  margin: 28px 0 10px;
+}
+
+.lede {
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.seat-name {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: var(--name-weight);
+  font-size: 15.5px;
+  letter-spacing: 0.03em;
+}
+
+.seat-line,
+.never {
+  display: block;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+.never {
+  color: var(--amber);
+  font-size: 12.5px;
+}
+
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+.plain-list b {
+  color: var(--accent);
+  font-family: var(--font-hud);
+  letter-spacing: 0.06em;
+  margin-right: 6px;
+}
+
+.opening {
+  align-self: flex-start;
+  max-width: 92%;
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-line);
+  border-radius: 10px 10px 10px 2px;
+  padding: 11px 14px;
+}
+
+.opening p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.opening .never {
+  margin-top: 7px;
+}
+
+/* ---------- Building B card ---------- */
+
+.building-b {
+  margin-top: 22px;
+}
+
+.lead-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  counter-reset: lead;
+}
+
+.lead-list li {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  padding: 10px 12px;
+  position: relative;
+}
+
+.lead-list li::before {
+  counter-increment: lead;
+  content: counter(lead);
+  font-family: var(--font-hud);
+  font-size: 11px;
+  color: var(--accent);
+  position: absolute;
+  right: 10px;
+  top: 9px;
+}
+
+.lead-name {
+  display: block;
+  font-weight: 600;
+  font-size: 14.5px;
+  padding-right: 18px;
+}
+
+.lead-tier {
+  display: inline-block;
+  font-size: 10.5px;
+  color: var(--lit);
+  margin: 4px 0 3px;
+}
+
+.lead-reason {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.safety-details {
+  margin-top: 14px;
+}
+
+.safety-details summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: var(--r-chip);
+  background: var(--red-card);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: var(--hud-case);
+  cursor: pointer;
+  list-style: none;
+}
+
+.stop-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stop-list b {
+  color: var(--red);
+  font-family: var(--font-hud);
+  margin-right: 6px;
+}
+
+.open-stop {
+  color: var(--red);
+  margin-top: 10px;
+}
+
+.how-link {
+  margin-top: 26px;
+}
+
 /* On a phone the seat switcher scrolls sideways instead of stacking, so it
    never pushes the chat off the screen. */
 @media (max-width: 560px) {

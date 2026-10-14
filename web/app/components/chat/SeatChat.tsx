@@ -33,6 +33,8 @@ export interface SeatChatProps {
   pollMs?: number;
   variant?: "page" | "column";
   rail?: { title: string; nodes: RailNode[] };
+  /** Pip's first words on this seat (C5b). Plain code, 0 AI. */
+  opening?: { text: string; never: string };
 }
 
 const SAFETY_WORD = "safety";
@@ -45,6 +47,7 @@ export function SeatChat({
   variant = "page",
   rail,
   initial,
+  opening,
 }: SeatChatProps) {
   const [state, setState] = useState<SeatState | null>(initial ?? null);
   const [replies, setReplies] = useState<{ text: string; cards: ServerCard[] }[]>([]);
@@ -96,6 +99,13 @@ export function SeatChat({
       {rail ? <QuestRail title={rail.title} nodes={rail.nodes} /> : null}
 
       <div className="chat-body">
+        {opening ? (
+          <div className="opening">
+            <p>{opening.text}</p>
+            <p className="never">{opening.never}</p>
+          </div>
+        ) : null}
+
         {state?.notices.map((notice, i) => (
           <div className="notice" key={`notice-${i}`}>
             <b>{notice.kind.replace(/-/g, " ")}</b>

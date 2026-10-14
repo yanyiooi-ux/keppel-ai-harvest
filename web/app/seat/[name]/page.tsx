@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 import { SeatChat } from "../../components/chat/SeatChat";
 import { SEAT_LABELS } from "../../../lib/permissions";
+import type { SeatId } from "../../../lib/permissions";
 import { seatView } from "../../../lib/seat-view";
+import { openingLineFor } from "../../../lib/seat-opening";
 import * as memory from "../../../lib/memory";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The seat shell. C5b gives it the job list, the Building B card and the real
- * opening lines; for now it is the chat on the one shared memory, so the old
- * routes have somewhere real to redirect to.
+ * One seat on the one shared memory (S21). Each seat opens with its own line
+ * and chips; C7a to C9 fill in the work each one does.
  *
  * The first state is rendered here on the server, so the notices and chips are
  * on screen before any JavaScript runs.
@@ -22,13 +23,14 @@ export default async function SeatPage({
   const { name } = await params;
   if (!(name in SEAT_LABELS)) notFound();
 
-  const initial = seatView(memory.read(), name);
+  const seat = name as SeatId;
 
   return (
     <SeatChat
-      seat={name}
-      initial={initial}
-      jobId={name === "aom-tower-a" ? undefined : "2318"}
+      seat={seat}
+      initial={seatView(memory.read(), seat)}
+      opening={openingLineFor(seat)}
+      jobId={seat === "aom-tower-a" ? undefined : "2318"}
     />
   );
 }

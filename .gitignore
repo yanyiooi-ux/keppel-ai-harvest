@@ -87,4 +87,7 @@ $RECYCLE.BIN/
 
 # Pill Desk app: demo state and runtime versions are local, the seed is committed
 web/data/state.json
+web/data/state.test-*.json
+web/data/state.json.*.tmp
 web/data/runtime/
+web/data/state.test-*.json.runtime/
