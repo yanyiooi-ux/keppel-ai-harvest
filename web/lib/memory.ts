@@ -109,6 +109,11 @@ export interface Notice {
   raisedBy?: string;
   /** The red stop an alert is about. Raise this stop finds the typed alert by it, not by its words. */
   stopId?: string;
+  /**
+   * The solution (S-n) or A3 request (A3-n) a notice to HQ asks about, so
+   * "What needs me" drops it once HQ has decided it (C8b review).
+   */
+  ref?: string;
 }
 
 export interface RuntimeCase {

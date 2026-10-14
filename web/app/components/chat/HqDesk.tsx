@@ -160,7 +160,7 @@ function SolutionCard({ solution: s, press, refused }: { solution: HqSolutionVie
           <>
             <span className="lead-k">Before it can go live (S16)</span>
             <ul className="card-lines">
-              {s.gates.map((g) => (
+              {[...s.gates, ...(s.baseCheck ? [s.baseCheck] : [])].map((g) => (
                 <li key={g.id}>
                   <span className={`badge ${g.colour}`}>{g.word}</span>
                   {g.label}

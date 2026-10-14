@@ -23,11 +23,11 @@ import { deskLead, type DeskLead } from "./technician-desk";
 import { safetyList } from "./safety";
 import { seatLabel, dayMonth } from "./technician-flow";
 import { partDisplay, parseEffect, runCounts, PART_TITLES, type PartId, type Solution, type SolutionPart, type OutsideHelpRequest } from "./senior-manager-flow";
-import { approveGates, outsideHelpResult, HQ_SIGNATURE } from "./hq-flow";
+import { approveGates, baseRefusal, outsideHelpResult, BASE_CHECK_LABEL, HQ_SIGNATURE } from "./hq-flow";
 import { versionList, liveVersion, versionRecord, BASE_VERSION, type VersionRow } from "./versions";
 import { AI_OFF_LABEL, type AiMode } from "./ai";
 import type { CardColour } from "./seat-view";
-import type { MemoryState } from "./memory";
+import type { MemoryState, Notice } from "./memory";
 
 /** The ticket the Building B card ranks (S21). */
 export const BUILDING_B_JOB_ID = "2401";
@@ -83,6 +83,11 @@ export interface HqSolutionView {
   baseVersion: string;
   /** S16 item 8, gate by gate. Only while the solution waits for HQ. */
   gates: HqGateView[];
+  /**
+   * Shown only when it fails (C8b review): the draft was built on a version
+   * that is not live now, so Approve is refused with this reason.
+   */
+  baseCheck: HqGateView | null;
   /** Approve and Decline are offered (the solution waits for HQ). */
   canDecide: boolean;
   sentLine: string;
@@ -174,10 +179,14 @@ function statusLine(state: MemoryState, s: Solution): string {
   if (s.status === "approved-and-distributed") {
     const approved = `Approved by ${HQ_SIGNATURE}${s.decidedAt ? `, ${timeOf(s.decidedAt)}` : ""}`;
     const record = versionRecord(state, s.version);
-    if (record?.rolledBackAt) {
-      return `${approved}, then rolled back, ${timeOf(record.rolledBackAt)}: every building is on v${record.parent} again.`;
-    }
     const live = liveVersion(state);
+    if (record?.rolledBackAt) {
+      const rolled = `${approved}, then rolled back, ${timeOf(record.rolledBackAt)}`;
+      // A later version may have gone live since: the card says where the buildings are now.
+      return live === record.parent
+        ? `${rolled}: every building is on v${record.parent} again.`
+        : `${rolled}: every building went back to v${record.parent}; v${live} is live now.`;
+    }
     if (live !== s.version) return `${approved}: v${s.version} went live in every building; v${live} is live now.`;
     return `${approved}: v${s.version} is live in every building.`;
   }
@@ -204,6 +213,7 @@ function solutionView(state: MemoryState, s: Solution, place: string): HqSolutio
 
   const run = s.testRun;
   const waiting = s.status === "sent-to-hq";
+  const stale = waiting ? baseRefusal(state, s) : null;
   // A rolled-back version's solution keeps its approval, and says it was rolled back.
   const rolledBack = s.status === "approved-and-distributed" && Boolean(versionRecord(state, s.version)?.rolledBackAt);
   return {
@@ -237,6 +247,9 @@ function solutionView(state: MemoryState, s: Solution, place: string): HqSolutio
           reason: g.reason,
         }))
       : [],
+    baseCheck: stale
+      ? { id: "base", label: BASE_CHECK_LABEL, holds: false, word: "Fails", colour: "red", reason: stale }
+      : null,
     canDecide: waiting,
     sentLine: `Sent by ${seatLabel(s.sentBy)}${s.sentAt ? `, ${timeOf(s.sentAt)}` : ""}.`,
     receipt: `New solution · draft v${s.version} on v${s.baseVersion} · AI calls: ${s.ai.aiCalls}`,
@@ -295,6 +308,21 @@ function requestRows(state: MemoryState): HqRequestRow[] {
 
 // ---- The Building B card (S21) ----
 
+/** The version notices S16 items 9 and 11 send to the Building B card. */
+const VERSION_NOTICE_KINDS = ["version-live", "rolled-back"];
+
+/**
+ * The Building B card's notices, on home and on the HQ seat: every safety
+ * alert S11 routes there, in order, and only the newest version notice, so the
+ * line under the card's live version never contradicts it (C8b review). The
+ * memory keeps every notice; only the card shows fewer.
+ */
+export function buildingBNotices(state: MemoryState): Notice[] {
+  const mine = state.notices.filter((n) => n.seat === "building-b-card");
+  const newestVersion = mine.map((n) => VERSION_NOTICE_KINDS.includes(n.kind)).lastIndexOf(true);
+  return mine.filter((n, i) => !VERSION_NOTICE_KINDS.includes(n.kind) || i === newestVersion);
+}
+
 /**
  * Building B, Level 12 (made up): its live version and ticket 2401's first 3
  * live leads, ranked for the technician seat at the demo clock. Its safety
@@ -316,7 +344,7 @@ export function buildingBView(state: MemoryState, realNow: Date = new Date(), mo
     version,
     ticket: `Ticket ${job.id}, ${job.tenant}: ${job.complaint}, ${job.intake.when}.`,
     leads,
-    alerts: state.notices.filter((n) => n.seat === "building-b-card").map((n) => ({ kind: n.kind, text: n.text })),
+    alerts: buildingBNotices(state).map((n) => ({ kind: n.kind, text: n.text })),
     openHere: state.openRedStops.filter((s) => s.clearedAt === null && s.building === job.building).map((s) => s.stopId),
     stops: safetyList(pill).map((stop) => ({ id: stop.id, trigger: stop.trigger })),
     receipt: `Ranked by the same engine as the technician seat, at the demo clock. AI calls: ${aiCalls}`,

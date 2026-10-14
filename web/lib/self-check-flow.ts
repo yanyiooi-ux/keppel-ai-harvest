@@ -90,6 +90,18 @@ export interface ChargeRequest {
   openedAt: string;
 }
 
+/**
+ * The next A4 request's id, the same rule wherever one opens (the after-hours
+ * self-check here, HQ's Approve in hq-flow.ts): one past every request so far,
+ * and never an id already used, so C9's decide-charge always finds one request.
+ */
+export function nextChargeRequestId(state: MemoryState): string {
+  const used = new Set((state.requests as { id?: string }[]).map((r) => r && r.id));
+  let n = state.requests.length + 1;
+  while (used.has(`A4-${n}`)) n += 1;
+  return `A4-${n}`;
+}
+
 /** The statuses a self-check outcome may move a job from (the self-check job, or one nobody has started on). */
 const MOVES_FROM: Record<"visit-booked" | "pending-30-day", JobStatus[]> = {
   "visit-booked": ["self-check", "reported"],
@@ -447,7 +459,7 @@ export function applyAnswer(
   // 3. After hours Yes: the A4 request for the AOM (S17). No amount, ever.
   if (end.outcome.kind === "after-hours") {
     const request: ChargeRequest = {
-      id: `A4-${state.requests.length + 1}`,
+      id: nextChargeRequestId(state),
       kind: "A4",
       status: "open",
       seat: alertSeatFor("aom", target.building),

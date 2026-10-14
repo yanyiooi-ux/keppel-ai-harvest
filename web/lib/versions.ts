@@ -75,14 +75,24 @@ export function versionRecord(state: MemoryState, version: string): VersionRecor
   return versionRecords(state).find((r) => r.version === version);
 }
 
+/** A solution still on its way to HQ's decision: a draft, or sent to HQ. A declined one frees its number. */
+function pendingVersion(state: MemoryState, version: string): boolean {
+  return (state.solutions as { status?: string; version?: string }[]).some(
+    (s) => s && (s.status === "draft" || s.status === "sent-to-hq") && s.version === version
+  );
+}
+
 /**
  * The version a new solution becomes (S16 item 8: a later solution starts the
  * next version): one step above its base, past every version already made,
- * live, rolled back, shipped or signed. A rolled-back v1.1 is never built again.
+ * live, rolled back, shipped or signed, and past every draft still waiting
+ * for HQ, so two waiting drafts never share a number. A rolled-back v1.1 is
+ * never built again.
  */
 export function nextFreeVersion(state: MemoryState, base: string, pillId = "ts-cc"): string {
   const taken = (v: string) =>
     versionRecords(state).some((r) => r.version === v) ||
+    pendingVersion(state, v) ||
     existsSync(signedPillPath(pillId, v)) ||
     existsSync(join(process.cwd(), "pills", pillId, `v${v}.yaml`));
   let version = nextVersion(base);

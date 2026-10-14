@@ -26,7 +26,7 @@ import { GOLDEN_CASES } from "./golden-cases";
 import { loadCauses } from "./causes";
 import { factsForJob } from "./leads";
 import { hideAmounts } from "./never-list";
-import { sgStamp } from "./self-check-flow";
+import { sgStamp, nextChargeRequestId } from "./self-check-flow";
 import type { ChargeRequest } from "./self-check-flow";
 import { alertSeatFor } from "./permissions";
 import { nextCaseId, seatLabel, dayMonth, SYMPTOM_FACTS } from "./technician-flow";
@@ -222,12 +222,37 @@ function waitingSolution(state: MemoryState, jobId: string): Solution | undefine
   return s && s.status === "sent-to-hq" ? s : undefined;
 }
 
-/** Why Approve is refused, or null: a solution sent to HQ, and every gate of S16 item 8. */
+export const BASE_CHECK_LABEL = "Built on the version live now";
+
+/**
+ * Why a draft cannot go live on the base it was built on, or null (C8b
+ * review). The draft is its base plus one rule, so approving it puts its whole
+ * base live in every building. When the base is not what every building runs
+ * now, that would quietly bring back a version HQ rolled back, or drop what a
+ * later approval added. HQ declines it, and the senior manager logs the
+ * solution again on the live version. Reads only.
+ */
+export function baseRefusal(state: MemoryState, s: Solution): string | null {
+  const lives = Object.values(state.liveVersionByBuilding);
+  if (lives.length > 0 && lives.every((v) => v === s.baseVersion)) return null;
+  const live = liveVersion(state);
+  const again = `Decline it, and the senior manager logs the solution again on v${live}.`;
+  if (versionRecord(state, s.baseVersion)?.rolledBackAt) {
+    return `This draft was built on v${s.baseVersion}, which was rolled back: every building is on v${live} now, so approving it would bring back what v${s.baseVersion} added. ${again}`;
+  }
+  return `This draft was built on v${s.baseVersion}, but v${live} is live in every building now, so approving it would drop what v${live} added. ${again}`;
+}
+
+/** Why Approve is refused, or null: a solution sent to HQ, every gate of S16 item 8, and a base that is live now. */
 export function approveRefusal(state: MemoryState, job: Job): string | null {
   const s = waitingSolution(state, job.id);
   if (!s) return NOT_WAITING(job.id);
-  const failing = approveGates(state, s).filter((g) => !g.holds);
-  if (failing.length > 0) return failing.map((g) => g.reason).join(" ");
+  const reasons = approveGates(state, s)
+    .filter((g) => !g.holds)
+    .map((g) => g.reason as string);
+  const base = baseRefusal(state, s);
+  if (base) reasons.push(base);
+  if (reasons.length > 0) return reasons.join(" ");
   const pillId = (parse(draftText(s)!) as Pill).pill_id || "ts-cc";
   if (versionRecord(state, s.version) || existsSync(signedPillPath(pillId, s.version))) {
     return `v${s.version} is already signed: a later solution starts the next version.`;
@@ -317,7 +342,7 @@ export function applyApprove(state: MemoryState, seat: string, jobId: string, re
   let charge = "";
   if (cause?.tenantItem && facts.includes("fit-out-12m")) {
     const request: ChargeRequest & { causeId: string; tenantSolution: string } = {
-      id: `A4-${(state.requests as { kind?: string }[]).filter((r) => r && r.kind === "A4").length + 1}`,
+      id: nextChargeRequestId(state),
       kind: "A4",
       status: "open",
       seat: alertSeatFor("aom", job.building),

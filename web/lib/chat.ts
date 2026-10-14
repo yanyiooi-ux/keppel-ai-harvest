@@ -18,7 +18,7 @@ import { safetyList, safetyCardForStop } from "./safety";
 import { alertSeatFor } from "./permissions";
 import { versionList } from "./versions";
 import * as memory from "./memory";
-import type { MemoryState, Job } from "./memory";
+import type { MemoryState, Job, Notice } from "./memory";
 
 export const CHIPS_BY_SEAT: Record<string, string[]> = {
   tenant: ["What needs me", "Show job", "Why?", "Safety"],
@@ -282,6 +282,32 @@ function chipAnswer(
   return { ...card, receipt: card.receipt ?? codeReceipt(pill, card.kind === "safety-list" ? "Safety list" : undefined) };
 }
 
+/** The record a notice to HQ asks about: by its ref, else the job's newest one (a notice stored before refs). */
+function askedAbout(records: unknown[], notice: Notice, kindOk: (r: { kind?: string }) => boolean) {
+  const mine = (records as { id?: string; kind?: string; jobId?: string; status?: string }[]).filter(
+    (r) => r && kindOk(r) && r.jobId === notice.jobId
+  );
+  return notice.ref ? mine.find((r) => r.id === notice.ref) : mine[mine.length - 1];
+}
+
+/**
+ * True while a notice still needs its seat (C8b review). HQ's notices about a
+ * new solution (A2) or an outside help request (A3) stop needing HQ once HQ has
+ * decided them; every other notice is listed as before. Reads only.
+ */
+function stillWaitsOnSeat(state: MemoryState, notice: Notice): boolean {
+  if (notice.seat !== "hq") return true;
+  if (notice.kind === "solution-sent") {
+    const s = askedAbout(state.solutions, notice, () => true);
+    return !s || s.status === "sent-to-hq";
+  }
+  if (notice.kind === "outside-help") {
+    const r = askedAbout(state.requests, notice, (x) => x.kind === "A3");
+    return !r || r.status === "open";
+  }
+  return true;
+}
+
 function chipAnswerCard(
   state: MemoryState,
   seat: string,
@@ -295,7 +321,7 @@ function chipAnswerCard(
   }
 
   if (chip === "What needs me") {
-    const mine = state.notices.filter((n) => n.seat === seat);
+    const mine = state.notices.filter((n) => n.seat === seat && stillWaitsOnSeat(state, n));
     return {
       kind: "answer",
       title: "What needs you",

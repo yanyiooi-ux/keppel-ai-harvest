@@ -619,6 +619,7 @@ export function applySendToHq(state: MemoryState, seat: string, jobId: string, r
     ].join("\n"),
     at,
     jobId: job.id,
+    ref: solution.id,
   });
   pipCard(
     state,
@@ -693,6 +694,7 @@ export function applyAskOutsideHelp(
     ].join("\n"),
     at,
     jobId: job.id,
+    ref: request.id,
   });
   pipCard(
     state,

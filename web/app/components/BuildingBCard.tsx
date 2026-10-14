@@ -2,16 +2,18 @@ import { wordLeadsAndCount } from "../../lib/ai-wording";
 import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
+import { buildingBNotices } from "../../lib/hq-desk";
 import * as memory from "../../lib/memory";
 import type { MemoryState } from "../../lib/memory";
 
 /**
  * The notices for Building B's card, the seat alertSeatFor names: the safety
  * alerts S11 routes there, and since C8b the version notices (S16 items 9 and
- * 11: a version went live everywhere, or was rolled back).
+ * 11: a version went live everywhere, or was rolled back), only the newest of
+ * those, the same list the HQ seat's Building B card shows.
  */
 export function buildingBAlerts(state: MemoryState) {
-  return state.notices.filter((n) => n.seat === "building-b-card");
+  return buildingBNotices(state);
 }
 
 /**
