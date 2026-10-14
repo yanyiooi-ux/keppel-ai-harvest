@@ -61,7 +61,11 @@ export function getClient(): OpenAI {
   if (cachedClient) return cachedClient;
   const baseURL = process.env.LLM_BASE_URL;
   const apiKey = process.env.LLM_API_KEY ?? "";
-  cachedClient = new OpenAI({ baseURL, apiKey });
+  // maxRetries 0: the SDK would otherwise quietly retry a 5xx, 429 or dropped
+  // connection twice inside the 8 s window, so one AI job could send 3 requests
+  // while its receipt and the memory's count say 1, and a 429 would use up 3x
+  // the trial quota. One job is one request; a failure goes on to the replay.
+  cachedClient = new OpenAI({ baseURL, apiKey, maxRetries: 0 });
   return cachedClient;
 }
 
@@ -329,9 +333,12 @@ export interface AiPlace {
   job: { id: string; tenant: string; building: string; floor: number };
 }
 
-/** The job's own tenant, building and floor, for the S13 checks. Never sent to the AI. */
+/**
+ * The job's own tenant, building and floor, and the seat (for HQ and the senior
+ * manager both buildings are their own), for the S13 checks. Never sent to the AI.
+ */
 function checkContext(place: AiPlace) {
-  return { tenant: place.job.tenant, building: place.job.building, floor: place.job.floor };
+  return { tenant: place.job.tenant, building: place.job.building, floor: place.job.floor, seat: place.seat };
 }
 
 function keyFor(aiJob: AiJobName, place: AiPlace, text: string): string {

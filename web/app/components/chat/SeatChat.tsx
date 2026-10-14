@@ -171,7 +171,7 @@ function Cards({ cards }: { cards: ServerCard[] }) {
       {cards.map((card, i) => {
         if (card.kind === "safety-list") {
           return (
-            <ChatCard key={i} from="Safety" title={card.title}>
+            <ChatCard key={i} from="Safety" title={card.title} receipt={card.receipt}>
               <ul style={{ margin: 0, paddingLeft: "18px" }}>
                 {card.items?.map((item) => (
                   <li key={item.id}>

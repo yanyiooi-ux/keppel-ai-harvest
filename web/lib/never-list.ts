@@ -9,10 +9,74 @@
 
 import type { Pill, TenantTip } from "./pill";
 import { checkWording } from "./wording-check";
+import { loadBuildings } from "./facts";
 
 export interface ScanResult {
   violated: string[];
   items: { id: string; text: string }[];
+}
+
+/**
+ * Whose text it is: the job's own tenant, building (its id, such as "tower-a",
+ * or its name) and floor, and the seat. Without it, only tenant names count.
+ */
+export interface ScanContext {
+  tenant?: string;
+  building?: string;
+  floor?: number;
+  seat?: string;
+}
+
+/** For these seats both buildings count as their own (S13 item 4). */
+const BOTH_BUILDINGS_SEATS = ["hq", "senior-manager"];
+
+/**
+ * The buildings and floors a text names: "Tower B", "Building B", "Block 5",
+ * "Level 12", "Floor 7", "L12", "12th floor". A building needs its letter or
+ * number right after the word, so "the building" and "this floor" name nothing.
+ */
+export function placesNamed(text: string): { buildings: string[]; floors: number[] } {
+  const buildings: string[] = [];
+  for (const m of text.matchAll(/\b(tower|building|block|blk)\s+([A-Z]|\d{1,3})\b/gi)) {
+    const word = m[1].toLowerCase();
+    // "I" is the word I. After "building" or "block" a small letter is a word,
+    // not a name ("building a case", "block a grille"); after "tower" it is a name.
+    // "block" with a number is the new-solution menu's verb ("block 25"), not a place.
+    if (m[2] === "I" || m[2] === "i") continue;
+    if (/^[a-z]$/.test(m[2]) && word !== "tower") continue;
+    if (word === "block" && /^\d/.test(m[2])) continue;
+    buildings.push(`${word} ${m[2].toLowerCase()}`);
+  }
+  const floors: number[] = [];
+  for (const m of text.matchAll(/\b(?:level|floor|storey|lvl|flr)\s*#?\s*(\d{1,3})\b/gi)) floors.push(Number(m[1]));
+  for (const m of text.matchAll(/\b(\d{1,3})(?:st|nd|rd|th)\s+(?:floor|storey|level)\b/gi)) floors.push(Number(m[1]));
+  for (const m of text.matchAll(/\bL(\d{1,3})\b/g)) floors.push(Number(m[1]));
+  return { buildings, floors };
+}
+
+/**
+ * True when the text names a building or floor that is not the seat's own
+ * (S13 item 4): the job's own building and floor, or, for HQ and the senior
+ * manager, every building and floor in buildings.json. With no building in the
+ * context there is nothing to compare with, so nothing is blocked.
+ */
+function namesAnotherPlace(text: string, context: ScanContext): boolean {
+  if (!context.building) return false;
+  const named = placesNamed(text);
+  if (named.buildings.length === 0 && named.floors.length === 0) return false;
+
+  const own = context.building.toLowerCase();
+  const all = loadBuildings();
+  const both = BOTH_BUILDINGS_SEATS.includes(context.seat ?? "");
+  const mine = both ? all : all.filter((b) => b.id.toLowerCase() === own || b.name.toLowerCase() === own);
+  const ownNames = new Set([own.replace(/-/g, " "), ...mine.map((b) => b.name.toLowerCase())]);
+  const ownFloors = new Set<number>(
+    both ? mine.flatMap((b) => b.floors.map((f) => f.floor)) : context.floor !== undefined ? [context.floor] : []
+  );
+
+  if (named.buildings.some((b) => !ownNames.has(b))) return true;
+  if (ownFloors.size > 0 && named.floors.some((f) => !ownFloors.has(f))) return true;
+  return false;
 }
 
 // Money marks and words
@@ -85,11 +149,7 @@ function matchPrice(text: string): boolean {
  * The never-list scanner. Replaces checkNeverList.
  * Scans text and returns the pill's never_list ids that were violated.
  */
-export function scanNeverList(
-  pill: Pill,
-  text: string,
-  context?: { tenant?: string; building?: string; floor?: number }
-): ScanResult {
+export function scanNeverList(pill: Pill, text: string, context?: ScanContext): ScanResult {
   const lower = text.toLowerCase();
   const violated: string[] = [];
   const items: { id: string; text: string }[] = [];
@@ -107,9 +167,8 @@ export function scanNeverList(
     }
 
     if (item.id === "never-cross-tenant") {
-      // Check for other tenant names, buildings, or floors
-      // This is checked against the context (tenant, building, floor)
-      // For now, check for known tenant names not matching the context
+      // Another tenant's name, or a building or floor that is not the seat's
+      // own (S13 item 4), checked against the context (tenant, building, floor, seat).
       if (context) {
         const knownTenants = ["northwind advisory", "meridian partners"];
         for (const t of knownTenants) {
@@ -118,6 +177,7 @@ export function scanNeverList(
             break;
           }
         }
+        if (namesAnotherPlace(text, context)) triggered = true;
       } else {
         // Without context, any tenant name triggers
         if (knownTenantNames.some((t) => lower.includes(t))) triggered = true;
@@ -168,9 +228,10 @@ export function passesNeverList(pill: Pill, text: string): boolean {
  */
 export function neverListRefusalCard(
   pill: Pill,
-  text: string
+  text: string,
+  context?: ScanContext
 ): { id: string; trigger: string; action: string; whoToCall: string; receipt: string; pointer: string } | null {
-  const result = scanNeverList(pill, text);
+  const result = scanNeverList(pill, text, context);
   if (result.violated.length === 0) return null;
 
   const stop = pill.red_stops.find((s) => s.id === "RS-10");
@@ -251,8 +312,8 @@ export function checkTenantText(
     violations.push("too many sentences");
   }
 
-  // Check against the job's own tenant, building and floor
-  // (handled by scanNeverList for cross-tenant)
+  // The job's own tenant, building and floor are checked by scanNeverList
+  // (never-cross-tenant), which tenantReplyOrTips runs with the same context.
 
   return {
     passes: violations.length === 0,
@@ -270,7 +331,7 @@ export function tenantReplyOrTips(
   pill: Pill,
   aiText: string | null,
   tips: TenantTip[],
-  context: { tenant: string; building: string; floor: number }
+  context: { tenant: string; building: string; floor: number; seat?: string }
 ): { source: "ai" | "tips"; lines: string[]; violations: string[] } {
   const tipLines = tips.map((t) => t.text);
   if (aiText === null || aiText.trim().length === 0) {

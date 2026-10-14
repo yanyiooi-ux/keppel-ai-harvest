@@ -1,4 +1,4 @@
-import { wordLeads } from "../../lib/ai-wording";
+import { wordLeadsAndCount } from "../../lib/ai-wording";
 import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
@@ -27,7 +27,8 @@ export async function BuildingBCard() {
   const version = state.liveVersionByBuilding[job.building] ?? "1.0";
   // The leads come from the engine; the AI may only add a line under each
   // code reason (S14, S15), and never changes which leads show or their order.
-  const worded = await wordLeads(state, job, "technician", await currentAiMode());
+  // Its model calls are added to the memory's AI call count (S20).
+  const worded = await wordLeadsAndCount(state, job, "technician", await currentAiMode());
   const pill = loadAndCheckPill("ts-cc", version);
   const openHere = state.openRedStops.filter(
     (s) => s.clearedAt === null && s.building === job.building

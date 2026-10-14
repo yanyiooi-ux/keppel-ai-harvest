@@ -104,3 +104,26 @@ export async function wordLeads(
     aiOff: mode === "off" ? AI_OFF_LABEL : null,
   };
 }
+
+/**
+ * wordLeads, then the model calls it made are added to the memory's AI call
+ * count (S20), after the calls and never inside them. With no calls (Replay,
+ * Off, no key) nothing is written. The Building B card uses this.
+ */
+export async function wordLeadsAndCount(
+  state: MemoryState,
+  job: Job,
+  seat: string,
+  mode: AiMode,
+  deps?: AiDeps,
+  realNow: Date = new Date(),
+  limit = 3
+): Promise<WordedLeads> {
+  const worded = await wordLeads(state, job, seat, mode, deps, realNow, limit);
+  if (worded.aiCalls > 0) {
+    memory.update((s) => {
+      s.aiCalls = (s.aiCalls ?? 0) + worded.aiCalls;
+    });
+  }
+  return worded;
+}

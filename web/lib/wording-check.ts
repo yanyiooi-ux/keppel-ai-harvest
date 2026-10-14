@@ -156,6 +156,39 @@ function tokens(text: string): { numbers: Set<string>; ruleIds: Set<string>; ver
   return { numbers, ruleIds, versions };
 }
 
+/**
+ * Each number with what it counts, so the AI cannot move a number to a new
+ * place (S14: "The AI text never changes ... a number"): "3 of 4" as a pair, a
+ * number with the word right after it ("15 minutes", "4 similar"), and a number
+ * with letters stuck to it ("1st"). Rule ids and versions are left out; they are
+ * checked whole. A number with nothing after it is checked by the number check.
+ */
+export function numberPhrases(text: string): string[] {
+  const t = digitsForWordNumbers(text)
+    .toLowerCase()
+    .replace(/\bts-cc-\d+\b/g, " ")
+    .replace(/\bv\d+(?:\.\d+)+\b/g, " ")
+    .replace(/\s+/g, " ");
+  const phrases: string[] = [];
+  const re = /(?<![\w.-])(\d+(?:\.\d+)?)([a-z]+)?(?:\s+of\s+(\d+(?:\.\d+)?)(?!\w)(?!\.\d)|\s+([a-z]+))?/g;
+  for (const m of t.matchAll(re)) {
+    const [, n, stuck, of, word] = m;
+    if (stuck) phrases.push(`${n}${stuck}`);
+    else if (of) phrases.push(`${n} of ${of}`);
+    else if (word) phrases.push(`${n} ${word}`);
+  }
+  return phrases;
+}
+
+/** True when the code text says the same number phrase; "15 minute" matches "15 minutes". */
+function codeSaysPhrase(codeText: string, phrase: string): boolean {
+  const code = digitsForWordNumbers(codeText).toLowerCase().replace(/\s+/g, " ");
+  const parts = phrase.split(" ");
+  const last = parts[parts.length - 1];
+  const loose = /^[a-z]+$/.test(last) && parts.length === 2 ? `${escapeRe(parts[0])} ${escapeRe(last.replace(/s$/, ""))}s?` : escapeRe(phrase);
+  return new RegExp(`(?<![\\w.-])${loose}(?!\\w)(?!\\.\\d)`).test(code);
+}
+
 export interface WordingResult {
   passes: boolean;
   errors: string[];
@@ -180,6 +213,9 @@ export function checkWording(aiText: string, codeText: string, kind: "rank" | "t
   for (const id of mine.ruleIds) if (!theirs.ruleIds.has(id)) errors.push(`rule ${id} is not in the code text`);
   for (const v of mine.versions) if (!theirs.versions.has(v)) errors.push(`version ${v} is not in the code text`);
   for (const n of mine.numbers) if (!theirs.numbers.has(n)) errors.push(`the number ${n} is not in the code text`);
+  for (const p of numberPhrases(aiText)) {
+    if (!codeSaysPhrase(codeText, p)) errors.push(`"${p}" is not said that way in the code text`);
+  }
 
   for (const word of BLOCKED_UNLESS_CODE_USES) {
     if (usesWord(ai, word) && !usesWord(codeText, word)) errors.push(`"${word}" is blocked unless the code text uses it`);

@@ -173,13 +173,15 @@ export function handleTyped(
     return { storedText, cards, chips, alerts, matched: "safety" };
   }
 
-  const scan = scanNeverList(pill, text, {
+  const scanContext = {
     tenant: job?.tenant,
     building: job?.building,
     floor: job?.floor,
-  });
+    seat,
+  };
+  const scan = scanNeverList(pill, text, scanContext);
   if (scan.violated.length > 0) {
-    const refusal = neverListRefusalCard(pill, text);
+    const refusal = neverListRefusalCard(pill, text, scanContext);
     return {
       storedText,
       cards: refusal
@@ -217,6 +219,7 @@ export function handleTyped(
       {
         kind: "answer",
         body: "I did not catch that. Try one of these.",
+        receipt: codeReceipt(pill),
       },
     ],
     chips,
@@ -225,7 +228,29 @@ export function handleTyped(
   };
 }
 
+/**
+ * The receipt of a card code made with no AI (S1, S15): the pill version and
+ * AI calls 0. Red stop and refusal cards carry their own, with their stop id;
+ * the AI layer sets the receipt of a card it words.
+ */
+function codeReceipt(pill: ReturnType<typeof loadAndCheckPill>, what?: string): string {
+  return `${what ? `${what} · ` : ""}pill v${pill.version} · AI calls: 0`;
+}
+
+/** A chip's answer card, always with its receipt (S15 "Each card's receipt shows its AI calls"). */
 function chipAnswer(
+  state: MemoryState,
+  seat: string,
+  chip: string,
+  job: Job | undefined,
+  realNow: Date,
+  pill: ReturnType<typeof loadAndCheckPill>
+): ChatCard {
+  const card = chipAnswerCard(state, seat, chip, job, realNow, pill);
+  return { ...card, receipt: card.receipt ?? codeReceipt(pill, card.kind === "safety-list" ? "Safety list" : undefined) };
+}
+
+function chipAnswerCard(
   state: MemoryState,
   seat: string,
   chip: string,
