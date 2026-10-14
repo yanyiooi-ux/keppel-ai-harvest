@@ -61,8 +61,10 @@ export interface ActionResult {
   notBuiltYet?: boolean;
   /** The job a press made or landed on (report, answer). */
   jobId?: string;
-  /** A pick of a stop already open there: no second stop, no alert and no second card (S11). */
+  /** A pick of a stop already open there: no second stop and no alert (S11). */
   alreadyOpen?: boolean;
+  /** The pressing seat's chat already holds that open stop's card, so the pick shows nothing new. */
+  alreadyShown?: boolean;
 }
 
 /** What a press may carry besides the person's input: code-made, never from the request. */
@@ -128,8 +130,10 @@ export function safetyPick(
   const card = safetyCardForStop(stop, version);
 
   // The same stop is already open on this spot: a second press opens no second
-  // stop and sends no alert (S11). It stays open until Reset.
-  const alreadyOpen = state.openRedStops.some(
+  // stop and sends no alert (S11). It stays open until Reset. Picking it still
+  // shows its card in a seat that has not seen it yet (S11: "Picking one shows
+  // that stop's card"); the same seat's second press shows nothing new.
+  const open = state.openRedStops.find(
     (s) =>
       s.clearedAt === null &&
       s.stopId === stopId &&
@@ -138,12 +142,13 @@ export function safetyPick(
       s.floor === spot.floor &&
       (stopId !== "RS-08" || s.zone === spot.zone)
   );
-  if (alreadyOpen) {
+  if (open) {
     return {
       ok: true,
       message: `Red stop ${stopId} is already open here. No second alert.`,
       cards: [{ ...card, alerts: [] }],
       alreadyOpen: true,
+      alreadyShown: seatShowsPickedCard(state, seat, stopId, open.openedAt),
     };
   }
 
@@ -211,6 +216,24 @@ export function safetyPick(
     } locked.`,
     cards: [{ ...card, alerts }],
   };
+}
+
+/**
+ * True when the seat's chat already holds the picked card of a stop opened at
+ * `since`: a card from a pick, not a typed-words card (that one carries Raise
+ * this stop). A card from before the stop opened is for an earlier stop.
+ */
+function seatShowsPickedCard(state: MemoryState, seat: string, stopId: string, since: string): boolean {
+  const from = new Date(since).getTime();
+  return state.messages.some(
+    (m) =>
+      m.seat === seat &&
+      m.from === "pip" &&
+      new Date(m.at).getTime() >= from &&
+      ((m.cards ?? []) as { kind?: string; stopId?: string; raiseStopId?: string }[]).some(
+        (c) => c.kind === "red-stop" && c.stopId === stopId && c.raiseStopId === undefined
+      )
+  );
 }
 
 /**
@@ -328,8 +351,9 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     memory.update((s) => {
       const at = sgStamp(memory.now(s, realNow));
       result = safetyPick(s, seat, stopId, jobId, source, at);
-      // A stop already open there shows nothing new: no second card (S11).
-      if (result.ok && !result.alreadyOpen) storePickedCard(s, seat, result, at);
+      // A stop already open there shows its card once in each seat's chat:
+      // the same seat's second press shows nothing new (S11).
+      if (result.ok && !result.alreadyShown) storePickedCard(s, seat, result, at);
     });
     return result;
   }

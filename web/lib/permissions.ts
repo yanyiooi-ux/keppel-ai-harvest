@@ -192,6 +192,17 @@ export interface PermissionResult {
   reason?: string;
 }
 
+/** Where a job went after the technician's part, for a refused press on it (S3). */
+const MOVED_ON: Partial<Record<JobStatus, string>> = {
+  escalated: "That job is escalated: it is with the senior manager now.",
+  "new-solution-drafted": "That job is escalated: the senior manager is drafting a new solution for it.",
+  "outside-help-requested": "That job is escalated: it waits for HQ's decision on outside help (A3).",
+  "approved-and-distributed": "That job is solved: its new solution is live and it waits for its 30-day check.",
+  "pending-30-day": "That job is solved: it waits for its 30-day check.",
+  won: "That job is closed: it passed its 30-day check.",
+  failed: "That job is closed: the spot called again within 30 days.",
+};
+
 /**
  * The seat check and, where the gate is a job status, the status check.
  * Gates that are not a job status ("other") are checked in actions.ts.
@@ -225,11 +236,17 @@ export function mayPress(
     if (jobStatus === "self-check") {
       return { allowed: false, reason: "That job is still in the tenant's self-check." };
     }
-    if (actionId === "open-job") {
-      return { allowed: false, reason: "That job is already open." };
-    }
-    if (gate.includes("in-progress")) {
-      return { allowed: false, reason: "Open the job first." };
+    // The technician's presses (open-job, and those that need in-progress) on
+    // a job that has moved on say where it went (S3: a refused move says why).
+    if (actionId === "open-job" || gate.includes("in-progress")) {
+      if (actionId === "open-job" && jobStatus === "in-progress") {
+        return { allowed: false, reason: "That job is already open." };
+      }
+      if (actionId !== "open-job" && (jobStatus === "reported" || jobStatus === "visit-booked")) {
+        return { allowed: false, reason: "Open the job first." };
+      }
+      const movedOn = MOVED_ON[jobStatus];
+      if (movedOn) return { allowed: false, reason: movedOn };
     }
     return {
       allowed: false,

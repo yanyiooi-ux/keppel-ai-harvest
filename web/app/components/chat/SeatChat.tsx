@@ -64,6 +64,13 @@ function waiting(reply: LocalReply, storedMessages: number): boolean {
 
 type Press = (action: string, job?: string, payload?: Record<string, unknown>) => Promise<void>;
 
+/**
+ * Presses whose result lands at the end of the chat: when one works, the chat
+ * scrolls Pip's new card into view, so on a phone the press is never silent
+ * (C7b). A tick or Open job changes the desk in place and scrolls nothing.
+ */
+const FOLLOWED_PRESSES = ["solved", "not-solved", "send-with-cause", "safety-pick"];
+
 export function SeatChat({
   seat,
   jobId,
@@ -83,10 +90,21 @@ export function SeatChat({
   // The technician's open job (C7b) wins over the page's default job, so the
   // chips, typed words and Safety picks are about the job on the desk.
   const activeJob = state?.desk?.open?.jobId ?? jobId;
+  // The technician's Show job: another in-progress job to put on the desk. A
+  // view only: it rides on the state read and is never a press.
+  const showJob = useRef<string | undefined>(undefined);
+  const root = useRef<HTMLDivElement>(null);
+  // How many chat items there were when a followed press or Safety started.
+  const followFrom = useRef<number | null>(null);
+  const itemCount = useRef(0);
 
   const load = useCallback(async () => {
-    const response = await call.current(`/api/state?seat=${seat}`);
+    const show = showJob.current;
+    const response = await call.current(`/api/state?seat=${seat}${show ? `&show=${encodeURIComponent(show)}` : ""}`);
     const data = (await response.json()) as SeatState;
+    // The server shows only a job the technician may work on; once the asked
+    // job has moved on, the desk is back on the open job.
+    if (show && showJob.current === show && data.desk?.open?.jobId !== show) showJob.current = undefined;
     setState(data);
     // A reply the stored messages now hold is dropped for good, so a later
     // Reset (which empties the log) can never bring it back on its own.
@@ -102,8 +120,11 @@ export function SeatChat({
   }, [load, pollMs]);
 
   const say = useCallback(
-    async (text: string) => {
+    async (text: string, follow = false) => {
       if (!text.trim()) return;
+      // Safety's list lands at the end of the chat, far below the bar on a
+      // phone: the chat scrolls it into view (S11 "One tap opens all 10").
+      followFrom.current = follow ? itemCount.current : null;
       const response = await call.current("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,6 +145,9 @@ export function SeatChat({
     async (action, job, payload) => {
       if (pressing.current) return;
       pressing.current = true;
+      followFrom.current = FOLLOWED_PRESSES.includes(action) ? itemCount.current : null;
+      // A job just opened goes on the desk.
+      if (action === "open-job") showJob.current = undefined;
       try {
         const body: Record<string, unknown> = { seat, action };
         if (job) body.job = job;
@@ -133,8 +157,11 @@ export function SeatChat({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const data = (await response.json()) as { ok?: boolean; message?: string };
+        const data = (await response.json()) as { ok?: boolean; message?: string; alreadyShown?: boolean };
         setRefused(data.ok === false ? data.message ?? "That press was refused." : null);
+        // A refusal shows where it was pressed, and a pick this chat already
+        // shows adds nothing: nothing to scroll to.
+        if (data.ok === false || data.alreadyShown) followFrom.current = null;
         await load();
       } finally {
         pressing.current = false;
@@ -143,14 +170,36 @@ export function SeatChat({
     [seat, load]
   );
 
+  const showOnDesk = useCallback(
+    (id: string) => {
+      showJob.current = id;
+      void load();
+    },
+    [load]
+  );
+
   const storedMessages = state?.messages.length ?? 0;
   const shownReplies = replies.filter((reply) => waiting(reply, storedMessages));
   // On the technician's open job the refusal shows in the bar, next to the
   // press that made it, so it is on screen on a phone (C7b).
   const refusedInBar = barIsShown(state?.desk);
+  // Every stored message is one chat item, numbered in screen order. A local
+  // reply counts as the 2 it is stored as (the seat's words and Pip's cards),
+  // so the numbers stay the same once a poll brings the stored copy.
+  const items = storedMessages + 2 * shownReplies.length;
+
+  // Once the followed press's or Safety's first new item is on screen, scroll
+  // it to the top of the view, once.
+  useEffect(() => {
+    itemCount.current = items;
+    const from = followFrom.current;
+    if (from === null || items <= from) return;
+    followFrom.current = null;
+    root.current?.querySelector(`[data-item="${from}"]`)?.scrollIntoView?.({ block: "start" });
+  }, [items]);
 
   return (
-    <div className={variant === "column" ? "chat column" : "chat"}>
+    <div ref={root} className={variant === "column" ? "chat column" : "chat"}>
       <header className="chat-head">
         <div className="avatar">
           <PipAvatar />
@@ -177,7 +226,8 @@ export function SeatChat({
           <TechnicianDesk
             desk={state.desk}
             press={press}
-            onSafety={() => void say(SAFETY_WORD)}
+            onSafety={() => void say(SAFETY_WORD, true)}
+            onShow={showOnDesk}
             refused={refusedInBar ? refused : null}
           />
         ) : null}
@@ -191,17 +241,21 @@ export function SeatChat({
 
         {state?.messages.map((message, i) =>
           message.from === "person" ? (
-            <div className="sent" key={`m-${i}`}>
+            <div className="sent" key={`m-${i}`} data-item={i}>
               {message.text}
             </div>
           ) : (
-            <Cards key={`m-${i}`} cards={message.cards ?? []} press={press} jobId={activeJob} />
+            <div className="msg" key={`m-${i}`} data-item={i}>
+              <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
+            </div>
           )
         )}
 
         {shownReplies.map((reply, i) => (
           <div key={`r-${i}`} style={{ display: "contents" }}>
-            <div className="sent">{reply.text}</div>
+            <div className="sent" data-item={storedMessages + 2 * i}>
+              {reply.text}
+            </div>
             <Cards cards={reply.cards} press={press} jobId={activeJob} />
           </div>
         ))}
@@ -244,7 +298,7 @@ export function SeatChat({
               {chip}
             </button>
           ))}
-        <button className="safety-btn" onClick={() => void say(SAFETY_WORD)}>
+        <button className="safety-btn" onClick={() => void say(SAFETY_WORD, true)}>
           Safety
         </button>
       </div>

@@ -11,7 +11,10 @@ export const dynamic = "force-dynamic";
  * demo; the seat only changes which notices and chips come back (S2).
  */
 export async function GET(request: Request) {
-  const seat = new URL(request.url).searchParams.get("seat") ?? "";
+  const params = new URL(request.url).searchParams;
+  const seat = params.get("seat") ?? "";
+  // The technician's Show job (C7b): which of its open jobs is on the desk. A view only.
+  const show = params.get("show") ?? undefined;
   if (!(seat in SEAT_LABELS)) {
     return NextResponse.json(
       { ok: false, message: `There is no seat called "${seat}".` },
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    ...seatView(state, seat, aiMode),
+    ...seatView(state, seat, aiMode, new Date(), show),
     aiMode,
     now: memory.now(state).toISOString(),
     demoNow: state.demoNow,

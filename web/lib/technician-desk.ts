@@ -121,7 +121,10 @@ export interface DeskJobRow {
   reported: string;
   status: JobStatus;
   canOpen: boolean;
+  /** On the desk now. */
   isOpen: boolean;
+  /** An in-progress job that is not on the desk: Show job brings it back (a view, no press). */
+  canShow?: boolean;
 }
 
 export interface TechnicianDesk {
@@ -492,13 +495,28 @@ function openJobDesk(state: MemoryState, job: Job, realNow: Date, mode: AiMode |
 /**
  * The technician seat's desk. `mode` is where the AI switch stands: on Off the
  * leads carry the "AI off" label and no AI line (S15).
+ *
+ * The desk shows the job the technician opened last (S2's home spot), or
+ * `show`, another Tower A job the technician has open (in progress), so a
+ * second Open job never leaves the first one out of reach. Showing is a view
+ * only: it writes nothing, and every press still goes through the server's gate.
  */
-export function technicianDesk(state: MemoryState, realNow: Date = new Date(), mode?: AiMode): TechnicianDesk {
+export function technicianDesk(
+  state: MemoryState,
+  realNow: Date = new Date(),
+  mode?: AiMode,
+  show?: string
+): TechnicianDesk {
   const openId = state.openJobBySeat?.[SEAT];
+  const asked = show ? memory.jobById(state, show) : undefined;
+  const shownId =
+    asked && asked.building === TECHNICIAN_BUILDING && (asked.status === "in-progress" || asked.id === openId)
+      ? asked.id
+      : openId;
   const jobs = state.jobs
     .filter((j) => j.building === TECHNICIAN_BUILDING && (FOR_THE_TECHNICIAN.includes(j.status) || j.id === openId))
     .sort((a, b) => a.id.localeCompare(b.id));
-  const open = openId ? memory.jobById(state, openId) : undefined;
+  const open = shownId ? memory.jobById(state, shownId) : undefined;
 
   return {
     title: "Jobs in Tower A",
@@ -510,6 +528,7 @@ export function technicianDesk(state: MemoryState, realNow: Date = new Date(), m
       status: j.status,
       canOpen: mayPress(SEAT, "open-job", j.status).allowed,
       isOpen: open?.id === j.id,
+      canShow: open?.id !== j.id && (j.status === "in-progress" || j.id === openId),
     })),
     open: open ? openJobDesk(state, open, realNow, mode) : null,
   };

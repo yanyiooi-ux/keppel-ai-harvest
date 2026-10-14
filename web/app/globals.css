@@ -313,6 +313,19 @@ a {
   gap: 12px;
 }
 
+/* One of Pip's messages: its cards, spaced like the rest of the chat. The
+   wrapper is what the chat scrolls to after a press (C7b). */
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.msg:empty {
+  display: none;
+}
+
 .sent {
   align-self: flex-end;
   max-width: 80%;

@@ -106,3 +106,14 @@ Each question names its part and the spec's exact words. Each one has one it.tod
    (impact record), Send with the cause, Safety", and C7b's items name no Confirm cause. Not built on the technician
    seat in C7b; `confirm-cause` itself works (C4). Should the technician seat get the list? Test:
    `web/tests/c7b.test.ts`, "QUESTION C7b: S8 says the Confirm cause list ..." (it.todo).
+
+## C7b (from the C7b review)
+
+9. **The impact record's cost in the senior manager's chat.** S13 item 9 says "Amounts appear only in code-made
+   cards: the impact meter (S18) and the AOM's charge card (S17)." T-C7b says "the senior manager's chat gets it with
+   a cost from the made-up rates", and S3 says the impact record is "shown to the senior manager and the AOM". Built:
+   the senior manager's escalation notice shows the cost ("Cost: S$420 (made-up rates: ...)"), and the technician's
+   own card names the record with no amount. Should the senior manager's chat show the amount? If YY answers
+   differently here or on question 7, the C7b tests that pin S$420 (`web/tests/c7b.test.ts`) need an old-test edit,
+   so that answer needs YY's go for the edit too. Test: `web/tests/c7b-review.test.ts`, "QUESTION C7b review: S13
+   item 9 says ..." (it.todo).

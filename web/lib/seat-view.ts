@@ -91,7 +91,17 @@ function forMode(card: SeatCard, mode: AiMode | undefined): SeatCard {
   return rest;
 }
 
-export function seatView(state: MemoryState, seat: string, mode?: AiMode, realNow: Date = new Date()): SeatView {
+/**
+ * `show` is the technician's Show job (C7b): another job it has in progress to
+ * put on the desk. A view only; technicianDesk ignores a job it may not show.
+ */
+export function seatView(
+  state: MemoryState,
+  seat: string,
+  mode?: AiMode,
+  realNow: Date = new Date(),
+  show?: string
+): SeatView {
   const view: SeatView = {
     seat,
     label: SEAT_LABELS[seat as SeatId],
@@ -108,6 +118,6 @@ export function seatView(state: MemoryState, seat: string, mode?: AiMode, realNo
       .filter((n) => n.seat === seat)
       .map((n) => ({ kind: n.kind, text: n.text })),
   };
-  if (seat === "technician") view.desk = technicianDesk(state, realNow, mode);
+  if (seat === "technician") view.desk = technicianDesk(state, realNow, mode, show);
   return view;
 }

@@ -31,11 +31,13 @@ export interface TechnicianDeskProps {
   press: Press;
   /** Opens the Safety list, the same as the Safety chip. */
   onSafety: () => void;
+  /** Show job: puts another in-progress job on the desk. A view only, never a press. */
+  onShow?: (jobId: string) => void;
   /** A refused press's reason, shown in the bar so it is on screen next to the press. */
   refused?: string | null;
 }
 
-export function TechnicianDesk({ desk, press, onSafety, refused = null }: TechnicianDeskProps) {
+export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null }: TechnicianDeskProps) {
   return (
     <section className="desk" aria-label="Technician desk">
       <article className="card">
@@ -51,6 +53,10 @@ export function TechnicianDesk({ desk, press, onSafety, refused = null }: Techni
               {job.canOpen ? (
                 <button className="open-btn" aria-label={`Open job ${job.id}`} onClick={() => void press("open-job", job.id)}>
                   Open job
+                </button>
+              ) : job.canShow && onShow ? (
+                <button className="open-btn" aria-label={`Show job ${job.id}`} onClick={() => onShow(job.id)}>
+                  Show job
                 </button>
               ) : null}
             </li>
