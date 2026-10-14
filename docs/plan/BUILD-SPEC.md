@@ -774,10 +774,13 @@ For every AI sentence shown under a code card or reason:
   the request. YY runs it in his own terminal. Never hand-write a replay answer and call it AI.
 - **Record-time limits (C6b):** recording runs offline before the demo, so only the record path uses
   `AI_RECORD_MAX_TOKENS = 2000` and a 30 s timeout (`AI_RECORD_TIMEOUT_MS = 30000`), both exported by `ai-core.ts`.
-  The live app and `ai:ping` keep `AI_MAX_TOKENS = 600` and 8 s; on Live a slow answer falls back to the saved answer
-  with its banner. `ai:record` printed, before (600 tokens, 8 s): "recorded: 0 passed checks, 0 failed checks, 16
-  unavailable, 0 already saved"; after (2000 tokens, 30 s, the first try): "recorded: 14 passed checks, 1 failed
-  checks, 1 unavailable, 0 already saved".
+  The live app and `ai:ping` keep `AI_MAX_TOKENS = 600` and 8 s. On Live, only an error or the 8 s timeout goes on to
+  the saved answer with its banner. A reply with no content still counts as no answer and shows the fallback (the
+  hy3 bullet above): no AI line and no banner, and the receipt still counts the call. At 600 tokens and 8 s all 16 demo
+  calls ended that way, so on Live the demo's AI lines usually do not show; the saved answers show on Replay.
+  `ai:record` printed, before (600 tokens, 8 s): "recorded: 0 passed checks, 0 failed checks, 16 unavailable, 0
+  already saved", with 16 lines "no answer"; after (2000 tokens, 30 s, the first try): "recorded: 14 passed checks, 1
+  failed checks, 1 unavailable, 0 already saved".
 - **Replay quality check** (`web/tests/replay-quality.test.ts`, cut 3): at least 80 percent of saved answers passed
   their checks; failed ones are never shown. It skips with "skipped: no replays yet" while the folder is empty. It is
   not a rule that changes advice.

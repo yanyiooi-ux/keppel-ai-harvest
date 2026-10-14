@@ -43,18 +43,19 @@ export {
   type AiMode,
 } from "./ai-mode";
 
-/** Max tokens for every AI call (spec S15: 600 so hy3 has room after thinking). */
+/** Max tokens for every live AI call and ai:ping (spec S15: 600). The record path uses AI_RECORD_MAX_TOKENS. */
 export const AI_MAX_TOKENS = 600;
 
-/** Timeout for every AI call in ms (spec S15: 8 s). */
+/** Timeout in ms for every live AI call (spec S15: 8 s). The record path uses AI_RECORD_TIMEOUT_MS. */
 export const AI_TIMEOUT_MS = 8000;
 
 /**
  * Record-time limits (spec S15, record mode). `npm run ai:record` runs offline
- * before the demo, so it may wait longer and allow more tokens: on the demo's
- * longer prompts hy3 spent all 600 tokens or all 8 s thinking, and 16 of 16
- * calls gave no answer. Only the record path uses these. The live app keeps
- * AI_MAX_TOKENS and AI_TIMEOUT_MS, and on Live falls back to the saved answer.
+ * before the demo, so it may wait longer and allow more tokens: at 600 tokens
+ * and 8 s, all 16 demo record calls ended with no content ("no answer"), most
+ * likely hy3 still thinking. Only the record path uses these. The live app keeps
+ * AI_MAX_TOKENS and AI_TIMEOUT_MS. On Live, only an error or the timeout goes
+ * on to the saved answer; a reply with no content shows the fallback (runAiJob).
  */
 export const AI_RECORD_MAX_TOKENS = 2000;
 export const AI_RECORD_TIMEOUT_MS = 30000;
@@ -180,7 +181,10 @@ function unavailableLine(status: number | null, phrase: string): string {
   return status === null ? phrase : `${status} ${phrase}`;
 }
 
-/** One model call with the 8 s timeout. Never throws; an error keeps only its status. */
+/**
+ * One model call with the timeout it is given (live: AI_TIMEOUT_MS, 8 s;
+ * record: AI_RECORD_TIMEOUT_MS). Never throws; an error keeps only its status.
+ */
 async function callModel(client: ModelClient, messages: AiMessage[], timeoutMs: number): Promise<CallResult> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
