@@ -11,7 +11,7 @@
  */
 
 import { loadAndCheckPill } from "./pill";
-import { typedSafetyWords, alertsForStop } from "./safety";
+import { typedSafetyWords, alertsForStop, alertNoticeText } from "./safety";
 import { scanNeverList, neverListRefusalCard, hideAmounts } from "./never-list";
 import { leadsForJob, dialStanding } from "./leads";
 import { safetyList, safetyCardForStop } from "./safety";
@@ -54,7 +54,7 @@ export interface ChatReply {
   cards: ChatCard[];
   chips: string[];
   /** Alerts to post for a typed red card. The stop itself stays closed. */
-  alerts: { seat: string; text: string }[];
+  alerts: { seat: string; text: string; stopId?: string }[];
   matched: "safety" | "never-list" | "chip" | "none";
 }
 
@@ -110,6 +110,7 @@ export function applyTypedReply(state: MemoryState, seat: string, jobId: string 
       at: state.demoNow,
       jobId,
       typed: true,
+      stopId: alert.stopId,
     });
   }
 }
@@ -134,7 +135,7 @@ export function handleTyped(
   const safety = typedSafetyWords(text, pill);
   if (safety.matchedStops.length > 0) {
     const cards: ChatCard[] = [];
-    const alerts: { seat: string; text: string }[] = [];
+    const alerts: { seat: string; text: string; stopId: string }[] = [];
     for (const card of safety.matchedStops) {
       cards.push({
         kind: "red-stop",
@@ -149,7 +150,8 @@ export function handleTyped(
         for (const alert of alertsForStop(stop, job?.buildingName ?? "Tower A", job?.floor ?? 23)) {
           alerts.push({
             seat: alertSeatFor(alert.seat, building),
-            text: `${alert.title}: ${alert.action}`,
+            text: alertNoticeText(alert),
+            stopId: alert.stopId,
           });
         }
       }

@@ -10,7 +10,7 @@ import { loadAndCheckPill } from "./pill";
 import { loadCauses } from "./causes";
 import { allCases } from "./cases";
 import { loadBuildings } from "./facts";
-import { factsFor } from "./facts";
+import { factsFor, repeatFlagFor } from "./facts";
 import { loadPlaces, spotKey } from "./places";
 import { rankLeads } from "./rank";
 import type { RankResult } from "./rank";
@@ -47,6 +47,7 @@ export function leadsForJob(
       .filter((s) => s.clearedAt === null)
       .map((s) => ({ spotKey: `${s.building}/${s.floor}`, id: s.stopId })),
     now: memory.now(state, realNow),
+    repeatFlag: repeatFlagFor(job as Ticket, calls),
   });
 }
 

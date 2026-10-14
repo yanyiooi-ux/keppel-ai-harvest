@@ -256,9 +256,16 @@ export function checkPill(pill: Pill): string[] {
       }
     }
   }
-  // Any rule that carries a condition must fit the menu, at its own colour.
+  // Only a rule born from a new solution (TS-CC-27 or higher) carries a
+  // condition: v1.0's rules TS-CC-01 to TS-CC-26 never do, in any version, so a
+  // file can never change what an old rule does. Any condition must fit the
+  // menu, at its own colour.
   for (const r of pill.rules ?? []) {
     if (r.condition === undefined) continue;
+    if (expectedRuleIds.includes(r.id)) {
+      errors.push(`rule ${r.id} is a v1.0 rule and carries no condition; only a new-solution rule does`);
+      continue;
+    }
     for (const refusal of checkCondition(r.condition, pill, r.colour)) {
       errors.push(`rule ${r.id} condition refused: ${refusal}`);
     }

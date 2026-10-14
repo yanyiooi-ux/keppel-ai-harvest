@@ -9,7 +9,7 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { Ticket } from "./rule-engine";
+import type { Ticket, RepeatFlagResult } from "./rule-engine";
 import { computeRepeatFlag } from "./rule-engine";
 import { placeTag, type PlacesFile, type PlaceSpot } from "./places";
 
@@ -58,6 +58,19 @@ function fitOutMonths(buildings: Building[], job: { building: string; floor: num
   return f.fitOutCompletedMonths;
 }
 
+/** The clock rule: the job's report time plus 20 minutes. */
+function clockFor(job: Ticket): Date {
+  return new Date(new Date(job.reportedAt).getTime() + 20 * 60 * 1000);
+}
+
+/**
+ * The job's repeat flag with the clock rule, the same one factsFor reads the
+ * repeat and opposite-fixes facts from.
+ */
+export function repeatFlagFor(job: Ticket, allCalls: Ticket[]): RepeatFlagResult {
+  return computeRepeatFlag(allCalls, job, clockFor(job));
+}
+
 /**
  * Returns fact ids in the fixed order of S5.
  *
@@ -76,10 +89,6 @@ export function factsFor(
   places: PlacesFile
 ): string[] {
   const facts: string[] = [];
-
-  // Clock rule: job's report time + 20 min
-  const reportTime = new Date(job.reportedAt);
-  const asOfDate = new Date(reportTime.getTime() + 20 * 60 * 1000);
 
   // Order 1: symptom
   if (job.complaint === "too cold" && job.timeOfDay === "morning") {
@@ -102,7 +111,7 @@ export function factsFor(
   }
 
   // Order 3 and 4: repeat and opposite-fixes
-  const repeat = computeRepeatFlag(allCalls, job, asOfDate);
+  const repeat = repeatFlagFor(job, allCalls);
   if (repeat.isRepeat) {
     facts.push("repeat");
   }

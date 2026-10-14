@@ -11,7 +11,8 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import type { Ticket } from "./rule-engine";
 import { loadAndCheckPill } from "./pill";
-import { safetyCardForStop, alertsForStop, locksForStop, safetyList } from "./safety";
+import { safetyCardForStop, alertsForStop, alertNoticeText, locksForStop, safetyList } from "./safety";
+import type { DraftTestRun } from "./draft-tests";
 import { allCalls, spotKey } from "./places";
 import { speakFirstNotices } from "./speak-first";
 import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
@@ -121,6 +122,28 @@ export function safetyPick(
     return { ok: false, message: `There is no red stop called "${stopId}".` };
   }
 
+  const buildingName = job ? job.buildingName : "Tower A";
+  const card = safetyCardForStop(stop, version);
+
+  // The same stop is already open on this spot: a second press opens no second
+  // stop and sends no alert (S11). It stays open until Reset.
+  const alreadyOpen = state.openRedStops.some(
+    (s) =>
+      s.clearedAt === null &&
+      s.stopId === stopId &&
+      s.source === source &&
+      s.building === spot.building &&
+      s.floor === spot.floor &&
+      (stopId !== "RS-08" || s.zone === spot.zone)
+  );
+  if (alreadyOpen) {
+    return {
+      ok: true,
+      message: `Red stop ${stopId} is already open here. No second alert.`,
+      cards: [{ ...card, alerts: [] }],
+    };
+  }
+
   const openJobs = state.jobs.map((j) => ({
     id: j.id,
     building: j.building,
@@ -129,8 +152,6 @@ export function safetyPick(
   }));
   const lockedJobIds = locksForStop(stopId, spot, openJobs, source);
 
-  const buildingName = job ? job.buildingName : "Tower A";
-  const card = safetyCardForStop(stop, version);
   const alerts = alertsForStop(stop, buildingName, spot.floor);
 
   state.openRedStops.push({
@@ -149,18 +170,20 @@ export function safetyPick(
   });
 
   // Raise this stop after typed words sends no second alert (S11): it adds
-  // "raised by {seat label}" to the alerts the typed words already sent.
+  // "raised by {seat label}" to the alerts the typed words already sent. The
+  // typed alert is found by its stop, so a change to the alert's words can
+  // never bring the second alert back.
   const raisedBy = SEAT_LABELS[seat as SeatId] ?? seat;
   for (const alert of alerts) {
     const alertSeat = alertSeatFor(alert.seat, spot.building);
-    const text = `${alert.title}: ${alert.action}`;
+    const text = alertNoticeText(alert);
     const sent = state.notices.find(
       (n) =>
         n.kind === "alert" &&
         n.typed === true &&
         n.raisedBy === undefined &&
         n.seat === alertSeat &&
-        n.text === text &&
+        n.stopId === alert.stopId &&
         (n.jobId ?? null) === (jobId ?? null)
     );
     if (sent) {
@@ -174,6 +197,7 @@ export function safetyPick(
       text,
       at: state.demoNow,
       jobId: jobId,
+      stopId: alert.stopId,
     });
   }
 
@@ -232,6 +256,34 @@ export function postLowConfidenceNotice(
   return true;
 }
 
+/** What send-to-hq reads from a stored solution: the draft's hash now and its stored test run. */
+export interface StoredSolutionGate {
+  hash?: string;
+  testRun?: Partial<DraftTestRun>;
+}
+
+const NO_PASSING_RUN = "That draft has no passing test run on this exact draft yet.";
+
+/**
+ * send-to-hq needs a stored run with 0 failed whose hash equals the draft's
+ * hash now (S16 item 7). The run is stored as runDraftTests returns it, where
+ * `passed` and `failed` are counts, so a run that passed 21 cases and failed 1
+ * is refused. A run in which nothing passed proves nothing and is refused too.
+ * Returns the refusal, or null when the draft may go to HQ.
+ */
+export function sendToHqRefusal(solution: StoredSolutionGate | undefined): string | null {
+  const run = solution?.testRun;
+  const passing =
+    run !== undefined &&
+    typeof run.failed === "number" &&
+    run.failed === 0 &&
+    typeof run.passed === "number" &&
+    run.passed > 0 &&
+    typeof solution?.hash === "string" &&
+    run.draftHash === solution.hash;
+  return passing ? null : NO_PASSING_RUN;
+}
+
 /**
  * The gate every button goes through, then the body.
  * Nothing before a passed gate ever writes to the memory.
@@ -270,15 +322,11 @@ export function runAction(input: ActionInput, realNow: Date = new Date()): Actio
   }
 
   if (action === "send-to-hq") {
-    const draft = (state.solutions as { jobId?: string; testRun?: { passed?: boolean; draftHash?: string }; hash?: string }[]).find(
+    const draft = (state.solutions as (StoredSolutionGate & { jobId?: string })[]).find(
       (s) => s.jobId === jobId
     );
-    if (!draft || !draft.testRun?.passed || draft.testRun.draftHash !== draft.hash) {
-      return {
-        ok: false,
-        message: "That draft has no passing test run on this exact draft yet.",
-      };
-    }
+    const refusal = sendToHqRefusal(draft);
+    if (refusal) return { ok: false, message: refusal };
   }
 
   if (action === "confirm-cause") {

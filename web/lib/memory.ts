@@ -83,6 +83,8 @@ export interface Notice {
   typed?: boolean;
   /** The seat that pressed Raise this stop on a typed alert. */
   raisedBy?: string;
+  /** The red stop an alert is about. Raise this stop finds the typed alert by it, not by its words. */
+  stopId?: string;
 }
 
 export interface RuntimeCase {

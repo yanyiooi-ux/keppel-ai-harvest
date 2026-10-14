@@ -295,6 +295,8 @@ a {
   padding: 10px 13px;
   font-size: 14px;
   color: var(--muted);
+  /* A safety alert is one part per line: title, trigger, action, who to call, receipt (S11). */
+  white-space: pre-line;
 }
 
 .notice b {

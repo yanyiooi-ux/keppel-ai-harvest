@@ -20,6 +20,7 @@ import { outcomeOf } from "./outcome";
 import { spotKey } from "./places";
 import { blockingRule, putFirstRule } from "./conditions";
 import { factLabel } from "./fact-labels";
+import { SEAT_LABELS, type SeatId } from "./permissions";
 
 // ---- Types ----
 
@@ -28,6 +29,8 @@ export type Tier = "found" | "signed-rule" | "case-backed" | "low-confidence" | 
 export interface Tick {
   causeId: string;
   type: "found" | "not-this";
+  /** The seat that made the tick. The found and ruled-out reasons name it (S9). */
+  seat?: string;
 }
 
 export interface Lead {
@@ -69,6 +72,12 @@ export interface RankInput {
   ticks: Tick[];
   openRedStops: { spotKey: string; id: string }[];
   now: Date;
+  /**
+   * The job's real repeat flag (computeRepeatFlag with the clock rule), so the
+   * dial lead's removal quotes canNudge's real reason. Without it, the flag is
+   * read from the job's facts alone.
+   */
+  repeatFlag?: RepeatFlagResult;
 }
 
 // ---- Fact labels (S9 {fact label}) come from S5's "Label on screen", in fact-labels.ts ----
@@ -194,8 +203,8 @@ function stepA_remove(input: RankInput): { leads: Lead[]; removed: RemovedLead[]
           (new Date(input.job.reportedAt).getTime() - new Date(c.closedAt).getTime()) <= 30 * 24 * 60 * 60 * 1000
       );
 
-      // Build repeat flag for canNudge
-      const repeatFlag: RepeatFlagResult = {
+      // The repeat flag for canNudge: the real one when the caller has it
+      const repeatFlag: RepeatFlagResult = input.repeatFlag ?? {
         isRepeat: input.job.facts.includes("repeat"),
         reason: input.job.facts.includes("repeat") ? "repeat flag" : "",
         count: 0,
@@ -444,6 +453,13 @@ function sortCloseGroups(leads: Lead[]): Lead[] {
 
 // ---- Step d: Show why ----
 
+/** {seat label} (S9): the label of the seat that made the tick, else of the seat looking. */
+function tickSeatLabel(input: RankInput, causeId: string, type: Tick["type"]): string {
+  const tick = input.ticks.find((t) => t.causeId === causeId && t.type === type);
+  const seat = tick?.seat ?? input.seat;
+  return SEAT_LABELS[seat as SeatId] ?? seat;
+}
+
 function buildReason(input: RankInput, lead: Lead, closeCallLead: Lead | null): string {
   const jobFacts = input.job.facts;
 
@@ -462,7 +478,7 @@ function buildReason(input: RankInput, lead: Lead, closeCallLead: Lead | null): 
   const factsStr = top3.join(" + ");
 
   if (lead.tier === "found") {
-    return `Checked: found it (${input.seat}).`;
+    return `Checked: found it (${tickSeatLabel(input, lead.causeId, "found")}).`;
   }
 
   if (lead.tier === "signed-rule") {
@@ -548,7 +564,7 @@ export function rankLeads(input: RankInput): RankResult {
 
   const ruledOutWithReasons = ruledOut.map((lead) => ({
     ...lead,
-    reason: `Checked: not this (${input.seat}).`,
+    reason: `Checked: not this (${tickSeatLabel(input, lead.causeId, "not-this")}).`,
   }));
 
   // alertSeniorManager: when the first live lead is low-confidence, or no live lead is left

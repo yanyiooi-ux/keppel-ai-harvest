@@ -25,6 +25,7 @@ export interface SafetyCard {
 
 export interface SafetyAlert {
   seat: string;
+  stopId: string;
   title: string;
   trigger: string;
   action: string;
@@ -81,6 +82,7 @@ export function alertsForStop(
   return [
     {
       seat: "senior-manager",
+      stopId: stop.id,
       title,
       trigger: stop.trigger,
       action: stop.action,
@@ -89,6 +91,7 @@ export function alertsForStop(
     },
     {
       seat: "aom",
+      stopId: stop.id,
       title,
       trigger: stop.trigger,
       action: stop.action,
@@ -96,6 +99,16 @@ export function alertsForStop(
       line,
     },
   ];
+}
+
+/**
+ * The text of a stored alert (S11): the code title, then the stop's trigger,
+ * action and who_to_call word for word, then the receipt line. One line each.
+ * Every alert writer (typed words and the Safety list) uses this one function,
+ * so the two can never drift apart.
+ */
+export function alertNoticeText(alert: SafetyAlert): string {
+  return [alert.title, alert.trigger, alert.action, `Call: ${alert.whoToCall}`, alert.line].join("\n");
 }
 
 // ---- Locks (S11) ----

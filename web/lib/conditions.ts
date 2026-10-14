@@ -202,23 +202,29 @@ export type ScreenedSuggestion =
   | { kind: "note"; text: string; label: typeof ADVISORY_LABEL; refusals: string[] };
 
 /**
- * Screen what the AI suggested. A note stays a note. A rule that fits the menu
- * comes back as a rule with its colour from code. A rule the menu refuses comes
- * back as a note, "advisory, not enforced", with every refusal.
+ * Screen what the AI suggested. The new-solution answer comes in S15's shape:
+ * `{ ruleText, fact, effects }` or `{ kind: "note", text }`; `{ kind: "rule",
+ * text, fact, effects }` is read too. A note stays a note. A rule that fits the
+ * menu comes back as a rule with its colour from code. A rule the menu refuses
+ * comes back as a note, "advisory, not enforced", that shows the rule's text,
+ * with every refusal.
  */
 export function screenSuggestion(suggestion: unknown, pill: Pill): ScreenedSuggestion {
   const s = suggestion && typeof suggestion === "object" ? (suggestion as Record<string, unknown>) : {};
-  const text = typeof s.text === "string" ? s.text : "";
+  const text = typeof s.ruleText === "string" ? s.ruleText : typeof s.text === "string" ? s.text : "";
   const note = (refusals: string[]): ScreenedSuggestion => ({ kind: "note", text, label: ADVISORY_LABEL, refusals });
 
   if (s.kind === "note") return note([]);
-  if (s.kind !== "rule") return note(["The suggestion is neither a rule nor a note."]);
+  const isRule =
+    s.kind === "rule" || (s.kind === undefined && ("ruleText" in s || "fact" in s || "effects" in s));
+  if (!isRule) return note(["The suggestion is neither a rule nor a note."]);
   if (text.trim().length === 0) return note(["A rule needs its rule text."]);
 
   // Everything except the text, the kind and a suggested colour is part of the condition.
-  const { kind: _kind, text: _text, colour: suggestedColour, ...conditionPart } = s;
+  const { kind: _kind, text: _text, ruleText: _ruleText, colour: suggestedColour, ...conditionPart } = s;
   void _kind;
   void _text;
+  void _ruleText;
 
   const fromCode = Array.isArray(conditionPart.effects)
     ? colourForCondition(conditionPart as unknown as RuleCondition, pill)
