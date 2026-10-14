@@ -1,0 +1,4 @@
+{
+  "text": "{\n  \"ruleText\": \"If the zone had a fit-out in the last 12 months, check where the thermostat sits against the fit-out drawing before any nudge.\",\n  \"fact\": \"fit-out-12m\",\n  \"effects\": [\n    {\n      \"effect\": \"put-first\",\n      \"step\": 21\n    }\n  ]\n}",
+  "pass": true
+}
