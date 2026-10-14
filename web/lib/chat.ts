@@ -16,6 +16,7 @@ import { scanNeverList, neverListRefusalCard, hideAmounts } from "./never-list";
 import { leadsForJob, dialStanding } from "./leads";
 import { safetyList, safetyCardForStop } from "./safety";
 import { alertSeatFor } from "./permissions";
+import { versionList } from "./versions";
 import * as memory from "./memory";
 import type { MemoryState, Job } from "./memory";
 
@@ -356,7 +357,11 @@ function chipAnswerCard(
     const lines = Object.entries(state.liveVersionByBuilding)
       .map(([b, v]) => `${b}: v${v}`)
       .join("\n");
-    return { kind: "answer", title: "Live versions", body: `${lines}\n\n${state.a1Line}` };
+    // The versions list like commits, newest first (S16 item 10, C8b), after A1's line.
+    const versions = versionList(state)
+      .map((v) => `${v.line} (${v.statusWord.toLowerCase()})`)
+      .join("\n");
+    return { kind: "answer", title: "Live versions", body: `${lines}\n\n${state.a1Line}\n\n${versions}` };
   }
 
   return { kind: "answer", body: "I did not catch that. Try one of these." };

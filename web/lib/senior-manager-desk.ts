@@ -50,6 +50,7 @@ import {
   type Solution,
   type SolutionPart,
 } from "./senior-manager-flow";
+import { outsideHelpResult } from "./hq-flow";
 import type { AiMode } from "./ai";
 import type { CardColour } from "./seat-view";
 import * as memory from "./memory";
@@ -271,7 +272,11 @@ function solutionView(s: Solution): ManagerSolutionView {
     statusLine:
       s.status === "draft"
         ? "Draft: confirm each part, run the tests, then send it to HQ (A2)."
-        : "Sent to HQ: it waits for HQ's decision (A2).",
+        : s.status === "declined"
+          ? `Declined by HQ: ${/[.!?]$/.test(s.declineReason ?? "") ? s.declineReason : `${s.declineReason ?? ""}.`}`
+          : s.status === "approved-and-distributed"
+            ? `Approved by HQ: v${s.version} is live in every building.`
+            : "Sent to HQ: it waits for HQ's decision (A2).",
     causeLabel: causeLabel(s.causeId),
     fixLine: s.fixLine,
     whyLine: s.whyLine,
@@ -297,7 +302,9 @@ function solutionView(s: Solution): ManagerSolutionView {
       : null,
     canEdit,
     canSend,
-    sendLine: !canEdit
+    sendLine: s.status === "declined"
+      ? `HQ declined it${s.decidedAt ? `, ${timeOf(s.decidedAt)}` : ""}: log a new solution to try again.`
+      : !canEdit
       ? `Sent to HQ by ${seatLabel(s.sentBy)}${s.sentAt ? `, ${timeOf(s.sentAt)}` : ""}.`
       : canSend
         ? "Send to HQ is open: the tests passed on this exact draft."
@@ -342,7 +349,10 @@ function outsideHelpLines(state: MemoryState, job: Job): string[] | null {
     `Asked HQ for ${request.need === "contractor" ? "a contractor" : "budget"} (A3), ${timeOf(request.openedAt)}.`,
     `Reason: ${request.reason}`,
     `Needs money: ${request.needsMoney ? "yes" : "no"}.`,
-    "Waiting for HQ's decision.",
+    // HQ's decision (C8b, S17): "outside help approved (A3)" or "declined: {reason}".
+    request.status === "open"
+      ? "Waiting for HQ's decision."
+      : outsideHelpResult(request.status === "approved" ? "approve" : "decline", request.decisionReason ?? ""),
   ];
 }
 

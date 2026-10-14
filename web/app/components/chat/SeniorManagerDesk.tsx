@@ -46,6 +46,8 @@ export interface SeniorManagerDeskProps {
 /** A refused press: what was pressed, with what, and the server's reason. */
 export interface RefusedPress {
   action: string;
+  /** The job it was pressed on (C8b: HQ's cards are found by their job). */
+  job?: string;
   payload?: Record<string, unknown>;
   message: string;
 }
@@ -391,11 +393,14 @@ function SolutionCard({
     if (sent) sendLine.current?.scrollIntoView?.({ block: "center" });
   }, [sent]);
 
+  // HQ's decision shows on the card too (C8b): a status colour always carries its word.
+  const declined = solution.status === "declined";
+  const approved = solution.status === "approved-and-distributed";
   return (
     <ChatCard
         from={`New solution · ${solution.id}`}
-        colour={sent ? "green" : "amber"}
-        colourWord={sent ? "Sent to HQ" : "Draft"}
+        colour={declined ? "red" : sent || approved ? "green" : "amber"}
+        colourWord={declined ? "Declined by HQ" : approved ? "Approved by HQ" : sent ? "Sent to HQ" : "Draft"}
         title={`Cause: ${solution.causeLabel}`}
         aiBanner={solution.aiBanner}
         aiNotice={solution.aiNotice}

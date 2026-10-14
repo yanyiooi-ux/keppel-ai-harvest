@@ -17,6 +17,8 @@
  *   whose own ranked list shows them.
  * - Log new solution (C8a): the new-solution job (S15) runs before the update,
  *   the same way as the tenant reply.
+ * - HQ's Approve and Roll back (C8b) move every building's live version, so
+ *   Building B's 2401 is worded again for the technician seat afterwards.
  */
 
 import { runAction, openStopsOnJob, type ActionInput, type ActionResult } from "./actions";
@@ -26,6 +28,7 @@ import { mayPress } from "./permissions";
 import { leadsForJob } from "./leads";
 import { loadAndCheckPill } from "./pill";
 import { tenantReply, rankWording, newSolution, type AiDeps, type AiMode } from "./ai";
+import { BUILDING_B_JOB_ID } from "./hq-desk";
 import * as memory from "./memory";
 
 /** The presses after which the ranking may have changed, so the leads are worded again. */
@@ -33,6 +36,9 @@ const WORDED_AFTER = ["open-job", "tick"];
 
 /** The presses that bring a job to the senior manager (C8a): its own ranked list is worded for that seat. */
 const ESCALATING = ["not-solved", "send-with-cause"];
+
+/** HQ's presses that move every building's live version (C8b). */
+const VERSION_MOVES = ["approve-solution", "rollback"];
 
 export async function actionTurn(
   input: ActionInput,
@@ -78,6 +84,11 @@ export async function actionTurn(
   }
   if (result.ok && input.jobId && ESCALATING.includes(input.action)) {
     await wordJobLeads(input.jobId, "senior-manager", mode, deps, realNow);
+  }
+  // A new live version changes Building B's ranking (C8b): its card on the HQ
+  // seat shows 2401's leads worded for the technician seat, kept by replay key.
+  if (result.ok && VERSION_MOVES.includes(input.action)) {
+    await wordJobLeads(BUILDING_B_JOB_ID, "technician", mode, deps, realNow);
   }
   return result;
 }

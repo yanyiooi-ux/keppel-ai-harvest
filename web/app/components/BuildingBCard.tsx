@@ -5,7 +5,11 @@ import { safetyList, safetyCardForStop } from "../../lib/safety";
 import * as memory from "../../lib/memory";
 import type { MemoryState } from "../../lib/memory";
 
-/** The alerts S11 routes to Building B's card, the seat alertSeatFor names. */
+/**
+ * The notices for Building B's card, the seat alertSeatFor names: the safety
+ * alerts S11 routes there, and since C8b the version notices (S16 items 9 and
+ * 11: a version went live everywhere, or was rolled back).
+ */
 export function buildingBAlerts(state: MemoryState) {
   return state.notices.filter((n) => n.seat === "building-b-card");
 }

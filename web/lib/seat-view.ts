@@ -14,6 +14,7 @@ import type { MemoryState } from "./memory";
 import { AI_OFF_LABEL, type AiMode } from "./ai-mode";
 import { technicianDesk, type TechnicianDesk } from "./technician-desk";
 import { managerDesk, type ManagerDesk } from "./senior-manager-desk";
+import { hqDesk, type HqDesk } from "./hq-desk";
 
 export type CardColour = "green" | "amber" | "red" | "none";
 
@@ -72,6 +73,8 @@ export interface SeatView {
   desk?: TechnicianDesk;
   /** The senior manager seat only (C8a): the jobs that came up, the new solution, cases to confirm, stops to clear. */
   manager?: ManagerDesk;
+  /** The HQ seat only (C8b): the A1 card, solutions sent to HQ, versions, outside help and the Building B card. */
+  hq?: HqDesk;
 }
 
 /**
@@ -124,5 +127,6 @@ export function seatView(
   };
   if (seat === "technician") view.desk = technicianDesk(state, realNow, mode, show);
   if (seat === "senior-manager") view.manager = managerDesk(state, realNow, mode, show);
+  if (seat === "hq") view.hq = hqDesk(state, realNow, mode);
   return view;
 }

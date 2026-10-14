@@ -27,7 +27,8 @@ import { loadCauses } from "./causes";
 import { loadBuildings } from "./facts";
 import { factLabel } from "./fact-labels";
 import { MENU_FACTS, checkCondition, type ConditionEffect } from "./conditions";
-import { buildDraft, draftYaml, draftHash, draftFileName, checkSolutionLines, wordCount, nextVersion } from "./draft";
+import { buildDraft, draftYaml, draftHash, draftFileName, checkSolutionLines, wordCount } from "./draft";
+import { nextFreeVersion } from "./versions";
 import { runDraftTests, type DraftTestRun } from "./draft-tests";
 import { typedSafetyWords } from "./safety";
 import { hideAmounts, scanNeverList } from "./never-list";
@@ -63,6 +64,8 @@ export const SAFETY_RECORD_LINE = "Safety record: Fire Safety Manager told and a
 export const SAFETY_RECORD_NOTE = "This is a safety record, not an approval.";
 
 const WITH_HQ = "That draft is with HQ now: it waits for HQ's decision (A2).";
+const DECLINED = "HQ declined that draft (A2): log a new solution to try again.";
+const APPROVED = "HQ approved that solution (A2): it is live in every building.";
 const NO_SOLUTION = "There is no new solution on this job yet.";
 const NOT_SAVED = "Confirm each part first: nothing is saved until then, so there is no draft to test.";
 const FOUND_FIRST = "Log new solution needs a found lead: tick Found it on the cause first.";
@@ -111,7 +114,8 @@ export interface SolutionAi {
 export interface Solution {
   id: string;
   jobId: string;
-  status: "draft" | "sent-to-hq";
+  /** C8b: HQ approves (A2) or declines it once it is sent. */
+  status: "draft" | "sent-to-hq" | "approved-and-distributed" | "declined";
   /** The found lead: the cause. */
   causeId: string;
   fixLine: string;
@@ -134,13 +138,19 @@ export interface Solution {
   testRun?: DraftTestRun;
   sentBy?: string;
   sentAt?: string;
+  /** HQ's decision (C8b): who pressed Approve or Decline, and when. */
+  decidedBy?: string;
+  decidedAt?: string;
+  /** Decline's reason, 3 words or more. */
+  declineReason?: string;
 }
 
 /** An A3 request (S17): what is needed, why, and whether it needs money. Never an amount. */
 export interface OutsideHelpRequest {
   id: string;
   kind: "A3";
-  status: "open";
+  /** HQ approves or declines it (C8b), each with a reason. */
+  status: "open" | "approved" | "declined";
   seat: "hq";
   jobId: string;
   need: "contractor" | "budget";
@@ -148,6 +158,9 @@ export interface OutsideHelpRequest {
   needsMoney: boolean;
   askedBy: string;
   openedAt: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  decisionReason?: string;
 }
 
 /** The job's newest solution. */
@@ -315,7 +328,9 @@ export function applyLogNewSolution(
     whyLine: ask.whyLine,
     flags: { fixLine: redWordFlags(ask.fixLine, ask.pill), whyLine: redWordFlags(ask.whyLine, ask.pill) },
     baseVersion: ask.place.version,
-    version: nextVersion(ask.pill.version),
+    // A later solution starts the next version (S16 item 8), past any version
+    // already made, so a rolled-back v1.1 is never built a second time (C8b).
+    version: nextFreeVersion(state, ask.pill.version, ask.pill.pill_id || "ts-cc"),
     loggedBy: seat,
     loggedAt: at,
     ai: {
@@ -384,6 +399,8 @@ type ConfirmPlan =
 function solutionGate(state: MemoryState, job: Job): { ok: false; message: string } | { ok: true; solution: Solution } {
   const solution = currentSolution(state, job.id);
   if (!solution) return { ok: false, message: NO_SOLUTION };
+  if (solution.status === "declined") return { ok: false, message: DECLINED };
+  if (solution.status === "approved-and-distributed") return { ok: false, message: APPROVED };
   if (solution.status !== "draft") return { ok: false, message: WITH_HQ };
   return { ok: true, solution };
 }
@@ -441,8 +458,12 @@ function planConfirm(state: MemoryState, job: Job, payload: Record<string, unkno
 
   const built = buildDraft(base, partsFor(solution, parts), new Date(solution.loggedAt));
   if (!built.ok) return { ok: false, message: built.refusals.join(" ") };
-  const yaml = draftYaml(built.pill);
-  return { ok: true, solution, partId, value, draft: { pill: built.pill, yaml, hash: draftHash(yaml), ruleId: built.rule.id } };
+  // The draft takes the version picked when it was logged (C8b: one step past
+  // every version already made). On the first solution that is the base plus
+  // one, the same as buildDraft's, so the YAML does not change.
+  const pill: Pill = { ...built.pill, version: solution.version };
+  const yaml = draftYaml(pill);
+  return { ok: true, solution, partId, value, draft: { pill, yaml, hash: draftHash(yaml), ruleId: built.rule.id } };
 }
 
 /** Why confirm-part is refused, or null. */

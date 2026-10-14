@@ -380,7 +380,8 @@ function filledValue(step: number, job: Job, recent: Ticket[], repeat: RepeatFla
 
 // ---- Leads, with the rank wording made at the press ----
 
-function deskLead(
+/** One ranked lead as a desk shows it, with the rank wording kept at the press. HQ's Building B card reads it too (C8b). */
+export function deskLead(
   lead: Lead,
   job: Job,
   pill: Pill,

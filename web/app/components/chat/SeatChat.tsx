@@ -6,6 +6,7 @@ import { ChatCard } from "./ChatCard";
 import { QuestRail } from "./QuestRail";
 import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
 import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPress } from "./SeniorManagerDesk";
+import { HqDesk, hqHolds } from "./HqDesk";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -178,7 +179,7 @@ export function SeatChat({
         });
         const data = (await response.json()) as { ok?: boolean; message?: string; alreadyShown?: boolean };
         setRefused(
-          data.ok === false ? { action, payload, message: data.message ?? "That press was refused." } : null
+          data.ok === false ? { action, job, payload, message: data.message ?? "That press was refused." } : null
         );
         // A refusal shows where it was pressed, and a pick this chat already
         // shows adds nothing: nothing to scroll to.
@@ -205,7 +206,8 @@ export function SeatChat({
   // wherever that row sits (C8a review). Otherwise, on the job on the desk the
   // refusal shows in the bar, next to the press that made it, so it is on
   // screen on a phone (C7b, C8a); with no bar, at the end of the chat.
-  const refusedInRow = managerRowHolds(state?.manager, refused);
+  // HQ's presses show their refusal in the card that was pressed (C8b).
+  const refusedInRow = managerRowHolds(state?.manager, refused) || hqHolds(state?.hq, refused);
   const refusedInBar = !refusedInRow && (barIsShown(state?.desk) || managerBarIsShown(state?.manager));
   const refusedText = refused?.message ?? null;
   // Every stored message is one chat item, numbered in screen order. A local
@@ -267,6 +269,8 @@ export function SeatChat({
             rowRefused={refusedInRow ? refused : null}
           />
         ) : null}
+
+        {state?.hq ? <HqDesk desk={state.hq} press={press} refused={refusedInRow ? refused : null} /> : null}
 
         {state?.notices.map((notice, i) => (
           <div className="notice" key={`notice-${i}`}>

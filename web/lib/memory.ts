@@ -94,7 +94,11 @@ export interface Notice {
     | "escalated"
     /** C8a: a new solution sent to HQ (A2), and an outside help request (A3). */
     | "solution-sent"
-    | "outside-help";
+    | "outside-help"
+    /** C8b: a version went live everywhere, was rolled back, or HQ declined a solution (A2). */
+    | "version-live"
+    | "rolled-back"
+    | "solution-declined";
   text: string;
   at: string;
   jobId?: string;
@@ -132,6 +136,33 @@ export interface StoredWording {
   aiCalls: number;
 }
 
+/**
+ * A version HQ approved (S16 items 8 to 11, C8b): like a commit. The signed
+ * file itself lives in the runtime folder and is never written again. v1.0 is
+ * not stored here: it ships in web/pills/ and A1 signed it.
+ */
+export interface VersionRecord {
+  pillId: string;
+  version: string;
+  parent: string;
+  /** SHA-256 of the signed file's YAML text: the draft the tests ran on. */
+  hash: string;
+  /** "HQ pill owner (role-played)". */
+  signedBy: string;
+  approvedBySeat: string;
+  approvedAt: string;
+  /** The why line of the solution it carries. */
+  why: string;
+  ruleId: string;
+  jobId: string;
+  solutionId: string;
+  /** The signed file's name in the runtime folder's signed/ folder. */
+  file: string;
+  /** Set by Roll back (cut 10). Nothing is deleted: the version stays in the list. */
+  rolledBackAt?: string;
+  rolledBackBySeat?: string;
+}
+
 export interface MemoryState {
   label: string;
   demoNow: string;
@@ -152,6 +183,8 @@ export interface MemoryState {
   openJobBySeat?: Record<string, string>;
   /** Rank wordings made at a press, by replay key (C7b). Absent in the seed. */
   leadWordings?: Record<string, StoredWording>;
+  /** The versions HQ approved, oldest first (C8b). Absent in the seed: v1.0 is A1's. */
+  versions?: VersionRecord[];
 }
 
 function dataDir(): string {

@@ -9,10 +9,11 @@
  * never via import (an import is frozen at build time).
  */
 
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "yaml";
 import { checkCondition, type RuleCondition } from "./conditions";
+import { runtimeDir } from "./memory";
 
 // ---- Types ----
 
@@ -101,15 +102,27 @@ export interface Pill {
 // ---- Loader ----
 
 /**
- * Load a pill version from web/pills/<pill_id>/<version>.yaml.
- * Uses fs at call time, never import.
+ * Where a version HQ approved is signed and frozen (S16 item 8, C8b): the
+ * runtime folder, never web/pills/. Reset clears it with the rest of runtime/.
+ */
+export function signedPillPath(pillId: string, version: string): string {
+  const bare = version.startsWith("v") ? version.slice(1) : version;
+  return join(runtimeDir(), "signed", `${pillId}-v${bare}.yaml`);
+}
+
+/**
+ * Load a pill version from web/pills/<pill_id>/<version>.yaml, or, for a
+ * version born from a new solution, the file HQ signed when it approved it
+ * (C8b). A shipped version always wins, so v1.0 is only ever read from
+ * web/pills/. Uses fs at call time, never import.
  */
 export function loadPill(pillId: string, version: string): Pill {
   const pillsDir = join(process.cwd(), "pills");
   // File naming: v1.0.yaml, v1.1.yaml, etc.
   const fileName = version.startsWith("v") ? `${version}.yaml` : `v${version}.yaml`;
   const filePath = join(pillsDir, pillId, fileName);
-  const raw = readFileSync(filePath, "utf-8");
+  const signed = signedPillPath(pillId, version);
+  const raw = readFileSync(existsSync(filePath) || !existsSync(signed) ? filePath : signed, "utf-8");
   return parse(raw) as Pill;
 }
 

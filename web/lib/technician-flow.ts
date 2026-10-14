@@ -33,7 +33,8 @@ export interface FlowResult {
 const TICK_TYPES = ["found", "not-this", "clear"] as const;
 type TickType = (typeof TICK_TYPES)[number];
 
-const SYMPTOM_FACTS = ["cold-mornings", "hot-afternoons", "cold-other", "hot-other"];
+/** The symptom facts (S5): a case keeps the one its job has. HQ's approval saves a case the same way (C8b). */
+export const SYMPTOM_FACTS = ["cold-mornings", "hot-afternoons", "cold-other", "hot-other"];
 
 const SG_OFFSET_MS = 8 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -230,7 +231,8 @@ export function solvedRefusal(
   return null;
 }
 
-function nextCaseId(state: MemoryState): string {
+/** The next free runtime case id, R-01 first. */
+export function nextCaseId(state: MemoryState): string {
   let n = state.runtimeCases.length + 1;
   const taken = new Set(state.runtimeCases.map((c) => c.id));
   while (taken.has(`R-${String(n).padStart(2, "0")}`)) n += 1;

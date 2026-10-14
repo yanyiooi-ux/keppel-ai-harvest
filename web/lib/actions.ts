@@ -8,8 +8,9 @@
  * technician's open-job, tick, solved, send-with-cause and not-solved
  * (technician-flow.ts); C8a writes the senior manager's log-new-solution,
  * confirm-part, run-tests, send-to-hq, ask-outside-help and clear-stop
- * (senior-manager-flow.ts); the rest pass their checks and say "not built
- * yet", and C8b to C9 fill them.
+ * (senior-manager-flow.ts); C8b writes HQ's approve-solution,
+ * decline-solution, rollback and decide-outside-help (hq-flow.ts); the rest
+ * pass their checks and say "not built yet", and C9 fills them.
  */
 
 import { loadAndCheckPill } from "./pill";
@@ -48,6 +49,16 @@ import {
   clearStopRefusal,
   applyClearStop,
 } from "./senior-manager-flow";
+import {
+  approveRefusal,
+  applyApprove,
+  declineRefusal,
+  applyDecline,
+  rollbackRefusal,
+  applyRollback,
+  decideOutsideHelpRefusal,
+  applyDecideOutsideHelp,
+} from "./hq-flow";
 import type { NewSolution } from "./ai";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
@@ -493,6 +504,31 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     return result;
   }
 
+  // HQ's presses (C8b, hq-flow.ts): A2 approve or decline, rollback, A3. The
+  // gate above has checked the seat. Each refusal is worked out on a read and
+  // never writes; the press plans again inside the update. Approve is not one
+  // of the presses a safety stop locks (S3): the stop stays open (T-C8b).
+  if (HQ_JOB_PRESSES.includes(action)) {
+    if (!job) return { ok: false, message: "Pick a job first." };
+    const refusal = hqRefusal(state, action, job, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyHqPress(s, seat, action, job.id, payload, realNow);
+    });
+    return result;
+  }
+
+  if (action === "rollback") {
+    const refusal = rollbackRefusal(state, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyRollback(s, seat, payload, realNow);
+    });
+    return result;
+  }
+
   if (action === "confirm-cause") {
     const caseId = String(payload?.caseId ?? "");
     let result: ActionResult = { ok: false, message: "" };
@@ -540,6 +576,33 @@ function applyTechnicianPress(
   if (action === "solved") return applySolved(state, seat, jobId, payload, realNow);
   if (action === "send-with-cause") return applySendWithCause(state, seat, jobId, realNow);
   return applyNotSolved(state, seat, jobId, payload, realNow);
+}
+
+/** HQ's presses on a job (C8b). Roll back names a version, not a job. */
+const HQ_JOB_PRESSES = ["approve-solution", "decline-solution", "decide-outside-help"];
+
+function hqRefusal(
+  state: MemoryState,
+  action: string,
+  job: Job,
+  payload: Record<string, unknown> | undefined
+): string | null {
+  if (action === "approve-solution") return approveRefusal(state, job);
+  if (action === "decline-solution") return declineRefusal(state, job, payload);
+  return decideOutsideHelpRefusal(state, job, payload);
+}
+
+function applyHqPress(
+  state: MemoryState,
+  seat: string,
+  action: string,
+  jobId: string,
+  payload: Record<string, unknown> | undefined,
+  realNow: Date
+): ActionResult {
+  if (action === "approve-solution") return applyApprove(state, seat, jobId, realNow);
+  if (action === "decline-solution") return applyDecline(state, seat, jobId, payload, realNow);
+  return applyDecideOutsideHelp(state, seat, jobId, payload, realNow);
 }
 
 /** The spot key of a job, for the screens. */
