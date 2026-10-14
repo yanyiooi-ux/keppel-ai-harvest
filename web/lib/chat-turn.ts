@@ -20,7 +20,7 @@ export interface ChatTurnInput {
 }
 
 export type ChatTurnResult =
-  | { status: 200; body: { ok: true } & ChatReply }
+  | { status: 200; body: { ok: true; storedCount: number } & ChatReply }
   | { status: 400 | 404; body: { ok: false; message: string } };
 
 export async function chatTurn(input: ChatTurnInput, mode: AiMode, deps?: AiDeps): Promise<ChatTurnResult> {
@@ -39,10 +39,15 @@ export async function chatTurn(input: ChatTurnInput, mode: AiMode, deps?: AiDeps
   const worded = { ...reply, cards };
   const aiCalls = cards.reduce((sum, card) => sum + (card.aiCalls ?? 0), 0);
 
-  memory.update((s) => {
+  const after = memory.update((s) => {
     applyTypedReply(s, seat, job, worded);
     s.aiCalls = (s.aiCalls ?? 0) + aiCalls;
   });
 
-  return { status: 200, body: { ok: true, ...worded } };
+  // How many messages this seat has stored, this one included. The chat shows
+  // its local copy only until a poll holds that many, so a typed message and
+  // its reply are never on screen twice.
+  const storedCount = after.messages.filter((m) => m.seat === seat).length;
+
+  return { status: 200, body: { ok: true, storedCount, ...worded } };
 }

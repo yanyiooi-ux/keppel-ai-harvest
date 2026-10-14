@@ -31,6 +31,8 @@ export interface ChatCardProps {
   aiNotice?: string;
   /** "AI off" when the switch is Off (S15). */
   aiOff?: string;
+  /** A red stop's who_to_call, shown after "Call:" (S11). */
+  call?: string;
 }
 
 export function ChatCard({
@@ -48,6 +50,7 @@ export function ChatCard({
   aiBanner,
   aiNotice,
   aiOff,
+  call,
 }: ChatCardProps) {
   const className = colour === "none" ? "card" : `card is-${colour}`;
 
@@ -64,6 +67,7 @@ export function ChatCard({
 
       {title ? <p className="card-title">{title}</p> : null}
       {body ? <p>{body}</p> : null}
+      {call ? <p className="card-call">{`Call: ${call}`}</p> : null}
       {aiWording ? (
         <p className="ai-line">
           <span className="ai-tag">AI wording</span>

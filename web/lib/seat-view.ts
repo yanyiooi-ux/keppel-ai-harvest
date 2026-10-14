@@ -41,6 +41,16 @@ export interface SeatCard {
   aiOff?: string;
   /** Model calls made for this card's wording. */
   aiCalls?: number;
+  /** A red stop's who_to_call, shown after "Call:" (S11). */
+  call?: string;
+  /** The job a self-check card or a Safety list is about (S10). */
+  jobId?: string;
+  /** A self-check question (S10): its id, its answer buttons, and the answer once given. */
+  questionId?: string;
+  answers?: string[];
+  answered?: string;
+  /** A tenant reply's tips, word for word from the pill. */
+  tips?: string[];
 }
 
 export interface SeatMessage {

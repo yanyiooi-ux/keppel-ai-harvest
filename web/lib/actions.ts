@@ -4,20 +4,22 @@
  * Every action runs the same gate first: the seat check and the status check
  * from permissions.ts, then the safety lock from S3. Only then does it touch
  * the memory. C4 writes the bodies for reset, safety-pick and confirm-cause;
- * the rest pass their checks and say "not built yet", and C7a to C9 fill them.
+ * C7a writes report and answer (the tenant's self-check, S10); the rest pass
+ * their checks and say "not built yet", and C7b to C9 fill them.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
-import type { Ticket } from "./rule-engine";
 import { loadAndCheckPill } from "./pill";
-import { safetyCardForStop, alertsForStop, alertNoticeText, locksForStop, safetyList } from "./safety";
+import { safetyCardForStop, alertsForStop, alertNoticeText, locksForStop, safetyList, type SafetyCard } from "./safety";
 import type { DraftTestRun } from "./draft-tests";
-import { allCalls, spotKey } from "./places";
-import { speakFirstNotices } from "./speak-first";
+import { spotKey } from "./places";
+import { callsForState, postSpeakFirst } from "./calls";
+import { reportRefusal, startReport, planAnswer, applyAnswer } from "./self-check-flow";
+import type { AiOutcome, TenantReply } from "./ai";
 import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
+
+export { callsForState };
 
 /** Buttons that a safety stop on the job's spot locks (S3). */
 const LOCKED_BY_SAFETY = [
@@ -40,20 +42,14 @@ export interface ActionResult {
   message: string;
   cards?: unknown[];
   notBuiltYet?: boolean;
+  /** The job a press made or landed on (report, answer). */
+  jobId?: string;
 }
 
-/**
- * Every ticket in tickets.json plus the jobs created at runtime.
- * The seed jobs are already in tickets.json, so they are not counted twice.
- */
-export function callsForState(state: MemoryState): Ticket[] {
-  const fileIds = new Set(
-    (JSON.parse(
-      readFileSync(join(process.cwd(), "data", "tickets.json"), "utf-8")
-    ) as Ticket[]).map((t) => t.id)
-  );
-  const runtimeOnly = state.jobs.filter((j) => !fileIds.has(j.id)) as Ticket[];
-  return allCalls({ tickets: runtimeOnly });
+/** What a press may carry besides the person's input: code-made, never from the request. */
+export interface ActionExtras {
+  /** The AI's tenant-reply, worded before the update (action-turn.ts). */
+  tenantWording?: AiOutcome<TenantReply>;
 }
 
 /** The stops open on a job's spot right now. */
@@ -69,26 +65,11 @@ export function openStopsOnJob(state: MemoryState, job: Job): OpenRedStop[] {
 export function resetDemo(realNow: Date = new Date()): ActionResult {
   memory.resetToSeed(realNow);
 
+  // Speak first goes to the senior manager's chat (S6), the same way the
+  // self-check posts it.
   const state = memory.update((s) => {
-    const calls = callsForState(s);
     const openJobs = s.jobs.filter((j) => j.status === "reported");
-    const posted = speakFirstNotices(
-      openJobs as Ticket[],
-      calls,
-      s.speakFirstNotices,
-      new Date(s.demoNow)
-    );
-    for (const notice of posted) {
-      s.speakFirstNotices.push({ spotKey: notice.spotKey, postedAt: s.demoNow });
-      s.notices.push({
-        seat: "technician",
-        kind: "speak-first",
-        text: notice.text,
-        at: s.demoNow,
-        jobId: notice.job.id,
-        spotKey: notice.spotKey,
-      });
-    }
+    postSpeakFirst(s, openJobs, new Date(s.demoNow), s.demoNow);
   });
 
   return {
@@ -211,6 +192,32 @@ export function safetyPick(
 }
 
 /**
+ * A pick from the Safety list shows that stop's card in the pressing seat's
+ * chat (S11): the pill's trigger, action and who to call, word for word, and
+ * its receipt with AI calls 0. Call it inside memory.update.
+ */
+function storePickedCard(state: MemoryState, seat: string, result: ActionResult): void {
+  const card = (result.cards ?? [])[0] as SafetyCard | undefined;
+  if (!card) return;
+  state.messages.push({
+    seat,
+    from: "pip",
+    text: card.action,
+    at: state.demoNow,
+    cards: [
+      {
+        kind: "red-stop",
+        stopId: card.id,
+        title: card.trigger,
+        body: card.action,
+        call: card.whoToCall,
+        receipt: card.receipt,
+      },
+    ],
+  });
+}
+
+/**
  * Confirm a pending case's cause. Refused for the seat that fixed it,
  * because a cause needs a second person (S8).
  */
@@ -288,7 +295,7 @@ export function sendToHqRefusal(solution: StoredSolutionGate | undefined): strin
  * The gate every button goes through, then the body.
  * Nothing before a passed gate ever writes to the memory.
  */
-export function runAction(input: ActionInput, realNow: Date = new Date()): ActionResult {
+export function runAction(input: ActionInput, realNow: Date = new Date(), extras: ActionExtras = {}): ActionResult {
   const { seat, action, jobId, payload } = input;
 
   if (action === "reset") {
@@ -317,6 +324,29 @@ export function runAction(input: ActionInput, realNow: Date = new Date()): Actio
     let result: ActionResult = { ok: false, message: "" };
     memory.update((s) => {
       result = safetyPick(s, seat, stopId, jobId, source);
+      if (result.ok) storePickedCard(s, seat, result);
+    });
+    return result;
+  }
+
+  // The tenant's self-check (S10). A refusal is worked out on a read and never
+  // writes; the press itself plans again inside the update.
+  if (action === "report") {
+    const refusal = reportRefusal(state, payload);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = startReport(s, seat, payload, memory.now(s, realNow));
+    });
+    return result;
+  }
+
+  if (action === "answer" && jobId) {
+    const plan = planAnswer(state, jobId, payload);
+    if (!plan.ok) return { ok: false, message: plan.message };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyAnswer(s, seat, jobId, payload, memory.now(s, realNow), extras.tenantWording);
     });
     return result;
   }

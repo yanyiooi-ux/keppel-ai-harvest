@@ -67,3 +67,24 @@ Each question names its part and the spec's exact words. Each one has one it.tod
    falls back to the saved answer with its banner"; that holds only for an error or a timeout. Should a reply with no
    content on Live go on to the saved answer, as an error does? That changes S15's words and the old C6a test above,
    so it needs YY's ruling. Test: `web/tests/c6b-review.test.ts`, "QUESTION C6b review: ..." (it.todo).
+
+## C7a
+
+5. **replay miss: tenant-reply 2318 (run rule 6).** C7a's tenant reply on 2318, through the part's real code path on
+   Replay (Report a problem, too cold, "Open area near the lift core", "It keeps coming back": visit booked on 2318,
+   the 2 TS-CC-09 tips, "A technician visit is booked."), asks for exactly the replay key `npm run ai:record` recorded
+   (a test checks the key equals the record target's key). The saved answer for that key has its pass flag false
+   (question 3), so the reply shows the tips word for word with no banner. Run once as a real test on 15 Oct 2026:
+   "aiBanner": null, "AI calls: 0". Not re-recorded, and no key code changed to force it. Test:
+   `web/tests/c7a.test.ts`, "replay miss: tenant-reply 2318 ..." (it.todo).
+
+6. **A report that attaches to a job someone has already started.** S10 says "if an open job exists for the same
+   tenant, building, floor and zone, the answers attach to it (2318 in the demo) and no new job is made", and its
+   outcomes say "The job goes to `pending-30-day`" (blinds up, after hours) or "visit booked". S3 says only buttons and
+   the code rules it lists move a status. The spec does not say what happens when the open job is already
+   `in-progress`, `escalated` or further along (a technician or the senior manager is working on it). Built for now:
+   the answers, the note and the reply attach, and the job's status moves only from `reported` (to `visit-booked`)
+   or from `reported` or `visit-booked` (to `pending-30-day`); a job further along keeps its status. In the demo the
+   self-check runs before anyone opens 2318, so this never shows. Should a tenant's tip close a job a technician has
+   open, or should the attach leave its status alone as built? Test: `web/tests/c7a.test.ts`, "QUESTION C7a: ..."
+   (it.todo).

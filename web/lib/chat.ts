@@ -237,6 +237,22 @@ function codeReceipt(pill: ReturnType<typeof loadAndCheckPill>, what?: string): 
   return `${what ? `${what} · ` : ""}pill v${pill.version} · AI calls: 0`;
 }
 
+/**
+ * The Safety list (S11): all 10 stops from the live pill, in YAML order, with
+ * its receipt. The Safety chip and the self-check's Q0 Yes (S10) both show it.
+ */
+export function safetyListCard(pill: ReturnType<typeof loadAndCheckPill>): ChatCard {
+  return {
+    kind: "safety-list",
+    title: "Safety first",
+    items: safetyList(pill).map((stop) => {
+      const card = safetyCardForStop(stop, pill.version);
+      return { id: card.id, title: card.trigger, body: card.action };
+    }),
+    receipt: codeReceipt(pill, "Safety list"),
+  };
+}
+
 /** A chip's answer card, always with its receipt (S15 "Each card's receipt shows its AI calls"). */
 function chipAnswer(
   state: MemoryState,
@@ -259,14 +275,7 @@ function chipAnswerCard(
   pill: ReturnType<typeof loadAndCheckPill>
 ): ChatCard {
   if (chip === "Safety") {
-    return {
-      kind: "safety-list",
-      title: "Safety first",
-      items: safetyList(pill).map((stop) => {
-        const card = safetyCardForStop(stop, pill.version);
-        return { id: card.id, title: card.trigger, body: card.action };
-      }),
-    };
+    return safetyListCard(pill);
   }
 
   if (chip === "What needs me") {

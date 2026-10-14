@@ -74,7 +74,7 @@ export interface ChatMessage {
 
 export interface Notice {
   seat: string;
-  kind: "speak-first" | "low-confidence" | "alert";
+  kind: "speak-first" | "low-confidence" | "alert" | "charge-request";
   text: string;
   at: string;
   jobId?: string;

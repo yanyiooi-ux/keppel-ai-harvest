@@ -656,6 +656,90 @@ a {
   text-transform: var(--hud-case);
 }
 
+/* ---------- Self-check and Safety list buttons (S10, S11) ---------- */
+
+/* The tenant's Report a problem row sits above the chips, in the same style. */
+.chips.report-row {
+  padding-bottom: 0;
+}
+
+.chips .report-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-family: var(--font-hud);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+  font-size: 13px;
+}
+
+/* Every answer is a button (S10), big enough for a thumb. */
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.answers button {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-chip);
+  background: var(--card-2);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pick-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.pick-list b {
+  color: var(--red);
+  margin-right: 4px;
+}
+
+.pick-btn {
+  flex: none;
+  min-height: 44px;
+  min-width: 64px;
+  padding: 0 12px;
+  border-radius: var(--r-chip);
+  background: var(--red-card);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: var(--font-hud);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+}
+
+.card .card-call {
+  font-weight: 600;
+}
+
+.notice.refused b {
+  color: var(--amber);
+}
+
 .compose {
   margin: 2px 12px 0;
   display: flex;

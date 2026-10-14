@@ -437,11 +437,12 @@ export interface TenantReply {
 
 /**
  * Input: only the chosen tips word for word and the code line. Never the job,
- * its cause line, its notes or any tenant's name (S13 item 10).
+ * its cause line, its notes or any tenant's name (S13 item 10). A reply S10
+ * gives no code line (blinds up: the tip alone) sends no "Code line:" line.
  */
 export function tenantReplyInput(tips: TenantTip[], codeLine: string): string {
   return [
-    `Code line: ${codeLine}`,
+    ...(codeLine.length > 0 ? [`Code line: ${codeLine}`] : []),
     "Approved tips, word for word:",
     ...tips.map((tip, i) => `${i + 1}. ${tip.text}`),
   ].join("\n");

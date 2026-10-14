@@ -30,8 +30,10 @@ import {
   type ModelClient,
 } from "./ai-core";
 
-/** The code line of a booked visit (S10 outcome 4). The tenant reply's replay key hashes it. */
-export const VISIT_BOOKED_LINE = "A technician visit is booked.";
+import { VISIT_BOOKED_LINE } from "./self-check";
+
+/** The code line of a booked visit (S10 outcome 4), from the self-check itself. The tenant reply's replay key hashes it. */
+export { VISIT_BOOKED_LINE };
 
 export interface RecordTarget {
   spec: AiJobSpec<unknown>;
