@@ -14,7 +14,7 @@ import { loadAndCheckPill } from "./pill";
 import { safetyCardForStop, alertsForStop, locksForStop, safetyList } from "./safety";
 import { allCalls, spotKey } from "./places";
 import { speakFirstNotices } from "./speak-first";
-import { mayPress, alertSeatFor } from "./permissions";
+import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
 
@@ -148,11 +148,30 @@ export function safetyPick(
     lockedJobIds,
   });
 
+  // Raise this stop after typed words sends no second alert (S11): it adds
+  // "raised by {seat label}" to the alerts the typed words already sent.
+  const raisedBy = SEAT_LABELS[seat as SeatId] ?? seat;
   for (const alert of alerts) {
+    const alertSeat = alertSeatFor(alert.seat, spot.building);
+    const text = `${alert.title}: ${alert.action}`;
+    const sent = state.notices.find(
+      (n) =>
+        n.kind === "alert" &&
+        n.typed === true &&
+        n.raisedBy === undefined &&
+        n.seat === alertSeat &&
+        n.text === text &&
+        (n.jobId ?? null) === (jobId ?? null)
+    );
+    if (sent) {
+      sent.text = `${sent.text} · raised by ${raisedBy}`;
+      sent.raisedBy = seat;
+      continue;
+    }
     state.notices.push({
-      seat: alertSeatFor(alert.seat, spot.building),
+      seat: alertSeat,
       kind: "alert",
-      text: `${alert.title}: ${alert.action}`,
+      text,
       at: state.demoNow,
       jobId: jobId,
     });

@@ -84,6 +84,37 @@ function chipFor(seat: string, text: string): string | null {
 }
 
 /**
+ * Record a typed message and its answer in the memory: the text as stored (amounts
+ * hidden), Pip's cards, and the typed alerts. Call it inside memory.update. It
+ * opens no stop and changes no status, tick, version, case or charge (S19).
+ */
+export function applyTypedReply(state: MemoryState, seat: string, jobId: string | undefined, reply: ChatReply): void {
+  state.messages.push({
+    seat,
+    from: "person",
+    text: reply.storedText,
+    at: state.demoNow,
+  });
+  state.messages.push({
+    seat,
+    from: "pip",
+    text: reply.cards.map((c) => c.body ?? c.title ?? "").join(" "),
+    at: state.demoNow,
+    cards: reply.cards,
+  });
+  for (const alert of reply.alerts) {
+    state.notices.push({
+      seat: alert.seat,
+      kind: "alert",
+      text: alert.text,
+      at: state.demoNow,
+      jobId,
+      typed: true,
+    });
+  }
+}
+
+/**
  * Answer a typed message. Reads the memory, never writes it.
  */
 export function handleTyped(

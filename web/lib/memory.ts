@@ -79,6 +79,10 @@ export interface Notice {
   at: string;
   jobId?: string;
   spotKey?: string;
+  /** An alert sent by typed safety words (S11): Raise this stop amends it instead of sending a second one. */
+  typed?: boolean;
+  /** The seat that pressed Raise this stop on a typed alert. */
+  raisedBy?: string;
 }
 
 export interface RuntimeCase {

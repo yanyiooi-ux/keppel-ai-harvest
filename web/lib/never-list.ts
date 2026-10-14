@@ -7,7 +7,8 @@
  * Returns the pill's never_list ids.
  */
 
-import type { Pill } from "./pill";
+import type { Pill, TenantTip } from "./pill";
+import { checkWording } from "./wording-check";
 
 export interface ScanResult {
   violated: string[];
@@ -257,4 +258,31 @@ export function checkTenantText(
     passes: violations.length === 0,
     violations,
   };
+}
+
+/**
+ * What the tenant sees (S10, S13 item 10, S14): the AI's wording of the chosen
+ * tips when it passes the never-list (against the job's own tenant, building and
+ * floor), the extra tenant-text blocks and the S14 wording check; otherwise, or
+ * with the AI off, the chosen tips word for word from the pill.
+ */
+export function tenantReplyOrTips(
+  pill: Pill,
+  aiText: string | null,
+  tips: TenantTip[],
+  context: { tenant: string; building: string; floor: number }
+): { source: "ai" | "tips"; lines: string[]; violations: string[] } {
+  const tipLines = tips.map((t) => t.text);
+  if (aiText === null || aiText.trim().length === 0) {
+    return { source: "tips", lines: tipLines, violations: [] };
+  }
+
+  const violations = [
+    ...scanNeverList(pill, aiText, context).violated,
+    ...checkTenantText(aiText, context).violations,
+    ...checkWording(aiText, tipLines.join(" "), "tenant").errors,
+  ];
+  return violations.length === 0
+    ? { source: "ai", lines: [aiText], violations }
+    : { source: "tips", lines: tipLines, violations };
 }
