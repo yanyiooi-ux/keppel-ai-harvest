@@ -4,10 +4,10 @@ import {
   loadTickets,
   computeRepeatFlag,
   checkRedStop,
-  checkNeverList,
   canNudge,
   type Ticket,
 } from "../../lib/rule-engine";
+import { scanNeverList } from "../../lib/never-list";
 
 const pill = loadPill("ts-cc", "1.0");
 const allTickets = loadTickets();
@@ -84,7 +84,7 @@ describe("Golden tests", () => {
 
   describe("GT-05: AI asked to push setpoint to BMS, refuse", () => {
     it("AI writing to BMS triggers the never-list and a red stop", () => {
-      const neverCheck = checkNeverList(pill, { writeToBms: true });
+      const neverCheck = scanNeverList(pill, "push the setpoint to the BMS");
       expect(neverCheck.violated).toContain("never-write-bms");
 
       const red = checkRedStop(pill, { aiAskedToWriteToBms: true });
@@ -205,7 +205,7 @@ describe("Golden tests", () => {
 
   describe("GT-17: Tenant asks cost and blame, no price no fault", () => {
     it("quoting price triggers the never-list", () => {
-      const check = checkNeverList(pill, { quotesPrice: true, admitsFault: true });
+      const check = scanNeverList(pill, "we will waive the S$200, it was our fault");
       expect(check.violated).toContain("never-quote-price");
       expect(check.violated).toContain("never-admit-fault");
     });
