@@ -1,8 +1,77 @@
 {
   "label": "made up for the demo",
-  "livePillVersion": "1.0",
-  "pillStatus": "approved",
-  "selectedBuilding": "tower-a",
-  "decisions": {},
-  "tickets": []
+  "demoNow": "2026-10-06T10:00:00+08:00",
+  "resetRealTime": "2026-10-06T10:00:00+08:00",
+  "liveVersionByBuilding": {
+    "tower-a": "1.0",
+    "building-b": "1.0"
+  },
+  "a1Line": "v1.0 signed by two senior experts (role-played)",
+  "jobs": [
+    {
+      "id": "2318",
+      "label": "made up for the demo",
+      "building": "tower-a",
+      "buildingName": "Tower A",
+      "floor": 23,
+      "tenant": "Northwind Advisory",
+      "zone": "core",
+      "complaint": "too cold",
+      "timeOfDay": "morning",
+      "complaintHour": "09:00",
+      "reportedAt": "2026-10-06T09:10:00+08:00",
+      "intake": {
+        "where": "open area near the lift core",
+        "when": "mornings, around 9am",
+        "sinceWhen": "keeps coming back"
+      },
+      "fix": null,
+      "status": "reported",
+      "previousChangesOnFloor": true,
+      "ticks": [],
+      "selfCheckAnswers": {},
+      "foundLeadId": null,
+      "whyLine": null,
+      "fixerSeat": null,
+      "impact": null,
+      "notes": []
+    },
+    {
+      "id": "2401",
+      "label": "made up for the demo",
+      "building": "building-b",
+      "buildingName": "Building B",
+      "floor": 12,
+      "tenant": "Meridian Partners",
+      "zone": "core",
+      "complaint": "too cold",
+      "timeOfDay": "morning",
+      "complaintHour": "09:00",
+      "reportedAt": "2026-10-05T09:00:00+08:00",
+      "intake": {
+        "where": "open area near the east columns",
+        "when": "mornings, around 9am",
+        "sinceWhen": "about 1 week"
+      },
+      "fix": null,
+      "status": "reported",
+      "previousChangesOnFloor": false,
+      "ticks": [],
+      "selfCheckAnswers": {},
+      "foundLeadId": null,
+      "whyLine": null,
+      "fixerSeat": null,
+      "impact": null,
+      "notes": []
+    }
+  ],
+  "runtimeCases": [],
+  "solutions": [],
+  "requests": [],
+  "openRedStops": [],
+  "messages": [],
+  "notices": [],
+  "speakFirstNotices": [],
+  "lowConfidenceJobIds": [],
+  "aiCalls": 0
 }
