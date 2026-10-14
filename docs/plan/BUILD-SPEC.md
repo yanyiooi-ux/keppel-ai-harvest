@@ -1026,30 +1026,105 @@ the data and the engine.
 
 ---
 
-## S23. Look: Ember (C5a)
+## S23. Look: Neon Quest (C5a)
 
-Ember only. The look switcher stays in the prototype page and is not built. Copy this block into `web/app/globals.css`
-as `:root` (it is the `:root,[data-look="ember"]` block of the prototype):
+Neon Quest only, picked by YY on 14 Oct 2026 (it replaces Ember, which this section named before). The look switcher
+stays in the prototype page and is not built. The tokens are taken from the `.n` block of
+`docs/design/chat-look-samples.html`, which is the picture YY picked from, and they live in `web/app/globals.css` as
+`:root`:
 
 ```css
---bg:#0F0D0B;--bg-img:none;--surface:#151210;--card:#1A1714;--card-2:#221E1A;--head-bg:transparent;
---line:#2A2420;--line-2:#3A332D;--text:#F2ECE4;--muted:#A89D90;
---accent:#FF7A2E;--accent-ink:#170B03;--accent-soft:rgba(255,122,46,.13);--link:#FF9C61;
---lit:#FF7A2E;--lit-ink:#170B03;--map-edge:#4A4038;--map-done:#8A7B6C;--map-rx:14px;
---green:#7FD99A;--amber:#F2C35A;--red:#FF8A7A;--red-card:#26130F;--red-line:#4A231C;--red-text:#F6E4DF;--red-muted:#D9B4AB;
---sent:#2A241F;--sent-line:#2A241F;--sent-text:#F2ECE4;--ai-bg:transparent;--ai-line:#4A4038;--needs:#241E14;
---font:"Geist","Inter",system-ui,-apple-system,"Segoe UI",sans-serif;--font-head:"Geist","Inter",system-ui,sans-serif;--font-hud:"Geist","Inter",system-ui,sans-serif;
---head-weight:300;--body-weight:400;--name-weight:500;--hud-case:uppercase;--hud-track:.11em;
---r-card:18px;--r-panel:26px;--r-btn:13px;--r-chip:999px;
---glow:0 0 0 1px rgba(255,138,70,.6),0 8px 30px rgba(255,122,46,.38);
---pip-pb:#E9DCCB;--pip-ps:#B9A893;--pip-hf:#FF7A2E;--pip-ht:#FF9C61;--pip-hs:#C9561A;--pip-hr:#FFB384;--pip-ey:#1A1410;--pip-ck:#F0A08A;
---av-bg:#1A1714;--av-line:#2C2622;--av-r:15px;
-```
+  --bg: #0b0b1a;
+  --grid: rgba(130, 120, 255, 0.05);
+  --surface: #101026;
+  --card: #14142c;
+  --card-2: #1c1c3c;
+  --head-bg: transparent;
+  --line: #2a2a55;
+  --line-2: #3a3a70;
+  --text: #eeedff;
+  --muted: #a9a8d6;
 
-- Dark warm near-black, one orange glow (only on the main action of a screen), thin headings (weight 300).
-- Keep the status tokens in `globals.css` (`--g`, `--a`, `--r` and their `-bg`, `-ink`, `-glow`) and map them to
-  `--green`, `--amber`, `--red`. Status text needs a contrast of 4.5:1 or more on its card.
-- No hard-coded colours outside the token block. Geist from Google Fonts or `next/font`, with the fallbacks above.
+  --accent: #45e6ff;
+  --accent-ink: #06121a;
+  --accent-soft: rgba(69, 230, 255, 0.13);
+  --link: #b3a8ff;
+  --lit: #b3a8ff;
+  --lit-ink: #0b0b1a;
+
+  --map-edge: #45e6ff;
+  --map-now: #b3a8ff;
+  --map-lock: #8f7330;
+  --map-dim: #5a5a95;
+  --map-rx: 6px;
+
+  --green: #52f2a2;
+  --amber: #ffcc55;
+  --red: #ff7a92;
+  --red-card: #2a0f1e;
+  --red-line: #6a2340;
+  --red-text: #ffe3ea;
+  --red-muted: #e6afc0;
+
+  --sent: #10304a;
+  --sent-line: #1f5c80;
+  --sent-text: #eeedff;
+  --ai-bg: #1c1c3c;
+  --ai-line: #34346a;
+  --needs: #221c22;
+  --needs-line: #5a4a2a;
+
+  --font: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: var(--font-hud-family), "Chakra Petch", var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-hud: var(--font-head);
+  --head-weight: 600;
+  --body-weight: 400;
+  --name-weight: 600;
+  --hud-case: uppercase;
+  --hud-track: 0.12em;
+
+  --r-card: 8px;
+  --r-panel: 10px;
+  --r-btn: 6px;
+  --r-chip: 6px;
+
+  --glow: 0 0 20px rgba(69, 230, 255, 0.4);
+  --av-bg: #14142c;
+  --av-line: #6b5ee8;
+  --av-r: 12px;
+  --av-glow: 0 0 18px rgba(139, 124, 255, 0.45);
+  --map-now-glow: drop-shadow(0 0 6px rgba(160, 145, 255, 0.9));
+
+  --pip-pb: #8b7cff;
+  --pip-ps: #5f4fdb;
+  --pip-hf: #ffcc55;
+  --pip-ht: #ffe08f;
+  --pip-hs: #c9971f;
+  --pip-hr: #ffebb0;
+  --pip-ey: #0b0b1a;
+  --pip-ck: #ff8fd6;
+  --pip-w: #ffffff;
+
+  /* Status tokens map onto the look's three colours. A status always carries
+     its word too, so colour is never the only signal (S21). */
+  --g: var(--green);
+  --g-ink: var(--green);
+  --g-bg: var(--card);
+  --a: var(--amber);
+  --a-ink: var(--amber);
+  --a-bg: var(--card);
+  --r: var(--red);
+  --r-ink: var(--red);
+  --r-bg: var(--red-card);
+}```
+
+- Dark near-black blue with a faint violet grid, one cyan glow (only on the main action of a screen), HUD type in
+  Chakra Petch for labels and Inter for body text.
+- Keep the status tokens in `globals.css` (`--g`, `--a`, `--r`) and map them to `--green`, `--amber`, `--red`. Status
+  text needs a contrast of 4.5:1 or more on its card; all five pairs are checked in `tests/c5a.test.tsx`.
+- No hard-coded colours outside the token block, hex or rgba. Chakra Petch and Inter from `next/font`.
+- The quest rail (`QuestRail.tsx`) is the look's own shape for how far a job has come. It draws only what the engine
+  hands it.
 
 ---
 
