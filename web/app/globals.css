@@ -195,7 +195,7 @@ a {
 }
 
 .reset-btn {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   border-radius: var(--r-btn);
   border: 1px solid var(--line-2);
@@ -225,7 +225,8 @@ a {
 }
 
 .ai-switch button {
-  min-height: 34px;
+  /* 44 px: every press on a phone is thumb-sized (C7b render check). */
+  min-height: 44px;
   padding: 0 10px;
   border: 1px solid transparent;
   border-radius: var(--r-chip);
@@ -788,8 +789,8 @@ a {
 }
 
 .send {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   flex: none;
   border-radius: var(--r-btn);
   background: var(--accent);
@@ -1050,6 +1051,344 @@ a {
   color: var(--muted);
 }
 
+/* ---------- Technician desk (C7b, S21) ---------- */
+
+/* Phone first: one column, every press at least 44 px tall, nothing wider
+   than the chat. A status colour always carries its word. */
+.desk,
+.open-job {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.desk-head {
+  font-family: var(--font-head);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin: 8px 2px 0;
+}
+
+.desk-sub {
+  font-family: var(--font-hud);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+  margin: 6px 2px 0;
+}
+
+.desk-status {
+  margin: 0 2px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.job-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.job-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.job-row.is-open {
+  border-color: var(--accent);
+}
+
+.job-row b {
+  font-family: var(--font-hud);
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.job-status {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.open-btn {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-chip);
+  background: var(--card-2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+}
+
+.card-lines {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.card-lines .badge {
+  margin-right: 6px;
+}
+
+.card-lines b {
+  color: var(--text);
+}
+
+.code-line {
+  font-size: 13px;
+}
+
+.lead-check,
+.lead-fix {
+  font-size: 13.5px;
+}
+
+.lead-k {
+  display: block;
+  font-family: var(--font-hud);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: var(--hud-case);
+  color: var(--lit);
+}
+
+.tick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tick-row button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--r-chip);
+  background: var(--card-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.tick-row .found-btn {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.tick-row .not-btn {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.desk-details summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-hud);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+  cursor: pointer;
+}
+
+.desk-details[open] summary {
+  margin-bottom: 10px;
+}
+
+.desk-details > [data-testid="lead-card"] + [data-testid="lead-card"] {
+  margin-top: 10px;
+}
+
+.step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.step-list li {
+  padding: 9px 2px;
+  border-top: 1px dashed var(--line);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.step-list p {
+  margin: 4px 0 0;
+}
+
+.step-no {
+  font-family: var(--font-hud);
+  margin: 0 8px;
+}
+
+.step-who {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.step-filled {
+  color: var(--accent);
+}
+
+.lock-line {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--red-line);
+  border-radius: var(--r-btn);
+  background: var(--r-bg);
+  color: var(--red-text);
+  font-size: 14px;
+}
+
+/* The job's presses stay at the bottom of the screen while the job is in
+   progress, so Solved, Not solved and Safety are on screen on a phone. */
+.job-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-panel);
+}
+
+.job-bar-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.job-bar-buttons button {
+  min-height: 48px;
+  padding: 0 10px;
+  border-radius: var(--r-btn);
+  background: var(--card-2);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: var(--hud-case);
+}
+
+.job-bar-buttons .solved-btn {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.job-bar-buttons .not-solved-btn {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* Two classes, like the chip row's, so the bar's Safety stays red. */
+.job-bar-buttons .safety-btn {
+  background: var(--red-card);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.job-form {
+  display: grid;
+  gap: 10px;
+}
+
+.job-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.job-form input[type="text"],
+.job-form input[type="number"] {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-btn);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+}
+
+.job-form fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.job-form legend {
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.job-form .radio {
+  display: inline-flex;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-chip);
+  color: var(--text);
+}
+
+.job-form .submit {
+  min-height: 48px;
+  border-radius: var(--r-btn);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-hud);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+}
+
 /* On a phone the seat switcher scrolls sideways instead of stacking, so it
    never pushes the chat off the screen. */
 @media (max-width: 560px) {
@@ -1078,7 +1417,7 @@ a {
   }
   .reset-btn {
     margin-left: auto;
-    min-height: 36px;
+    min-height: 44px;
     font-size: 12.5px;
   }
   /* The AI switch gets its own row under the seats, so the brand and Reset
@@ -1089,7 +1428,7 @@ a {
   }
   .ai-switch button {
     flex: 1;
-    min-height: 34px;
+    min-height: 44px;
   }
   .chat-head {
     padding: 12px;

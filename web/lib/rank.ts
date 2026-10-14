@@ -90,7 +90,8 @@ function firstSentence(text: string): string {
 
 // ---- Time formatting (S9 {time}) ----
 
-function formatTime(minutes: number): string {
+/** S9's {time}; the technician's lead cards show each check time with it (C7b). */
+export function formatTime(minutes: number): string {
   if (minutes < 60) {
     return `${minutes} minutes`;
   }

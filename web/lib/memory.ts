@@ -38,6 +38,15 @@ export interface ImpactRecord {
   cost?: number;
 }
 
+/** How a job reached the senior manager (C7b): Not solved, or Send with the cause. */
+export interface Escalation {
+  route: "not-solved" | "send-with-cause";
+  seat: string;
+  at: string;
+  /** The found lead it went up with, or null. */
+  causeId: string | null;
+}
+
 export interface Job extends Ticket {
   status: JobStatus;
   ticks: Tick[];
@@ -47,6 +56,7 @@ export interface Job extends Ticket {
   fixerSeat: string | null;
   impact: ImpactRecord | null;
   notes: string[];
+  escalatedWith?: Escalation;
 }
 
 export interface OpenRedStop {
@@ -74,7 +84,7 @@ export interface ChatMessage {
 
 export interface Notice {
   seat: string;
-  kind: "speak-first" | "low-confidence" | "alert" | "charge-request";
+  kind: "speak-first" | "low-confidence" | "alert" | "charge-request" | "escalated";
   text: string;
   at: string;
   jobId?: string;
@@ -98,6 +108,18 @@ export interface RuntimeCase {
   fixedAt: string;
   fixedBy: string;
   confirmedBy: string | null;
+  /** Saved by `solved` (C7b): the job's facts, the fix line and the one line of why (S7, S8). */
+  facts?: string[];
+  fix?: string;
+  why?: string;
+}
+
+/** A rank wording made at a press (C7b), kept by its replay key so it shows only under the reason it worded. */
+export interface StoredWording {
+  aiWording: string | null;
+  banner: string | null;
+  notice: string | null;
+  aiCalls: number;
 }
 
 export interface MemoryState {
@@ -116,6 +138,10 @@ export interface MemoryState {
   speakFirstNotices: { spotKey: string; postedAt: string }[];
   lowConfidenceJobIds: string[];
   aiCalls: number;
+  /** The job each seat opened last (S2: the technician's home spot). Absent in the seed. */
+  openJobBySeat?: Record<string, string>;
+  /** Rank wordings made at a press, by replay key (C7b). Absent in the seed. */
+  leadWordings?: Record<string, StoredWording>;
 }
 
 function dataDir(): string {

@@ -88,3 +88,21 @@ Each question names its part and the spec's exact words. Each one has one it.tod
    self-check runs before anyone opens 2318, so this never shows. Should a tenant's tip close a job a technician has
    open, or should the attach leave its status alone as built? Test: `web/tests/c7a.test.ts`, "QUESTION C7a: ..."
    (it.todo).
+
+## C7b
+
+7. **The impact record's cost.** S3 says "Code adds the cost from the made-up rates in
+   `web/data/impact-rates.json` (S18)", and S18's rates are "`visitHours: 2`, `seniorCheckHours: 3`,
+   `hourlyRateSgd: 60`". The spec does not say how hours lost, extra visits and "contractor or parts needed" turn into
+   one cost. Built for now: hours lost x the hourly rate + extra visits x a visit's hours x the hourly rate, so 3 hours
+   and 2 visits cost S$420; "contractor or parts needed" has no rate in S18, so it is shown but not costed. The cost
+   is stored on the job and shown only in the senior manager's notice (S3 also names the AOM; that screen is C9).
+   Is that the cost YY wants? Test: `web/tests/c7b.test.ts`, "QUESTION C7b: S3 says code adds the impact record's
+   cost ..." (it.todo).
+
+8. **A Confirm cause list on the technician seat.** S8 says "Cut 7 fallback (confirm-cause): the Confirm cause list
+   on the technician and HQ seats goes", and run rule 4 builds everything marked cut 5 to cut 10, so the list should
+   exist. But S21's technician row lists the buttons "Open job, Found it, Not this, Solved (why line), Not solved
+   (impact record), Send with the cause, Safety", and C7b's items name no Confirm cause. Not built on the technician
+   seat in C7b; `confirm-cause` itself works (C4). Should the technician seat get the list? Test:
+   `web/tests/c7b.test.ts`, "QUESTION C7b: S8 says the Confirm cause list ..." (it.todo).

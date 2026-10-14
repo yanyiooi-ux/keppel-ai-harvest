@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PipAvatar } from "../PipAvatar";
 import { ChatCard } from "./ChatCard";
 import { QuestRail } from "./QuestRail";
+import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -79,6 +80,9 @@ export function SeatChat({
   const [reporting, setReporting] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const call = useRef(fetcher ?? ((input: string, init?: RequestInit) => fetch(input, init)));
+  // The technician's open job (C7b) wins over the page's default job, so the
+  // chips, typed words and Safety picks are about the job on the desk.
+  const activeJob = state?.desk?.open?.jobId ?? jobId;
 
   const load = useCallback(async () => {
     const response = await call.current(`/api/state?seat=${seat}`);
@@ -103,13 +107,13 @@ export function SeatChat({
       const response = await call.current("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seat, text, job: jobId }),
+        body: JSON.stringify({ seat, text, job: activeJob }),
       });
       const data = (await response.json()) as { storedText: string; cards: ServerCard[]; storedCount?: number };
       setReplies((old) => [...old, { text: data.storedText, cards: data.cards ?? [], storedCount: data.storedCount }]);
       setTyped("");
     },
-    [seat, jobId]
+    [seat, activeJob]
   );
 
   // One press at a time: a double tap while a press is on its way sends
@@ -141,6 +145,9 @@ export function SeatChat({
 
   const storedMessages = state?.messages.length ?? 0;
   const shownReplies = replies.filter((reply) => waiting(reply, storedMessages));
+  // On the technician's open job the refusal shows in the bar, next to the
+  // press that made it, so it is on screen on a phone (C7b).
+  const refusedInBar = barIsShown(state?.desk);
 
   return (
     <div className={variant === "column" ? "chat column" : "chat"}>
@@ -166,6 +173,15 @@ export function SeatChat({
           </div>
         ) : null}
 
+        {state?.desk ? (
+          <TechnicianDesk
+            desk={state.desk}
+            press={press}
+            onSafety={() => void say(SAFETY_WORD)}
+            refused={refusedInBar ? refused : null}
+          />
+        ) : null}
+
         {state?.notices.map((notice, i) => (
           <div className="notice" key={`notice-${i}`}>
             <b>{notice.kind.replace(/-/g, " ")}</b>
@@ -179,18 +195,18 @@ export function SeatChat({
               {message.text}
             </div>
           ) : (
-            <Cards key={`m-${i}`} cards={message.cards ?? []} press={press} jobId={jobId} />
+            <Cards key={`m-${i}`} cards={message.cards ?? []} press={press} jobId={activeJob} />
           )
         )}
 
         {shownReplies.map((reply, i) => (
           <div key={`r-${i}`} style={{ display: "contents" }}>
             <div className="sent">{reply.text}</div>
-            <Cards cards={reply.cards} press={press} jobId={jobId} />
+            <Cards cards={reply.cards} press={press} jobId={activeJob} />
           </div>
         ))}
 
-        {refused ? (
+        {refused && !refusedInBar ? (
           <div className="notice refused" role="status">
             <b>not done</b>
             {refused}
@@ -243,7 +259,7 @@ export function SeatChat({
         <input
           value={typed}
           onChange={(event) => setTyped(event.target.value)}
-          placeholder={`Message Pip${jobId ? ` about ${jobId}` : ""}`}
+          placeholder={`Message Pip${activeJob ? ` about ${activeJob}` : ""}`}
           aria-label="Message Pip"
         />
         <button className="send" type="submit" aria-label="Send">

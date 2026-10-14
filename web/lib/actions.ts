@@ -4,8 +4,10 @@
  * Every action runs the same gate first: the seat check and the status check
  * from permissions.ts, then the safety lock from S3. Only then does it touch
  * the memory. C4 writes the bodies for reset, safety-pick and confirm-cause;
- * C7a writes report and answer (the tenant's self-check, S10); the rest pass
- * their checks and say "not built yet", and C7b to C9 fill them.
+ * C7a writes report and answer (the tenant's self-check, S10); C7b writes the
+ * technician's open-job, tick, solved, send-with-cause and not-solved
+ * (technician-flow.ts); the rest pass their checks and say "not built yet",
+ * and C8a to C9 fill them.
  */
 
 import { loadAndCheckPill } from "./pill";
@@ -16,10 +18,25 @@ import { callsForState, postSpeakFirst } from "./calls";
 import { reportRefusal, startReport, planAnswer, applyAnswer, sgStamp } from "./self-check-flow";
 import type { AiOutcome, TenantReply } from "./ai";
 import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
+import {
+  applyOpenJob,
+  applyTick,
+  applySolved,
+  applySendWithCause,
+  applyNotSolved,
+  tickRefusal,
+  solvedRefusal,
+  sendWithCauseRefusal,
+  notSolvedRefusal,
+  postLowConfidenceNotice,
+} from "./technician-flow";
 import * as memory from "./memory";
 import type { MemoryState, Job, OpenRedStop } from "./memory";
 
 export { callsForState };
+
+/** The low-confidence notice (S9) lives with the presses that raise it (technician-flow.ts). */
+export { postLowConfidenceNotice };
 
 /** Buttons that a safety stop on the job's spot locks (S3). */
 const LOCKED_BY_SAFETY = [
@@ -44,6 +61,8 @@ export interface ActionResult {
   notBuiltYet?: boolean;
   /** The job a press made or landed on (report, answer). */
   jobId?: string;
+  /** A pick of a stop already open there: no second stop, no alert and no second card (S11). */
+  alreadyOpen?: boolean;
 }
 
 /** What a press may carry besides the person's input: code-made, never from the request. */
@@ -124,6 +143,7 @@ export function safetyPick(
       ok: true,
       message: `Red stop ${stopId} is already open here. No second alert.`,
       cards: [{ ...card, alerts: [] }],
+      alreadyOpen: true,
     };
   }
 
@@ -246,26 +266,6 @@ export function confirmCause(
   return { ok: true, message: `Cause confirmed by ${seat}.` };
 }
 
-/**
- * The low-confidence notice (S9) reaches the senior manager once per job.
- */
-export function postLowConfidenceNotice(
-  state: MemoryState,
-  jobId: string,
-  text: string
-): boolean {
-  if (state.lowConfidenceJobIds.includes(jobId)) return false;
-  state.lowConfidenceJobIds.push(jobId);
-  state.notices.push({
-    seat: "senior-manager",
-    kind: "low-confidence",
-    text,
-    at: state.demoNow,
-    jobId,
-  });
-  return true;
-}
-
 /** What send-to-hq reads from a stored solution: the draft's hash now and its stored test run. */
 export interface StoredSolutionGate {
   hash?: string;
@@ -328,7 +328,20 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     memory.update((s) => {
       const at = sgStamp(memory.now(s, realNow));
       result = safetyPick(s, seat, stopId, jobId, source, at);
-      if (result.ok) storePickedCard(s, seat, result, at);
+      // A stop already open there shows nothing new: no second card (S11).
+      if (result.ok && !result.alreadyOpen) storePickedCard(s, seat, result, at);
+    });
+    return result;
+  }
+
+  // The technician's presses (C7b, technician-flow.ts). Each refusal is worked
+  // out on a read and never writes; the press plans again inside the update.
+  if (job && TECHNICIAN_PRESSES.includes(action)) {
+    const refusal = technicianRefusal(state, seat, action, job, payload, realNow);
+    if (refusal) return { ok: false, message: refusal };
+    let result: ActionResult = { ok: false, message: "" };
+    memory.update((s) => {
+      result = applyTechnicianPress(s, seat, action, job.id, payload, realNow);
     });
     return result;
   }
@@ -377,6 +390,39 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     message: `"${action}" passed its checks. Not built yet.`,
     notBuiltYet: true,
   };
+}
+
+/** The presses technician-flow.ts builds (C7b). The gate above has checked the seat, status and lock. */
+const TECHNICIAN_PRESSES = ["open-job", "tick", "solved", "send-with-cause", "not-solved"];
+
+function technicianRefusal(
+  state: MemoryState,
+  seat: string,
+  action: string,
+  job: Job,
+  payload: Record<string, unknown> | undefined,
+  realNow: Date
+): string | null {
+  if (action === "tick") return tickRefusal(state, seat, job, payload, realNow);
+  if (action === "solved") return solvedRefusal(state, seat, job, payload, realNow);
+  if (action === "send-with-cause") return sendWithCauseRefusal(state, seat, job, realNow);
+  if (action === "not-solved") return notSolvedRefusal(payload);
+  return null;
+}
+
+function applyTechnicianPress(
+  state: MemoryState,
+  seat: string,
+  action: string,
+  jobId: string,
+  payload: Record<string, unknown> | undefined,
+  realNow: Date
+): ActionResult {
+  if (action === "open-job") return applyOpenJob(state, seat, jobId, realNow);
+  if (action === "tick") return applyTick(state, seat, jobId, payload, realNow);
+  if (action === "solved") return applySolved(state, seat, jobId, payload, realNow);
+  if (action === "send-with-cause") return applySendWithCause(state, seat, jobId, realNow);
+  return applyNotSolved(state, seat, jobId, payload, realNow);
 }
 
 /** The spot key of a job, for the screens. */

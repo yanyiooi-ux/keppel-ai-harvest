@@ -12,6 +12,7 @@ import { SEAT_LABELS, PIP_NEVER } from "./permissions";
 import type { SeatId } from "./permissions";
 import type { MemoryState } from "./memory";
 import { AI_OFF_LABEL, type AiMode } from "./ai-mode";
+import { technicianDesk, type TechnicianDesk } from "./technician-desk";
 
 export type CardColour = "green" | "amber" | "red" | "none";
 
@@ -66,6 +67,8 @@ export interface SeatView {
   chips: string[];
   messages: SeatMessage[];
   notices: { kind: string; text: string }[];
+  /** The technician seat only (C7b): the job list and the open job's filled checklist and leads. */
+  desk?: TechnicianDesk;
 }
 
 /**
@@ -88,8 +91,8 @@ function forMode(card: SeatCard, mode: AiMode | undefined): SeatCard {
   return rest;
 }
 
-export function seatView(state: MemoryState, seat: string, mode?: AiMode): SeatView {
-  return {
+export function seatView(state: MemoryState, seat: string, mode?: AiMode, realNow: Date = new Date()): SeatView {
+  const view: SeatView = {
     seat,
     label: SEAT_LABELS[seat as SeatId],
     pipNever: PIP_NEVER[seat as SeatId],
@@ -105,4 +108,6 @@ export function seatView(state: MemoryState, seat: string, mode?: AiMode): SeatV
       .filter((n) => n.seat === seat)
       .map((n) => ({ kind: n.kind, text: n.text })),
   };
+  if (seat === "technician") view.desk = technicianDesk(state, realNow, mode);
+  return view;
 }
