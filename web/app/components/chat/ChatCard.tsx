@@ -23,6 +23,14 @@ export interface ChatCardProps {
   needs?: string;
   action?: { label: string; onPress?: () => void };
   children?: React.ReactNode;
+  /** The extra line the AI adds under the code reason (S14). The body always stays. */
+  aiWording?: string;
+  /** "replay: saved real AI answer" (S15). */
+  aiBanner?: string;
+  /** "<status> AI unavailable, using replay" (S0 rule 12). */
+  aiNotice?: string;
+  /** "AI off" when the switch is Off (S15). */
+  aiOff?: string;
 }
 
 export function ChatCard({
@@ -36,6 +44,10 @@ export function ChatCard({
   needs,
   action,
   children,
+  aiWording,
+  aiBanner,
+  aiNotice,
+  aiOff,
 }: ChatCardProps) {
   const className = colour === "none" ? "card" : `card is-${colour}`;
 
@@ -52,6 +64,15 @@ export function ChatCard({
 
       {title ? <p className="card-title">{title}</p> : null}
       {body ? <p>{body}</p> : null}
+      {aiWording ? (
+        <p className="ai-line">
+          <span className="ai-tag">AI wording</span>
+          <span>{aiWording}</span>
+        </p>
+      ) : null}
+      {aiBanner ? <p className="ai-banner">{aiBanner}</p> : null}
+      {aiNotice ? <p className="ai-notice">{aiNotice}</p> : null}
+      {aiOff ? <span className="ai-off">{aiOff}</span> : null}
       {children}
 
       {needs ? (

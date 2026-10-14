@@ -1,4 +1,5 @@
-import { leadsForJob } from "../../lib/leads";
+import { wordLeads } from "../../lib/ai-wording";
+import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
 import * as memory from "../../lib/memory";
@@ -18,13 +19,15 @@ export function buildingBAlerts(state: MemoryState) {
  * No buttons except Safety for its own stops. Safety is a plain details block,
  * so it opens without any JavaScript.
  */
-export function BuildingBCard() {
+export async function BuildingBCard() {
   const state = memory.read();
   const job = state.jobs.find((j) => j.id === "2401");
   if (!job) return null;
 
   const version = state.liveVersionByBuilding[job.building] ?? "1.0";
-  const leads = leadsForJob(state, job, "technician").leads.slice(0, 3);
+  // The leads come from the engine; the AI may only add a line under each
+  // code reason (S14, S15), and never changes which leads show or their order.
+  const worded = await wordLeads(state, job, "technician", await currentAiMode());
   const pill = loadAndCheckPill("ts-cc", version);
   const openHere = state.openRedStops.filter(
     (s) => s.clearedAt === null && s.building === job.building
@@ -49,14 +52,23 @@ export function BuildingBCard() {
       ))}
 
       <ol className="lead-list">
-        {leads.map((lead) => (
+        {worded.items.map(({ lead, wording }) => (
           <li key={lead.causeId}>
             <span className="lead-name">{lead.label}</span>
             <span className="lead-tier hud">{lead.tier.replace(/-/g, " ")}</span>
             <span className="lead-reason">{lead.reason}</span>
+            {wording.value.aiWording ? (
+              <span className="ai-line">
+                <span className="ai-tag">AI wording</span>
+                <span>{wording.value.aiWording}</span>
+              </span>
+            ) : null}
+            {wording.banner ? <span className="ai-banner">{wording.banner}</span> : null}
+            {wording.notice ? <span className="ai-notice">{wording.notice}</span> : null}
           </li>
         ))}
       </ol>
+      {worded.aiOff ? <span className="ai-off">{worded.aiOff}</span> : null}
 
       <details className="safety-details">
         <summary className="safety-btn">Safety</summary>
@@ -80,7 +92,8 @@ export function BuildingBCard() {
       </details>
 
       <p className="receipt">
-        Ranked by the same engine as the technician seat, at the demo clock. AI calls: 0
+        Ranked by the same engine as the technician seat, at the demo clock. AI calls:{" "}
+        {worded.aiCalls}
       </p>
     </article>
   );

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AiSwitch } from "./AiSwitch";
+import type { AiMode } from "../../lib/ai-mode";
 
 /**
- * The seat switcher and Reset demo (S20). There is no building switcher:
- * Building B is a card, not a seat (S2).
+ * The seat switcher, the AI switch (S15) and Reset demo (S20). There is no
+ * building switcher: Building B is a card, not a seat (S2).
  */
 const SEATS = [
   { id: "tenant", label: "Tenant" },
@@ -15,7 +17,7 @@ const SEATS = [
   { id: "aom-tower-a", label: "AOM Tower A" },
 ] as const;
 
-export function TopBar() {
+export function TopBar({ aiMode }: { aiMode: AiMode }) {
   const pathname = usePathname();
 
   const resetDemo = async () => {
@@ -39,6 +41,7 @@ export function TopBar() {
           </Link>
         ))}
       </nav>
+      <AiSwitch mode={aiMode} />
       <button className="reset-btn" onClick={resetDemo}>
         Reset demo
       </button>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
 import "./globals.css";
 import { TopBar } from "./components/TopBar";
+import { currentAiMode } from "../lib/ai-mode-cookie";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,11 +22,13 @@ export const metadata: Metadata = {
     "Pill Desk: turning building engineers' know-how into reusable, governed Intelligence Pills. Made up for the hackathon demo.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const aiMode = await currentAiMode();
+
   return (
     <html lang="en" className={`${inter.variable} ${chakraPetch.variable}`}>
       <body>
-        <TopBar />
+        <TopBar aiMode={aiMode} />
         {children}
       </body>
     </html>

@@ -6,7 +6,7 @@
  * the chat both come through here, so they can never rank differently.
  */
 
-import { loadAndCheckPill } from "./pill";
+import { loadAndCheckPill, type Pill } from "./pill";
 import { loadCauses } from "./causes";
 import { allCases } from "./cases";
 import { loadBuildings } from "./facts";
@@ -25,12 +25,16 @@ export function factsForJob(state: MemoryState, job: Job): string[] {
 
 /**
  * The ranked leads for one job, through one seat's eyes.
+ *
+ * `livePill` is the building's live pill unless one is given. ai:record passes
+ * the v1.1 fixture to record 2401's wording as it ranks after HQ approves (C6b).
  */
 export function leadsForJob(
   state: MemoryState,
   job: Job,
   seat: string,
-  realNow: Date = new Date()
+  realNow: Date = new Date(),
+  livePill?: Pill
 ): RankResult {
   const version = state.liveVersionByBuilding[job.building] ?? "1.0";
   const causesFile = loadCauses();
@@ -39,7 +43,7 @@ export function leadsForJob(
   return rankLeads({
     job: { ...(job as Ticket), facts: factsForJob(state, job) },
     seat,
-    livePill: loadAndCheckPill("ts-cc", version),
+    livePill: livePill ?? loadAndCheckPill("ts-cc", version),
     causes: causesFile.causes,
     allCases: allCases(calls),
     ticks: job.ticks,

@@ -194,6 +194,10 @@ function Cards({ cards }: { cards: ServerCard[] }) {
             title={card.title}
             body={card.body}
             receipt={card.receipt}
+            aiWording={card.aiWording}
+            aiBanner={card.aiBanner}
+            aiNotice={card.aiNotice}
+            aiOff={card.aiOff}
           />
         );
       })}

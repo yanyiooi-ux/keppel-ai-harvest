@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as memory from "../../../lib/memory";
 import { seatView } from "../../../lib/seat-view";
 import { SEAT_LABELS } from "../../../lib/permissions";
+import { currentAiMode } from "../../../lib/ai-mode-cookie";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,12 @@ export async function GET(request: Request) {
   }
 
   const state = memory.read();
+  const aiMode = await currentAiMode();
 
   return NextResponse.json({
     ok: true,
-    ...seatView(state, seat),
+    ...seatView(state, seat, aiMode),
+    aiMode,
     now: memory.now(state).toISOString(),
     demoNow: state.demoNow,
     liveVersionByBuilding: state.liveVersionByBuilding,

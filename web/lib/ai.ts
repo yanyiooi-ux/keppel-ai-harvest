@@ -7,4 +7,4 @@
 
 import "server-only";
 
-export { getClient, getModel, hasKey, _resetClient } from "./ai-core";
+export * from "./ai-core";

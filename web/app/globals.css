@@ -204,6 +204,43 @@ a {
   font-size: 13.5px;
 }
 
+/* The AI switch (S15): Live, Replay, Off. Where it stands is printed and
+   outlined, so colour is never the only signal. */
+.ai-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: var(--card);
+}
+
+.ai-switch-name {
+  font-family: var(--font-hud);
+  font-size: 11px;
+  letter-spacing: var(--hud-track);
+  color: var(--muted);
+  padding: 0 7px 0 6px;
+}
+
+.ai-switch button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-chip);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ai-switch button.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* ---------- Chat ---------- */
 
 .chat {
@@ -865,6 +902,54 @@ a {
   margin-top: 26px;
 }
 
+/* ---------- AI wording (S14, S15) ---------- */
+
+/* The AI's line sits under the code reason, which always stays, and is
+   labelled, so it never reads as the engine's own words. */
+.ai-line {
+  display: block;
+  margin: 8px 0 0;
+  padding: 7px 10px;
+  border: 1px solid var(--ai-line);
+  border-radius: var(--r-btn);
+  background: var(--ai-bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-tag {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: var(--font-hud);
+  font-size: 10.5px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--lit);
+}
+
+.ai-banner,
+.ai-notice {
+  display: block;
+  margin: 5px 0 0;
+  font-family: var(--font-hud);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.ai-off {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-chip);
+  font-family: var(--font-hud);
+  font-size: 11px;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--muted);
+}
+
 /* On a phone the seat switcher scrolls sideways instead of stacking, so it
    never pushes the chat off the screen. */
 @media (max-width: 560px) {
@@ -895,6 +980,16 @@ a {
     margin-left: auto;
     min-height: 36px;
     font-size: 12.5px;
+  }
+  /* The AI switch gets its own row under the seats, so the brand and Reset
+     demo keep the first row. */
+  .ai-switch {
+    order: 4;
+    flex: 1 0 100%;
+  }
+  .ai-switch button {
+    flex: 1;
+    min-height: 34px;
   }
   .chat-head {
     padding: 12px;

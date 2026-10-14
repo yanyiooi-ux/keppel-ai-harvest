@@ -11,6 +11,7 @@ import { CHIPS_BY_SEAT } from "./chat";
 import { SEAT_LABELS, PIP_NEVER } from "./permissions";
 import type { SeatId } from "./permissions";
 import type { MemoryState } from "./memory";
+import { AI_OFF_LABEL, type AiMode } from "./ai-mode";
 
 export type CardColour = "green" | "amber" | "red" | "none";
 
@@ -26,6 +27,20 @@ export interface SeatCard {
   colour?: CardColour;
   meaning?: string;
   items?: { id: string; title: string; body: string }[];
+  /** The lead whose code reason is the body (rank wording, S15). */
+  rankLead?: { label: string; checkText: string };
+  /** Set once the card went through the AI layer. */
+  aiJob?: string;
+  /** The extra "AI wording" line under the code reason, which always stays (S14). */
+  aiWording?: string;
+  /** "replay: saved real AI answer". */
+  aiBanner?: string;
+  /** "<status> AI unavailable, using replay". */
+  aiNotice?: string;
+  /** "AI off" when the switch is Off. */
+  aiOff?: string;
+  /** Model calls made for this card's wording. */
+  aiCalls?: number;
 }
 
 export interface SeatMessage {
@@ -43,7 +58,27 @@ export interface SeatView {
   notices: { kind: string; text: string }[];
 }
 
-export function seatView(state: MemoryState, seat: string): SeatView {
+/**
+ * Where the AI switch stands decides how a worded card shows (S15). On Off there
+ * is no AI at all: the same card, its code text, the small "AI off" label and no
+ * AI line, even if the line was made earlier on Live or Replay. Cards the AI never
+ * touched (red cards among them) are left exactly as they are.
+ */
+function forMode(card: SeatCard, mode: AiMode | undefined): SeatCard {
+  if (!mode || !card.aiJob) return card;
+  if (mode === "off") {
+    const { aiWording: _w, aiBanner: _b, aiNotice: _n, ...rest } = card;
+    void _w;
+    void _b;
+    void _n;
+    return { ...rest, aiOff: AI_OFF_LABEL };
+  }
+  const { aiOff: _o, ...rest } = card;
+  void _o;
+  return rest;
+}
+
+export function seatView(state: MemoryState, seat: string, mode?: AiMode): SeatView {
   return {
     seat,
     label: SEAT_LABELS[seat as SeatId],
@@ -54,7 +89,7 @@ export function seatView(state: MemoryState, seat: string): SeatView {
       .map((m) => ({
         from: m.from,
         text: m.text,
-        cards: (m.cards ?? []) as SeatCard[],
+        cards: ((m.cards ?? []) as SeatCard[]).map((card) => forMode(card, mode)),
       })),
     notices: state.notices
       .filter((n) => n.seat === seat)

@@ -46,6 +46,20 @@ export interface ChatCard {
   raiseStopId?: string;
   pointer?: string;
   items?: { id: string; title: string; body: string }[];
+  /** The lead whose code reason is the body, so the AI may word it (S15 rank-wording). Code text only. */
+  rankLead?: { label: string; checkText: string };
+  /** Set once the card went through the AI layer (ai-wording.ts). */
+  aiJob?: "rank-wording";
+  /** The extra "AI wording" line under the code reason. The body always stays. */
+  aiWording?: string;
+  /** "replay: saved real AI answer" when the wording came from a replay. */
+  aiBanner?: string;
+  /** "<status> AI unavailable, using replay" when the live call failed. */
+  aiNotice?: string;
+  /** "AI off" when the switch is Off. */
+  aiOff?: string;
+  /** Model calls made for this card's wording; its receipt says the same. */
+  aiCalls?: number;
 }
 
 export interface ChatReply {
@@ -259,10 +273,14 @@ function chipAnswer(
 
   if (chip === "Why?") {
     const first = leadsForJob(state, job, seat, realNow).leads[0];
+    if (!first) {
+      return { kind: "answer", title: "Why that one first", body: "There is no lead on this job yet." };
+    }
     return {
       kind: "answer",
       title: "Why that one first",
-      body: first ? first.reason : "There is no lead on this job yet.",
+      body: first.reason,
+      rankLead: { label: first.label, checkText: first.checkText },
     };
   }
 
