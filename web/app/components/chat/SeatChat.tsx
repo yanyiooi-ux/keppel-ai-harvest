@@ -112,19 +112,29 @@ export function SeatChat({
     [seat, jobId]
   );
 
+  // One press at a time: a double tap while a press is on its way sends
+  // nothing, so it can never come back as a confusing refusal.
+  const pressing = useRef(false);
+
   const press = useCallback<Press>(
     async (action, job, payload) => {
-      const body: Record<string, unknown> = { seat, action };
-      if (job) body.job = job;
-      if (payload) body.payload = payload;
-      const response = await call.current("/api/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = (await response.json()) as { ok?: boolean; message?: string };
-      setRefused(data.ok === false ? data.message ?? "That press was refused." : null);
-      await load();
+      if (pressing.current) return;
+      pressing.current = true;
+      try {
+        const body: Record<string, unknown> = { seat, action };
+        if (job) body.job = job;
+        if (payload) body.payload = payload;
+        const response = await call.current("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = (await response.json()) as { ok?: boolean; message?: string };
+        setRefused(data.ok === false ? data.message ?? "That press was refused." : null);
+        await load();
+      } finally {
+        pressing.current = false;
+      }
     },
     [seat, load]
   );
@@ -296,6 +306,19 @@ function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; job
         }
 
         const isRed = card.kind === "red-stop" || card.kind === "refusal";
+        // A typed red card opens no stop on its own; its Raise this stop
+        // button (safety-pick) does, on the job the words were typed about,
+        // else the seat's job (S11, S19).
+        const raise =
+          card.kind === "red-stop" && card.raiseStopId ? (
+            <button
+              className="raise-btn"
+              aria-label={`Raise this stop: ${card.raiseStopId}`}
+              onClick={() => void press("safety-pick", card.jobId ?? jobId, { stopId: card.raiseStopId })}
+            >
+              Raise this stop
+            </button>
+          ) : null;
         return (
           <ChatCard
             key={i}
@@ -311,7 +334,9 @@ function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; job
             aiBanner={card.aiBanner}
             aiNotice={card.aiNotice}
             aiOff={card.aiOff}
-          />
+          >
+            {raise}
+          </ChatCard>
         );
       })}
     </>

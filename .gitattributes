@@ -2,6 +2,9 @@
 * text=auto
 *.ps1 text eol=crlf
 *.sh text eol=lf
+# The pill is checked byte for byte (tests/c2a.test.ts), so it keeps LF on every checkout
+*.yaml text eol=lf
+*.yml text eol=lf
 *.png binary
 *.jpg binary
 *.mp4 binary

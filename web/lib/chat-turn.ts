@@ -10,6 +10,7 @@
 import { handleTyped, applyTypedReply, type ChatReply } from "./chat";
 import { wordChatCards } from "./ai-wording";
 import { SEAT_LABELS } from "./permissions";
+import { sgStamp } from "./self-check-flow";
 import type { AiDeps, AiMode } from "./ai";
 import * as memory from "./memory";
 
@@ -23,7 +24,12 @@ export type ChatTurnResult =
   | { status: 200; body: { ok: true; storedCount: number } & ChatReply }
   | { status: 400 | 404; body: { ok: false; message: string } };
 
-export async function chatTurn(input: ChatTurnInput, mode: AiMode, deps?: AiDeps): Promise<ChatTurnResult> {
+export async function chatTurn(
+  input: ChatTurnInput,
+  mode: AiMode,
+  deps?: AiDeps,
+  realNow: Date = new Date()
+): Promise<ChatTurnResult> {
   const { seat, text, job } = input;
   if (!seat || typeof text !== "string") {
     return { status: 400, body: { ok: false, message: "A message needs a seat and some text." } };
@@ -39,8 +45,9 @@ export async function chatTurn(input: ChatTurnInput, mode: AiMode, deps?: AiDeps
   const worded = { ...reply, cards };
   const aiCalls = cards.reduce((sum, card) => sum + (card.aiCalls ?? 0), 0);
 
+  // Stamped on the demo clock (S20), worked out inside the update.
   const after = memory.update((s) => {
-    applyTypedReply(s, seat, job, worded);
+    applyTypedReply(s, seat, job, worded, sgStamp(memory.now(s, realNow)));
     s.aiCalls = (s.aiCalls ?? 0) + aiCalls;
   });
 

@@ -13,7 +13,7 @@ import { safetyCardForStop, alertsForStop, alertNoticeText, locksForStop, safety
 import type { DraftTestRun } from "./draft-tests";
 import { spotKey } from "./places";
 import { callsForState, postSpeakFirst } from "./calls";
-import { reportRefusal, startReport, planAnswer, applyAnswer } from "./self-check-flow";
+import { reportRefusal, startReport, planAnswer, applyAnswer, sgStamp } from "./self-check-flow";
 import type { AiOutcome, TenantReply } from "./ai";
 import { mayPress, alertSeatFor, SEAT_LABELS, type SeatId } from "./permissions";
 import * as memory from "./memory";
@@ -82,14 +82,16 @@ export function resetDemo(realNow: Date = new Date()): ActionResult {
 
 /**
  * Raise one red stop (S11): the card and its alerts go into the memory,
- * and the stop locks the jobs that locksForStop names.
+ * and the stop locks the jobs that locksForStop names. `at` is the demo
+ * clock's time now (S20); runAction passes it.
  */
 export function safetyPick(
   state: MemoryState,
   seat: string,
   stopId: string,
   jobId: string | undefined,
-  source: "button" | "trend"
+  source: "button" | "trend",
+  at: string = state.demoNow
 ): ActionResult {
   const job = jobId ? memory.jobById(state, jobId) : undefined;
   const spot = job
@@ -143,7 +145,7 @@ export function safetyPick(
     jobId: jobId ?? null,
     source,
     openedBySeat: seat,
-    openedAt: state.demoNow,
+    openedAt: at,
     clearedBySeat: null,
     clearedAt: null,
     clearedReason: null,
@@ -176,7 +178,7 @@ export function safetyPick(
       seat: alertSeat,
       kind: "alert",
       text,
-      at: state.demoNow,
+      at,
       jobId: jobId,
       stopId: alert.stopId,
     });
@@ -194,16 +196,17 @@ export function safetyPick(
 /**
  * A pick from the Safety list shows that stop's card in the pressing seat's
  * chat (S11): the pill's trigger, action and who to call, word for word, and
- * its receipt with AI calls 0. Call it inside memory.update.
+ * its receipt with AI calls 0. Call it inside memory.update, with the demo
+ * clock's time now (S20).
  */
-function storePickedCard(state: MemoryState, seat: string, result: ActionResult): void {
+function storePickedCard(state: MemoryState, seat: string, result: ActionResult, at: string): void {
   const card = (result.cards ?? [])[0] as SafetyCard | undefined;
   if (!card) return;
   state.messages.push({
     seat,
     from: "pip",
     text: card.action,
-    at: state.demoNow,
+    at,
     cards: [
       {
         kind: "red-stop",
@@ -323,8 +326,9 @@ export function runAction(input: ActionInput, realNow: Date = new Date(), extras
     const source = payload?.source === "trend" ? "trend" : "button";
     let result: ActionResult = { ok: false, message: "" };
     memory.update((s) => {
-      result = safetyPick(s, seat, stopId, jobId, source);
-      if (result.ok) storePickedCard(s, seat, result);
+      const at = sgStamp(memory.now(s, realNow));
+      result = safetyPick(s, seat, stopId, jobId, source, at);
+      if (result.ok) storePickedCard(s, seat, result, at);
     });
     return result;
   }

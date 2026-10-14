@@ -220,6 +220,11 @@ export function mayPress(
   }
 
   if (!gate.includes(jobStatus)) {
+    // A job in the self-check is not reported yet (S10), so it is neither open
+    // nor waiting to be opened.
+    if (jobStatus === "self-check") {
+      return { allowed: false, reason: "That job is still in the tenant's self-check." };
+    }
     if (actionId === "open-job") {
       return { allowed: false, reason: "That job is already open." };
     }

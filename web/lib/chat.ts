@@ -44,6 +44,10 @@ export interface ChatCard {
   receipt?: string;
   stopId?: string;
   raiseStopId?: string;
+  /** A red stop's who_to_call, word for word, shown after "Call:" (S11). */
+  call?: string;
+  /** The job a typed red card's Raise this stop press goes to: the job the message was typed about. */
+  jobId?: string;
   pointer?: string;
   items?: { id: string; title: string; body: string }[];
   /** The lead whose code reason is the body, so the AI may word it (S15 rank-wording). Code text only. */
@@ -101,19 +105,26 @@ function chipFor(seat: string, text: string): string | null {
  * Record a typed message and its answer in the memory: the text as stored (amounts
  * hidden), Pip's cards, and the typed alerts. Call it inside memory.update. It
  * opens no stop and changes no status, tick, version, case or charge (S19).
+ * `at` is the demo clock's time now (S20); chat-turn.ts passes it.
  */
-export function applyTypedReply(state: MemoryState, seat: string, jobId: string | undefined, reply: ChatReply): void {
+export function applyTypedReply(
+  state: MemoryState,
+  seat: string,
+  jobId: string | undefined,
+  reply: ChatReply,
+  at: string = state.demoNow
+): void {
   state.messages.push({
     seat,
     from: "person",
     text: reply.storedText,
-    at: state.demoNow,
+    at,
   });
   state.messages.push({
     seat,
     from: "pip",
     text: reply.cards.map((c) => c.body ?? c.title ?? "").join(" "),
-    at: state.demoNow,
+    at,
     cards: reply.cards,
   });
   for (const alert of reply.alerts) {
@@ -121,7 +132,7 @@ export function applyTypedReply(state: MemoryState, seat: string, jobId: string 
       seat: alert.seat,
       kind: "alert",
       text: alert.text,
-      at: state.demoNow,
+      at,
       jobId,
       typed: true,
       stopId: alert.stopId,
@@ -151,13 +162,17 @@ export function handleTyped(
     const cards: ChatCard[] = [];
     const alerts: { seat: string; text: string; stopId: string }[] = [];
     for (const card of safety.matchedStops) {
+      // The same words as a pick from the Safety list, its who_to_call included
+      // (S11), plus the Raise this stop button's stop and job (S19).
       cards.push({
         kind: "red-stop",
         stopId: card.id,
         title: card.trigger,
         body: card.action,
+        call: card.whoToCall,
         receipt: card.receipt,
         raiseStopId: card.id,
+        ...(jobId ? { jobId } : {}),
       });
       const stop = safetyList(pill).find((s) => s.id === card.id);
       if (stop) {

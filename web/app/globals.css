@@ -736,6 +736,22 @@ a {
   font-weight: 600;
 }
 
+.raise-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border-radius: var(--r-btn);
+  background: var(--red-card);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: var(--font-hud);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--hud-case);
+}
+
 .notice.refused b {
   color: var(--amber);
 }
