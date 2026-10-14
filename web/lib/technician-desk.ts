@@ -134,6 +134,13 @@ export interface TechnicianDesk {
 const TECHNICIAN_BUILDING = "tower-a";
 const SEAT = "technician";
 
+/**
+ * The jobs that are the technician's to work on (S2 open-job, S3): waiting for
+ * a visit or open. A job a tip closed is no job for the technician (T-C7a); the
+ * job the technician opened stays listed whatever it moved to.
+ */
+const FOR_THE_TECHNICIAN: JobStatus[] = ["reported", "visit-booked", "in-progress"];
+
 // ---- Small readers ----
 
 interface TrendsFile {
@@ -489,7 +496,7 @@ function openJobDesk(state: MemoryState, job: Job, realNow: Date, mode: AiMode |
 export function technicianDesk(state: MemoryState, realNow: Date = new Date(), mode?: AiMode): TechnicianDesk {
   const openId = state.openJobBySeat?.[SEAT];
   const jobs = state.jobs
-    .filter((j) => j.building === TECHNICIAN_BUILDING && j.status !== "self-check")
+    .filter((j) => j.building === TECHNICIAN_BUILDING && (FOR_THE_TECHNICIAN.includes(j.status) || j.id === openId))
     .sort((a, b) => a.id.localeCompare(b.id));
   const open = openId ? memory.jobById(state, openId) : undefined;
 
