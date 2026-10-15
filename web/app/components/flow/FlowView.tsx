@@ -91,7 +91,7 @@ function Section({ id, lead, children }: { id: (typeof FLOW_SECTIONS)[number]["i
   );
 }
 
-export function FlowView({ flow, video }: { flow: FlowData; video: ReactNode }) {
+export function FlowView({ flow, video }: { flow: FlowData; video?: ReactNode }) {
   return (
     <main className="flow">
       <header className="flow-hero">
@@ -120,7 +120,7 @@ export function FlowView({ flow, video }: { flow: FlowData; video: ReactNode }) 
         </nav>
       </header>
 
-      {video}
+      {video ?? null}
 
       <Section
         id="seats"

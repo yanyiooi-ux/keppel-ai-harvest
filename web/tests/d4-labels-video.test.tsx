@@ -8,8 +8,9 @@
  * Manager" wherever a person reads it. The seat id aom-tower-a and the
  * engine's own lines stay; the change is in the plain-words layer.
  *
- * The video: a plain browser player with a poster frame on home, /how and
- * /flow, or one plain line when the file is not on this copy of the demo.
+ * The video: a plain browser player with a poster frame on home only, near the
+ * top (YY, 16 Oct: "can the video be at the main page, then flow just keep as
+ * flow"), or one plain line when the file is not on this copy of the demo.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -169,10 +170,14 @@ describe("D4: the video player", () => {
     expect(readme).toContain(VIDEO_MISSING);
   });
 
-  it("home, /how and /flow each show the player, read from the disk", () => {
-    for (const file of [join("app", "page.tsx"), join("app", "how", "page.tsx"), join("app", "flow", "page.tsx")]) {
+  it("only home shows the player, read from the disk, above the seat list; /how and /flow show none", () => {
+    const home = readFileSync(join(process.cwd(), "app", "page.tsx"), "utf-8");
+    expect(home).toMatch(/<VideoPlayer available=\{videoOnDisk\(\)\} \/>/);
+    expect(home.indexOf("<VideoPlayer")).toBeLessThan(home.indexOf('className="seat-list"'));
+    expect(home).not.toMatch(/further down/);
+    for (const file of [join("app", "how", "page.tsx"), join("app", "flow", "page.tsx")]) {
       const src = readFileSync(join(process.cwd(), file), "utf-8");
-      expect(src, file).toMatch(/<VideoPlayer available=\{videoOnDisk\(\)\} \/>/);
+      expect(src, file).not.toMatch(/VideoPlayer/);
     }
   });
 });

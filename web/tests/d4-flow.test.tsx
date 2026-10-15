@@ -14,7 +14,6 @@ import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import ts from "typescript";
 import { FlowView } from "../app/components/flow/FlowView";
-import { VideoPlayer } from "../app/components/VideoPlayer";
 import { FLOW_SECTIONS, flowButtons, flowView, safetyWords } from "../lib/flow";
 import { FLOW_LINK_WORDS } from "../lib/flow-words";
 import { CHARGE_CHOICES } from "../lib/charge-flow";
@@ -81,7 +80,7 @@ function realButtonLabels(skip: string[]): Set<string> {
 }
 
 function renderFlow() {
-  return render(<FlowView flow={flowView()} video={<VideoPlayer available={false} />} />);
+  return render(<FlowView flow={flowView()} />);
 }
 
 describe("D4: every button name on /flow is a real button in the app", () => {
@@ -147,7 +146,7 @@ describe("D4: the page's sections and words", () => {
   it("has the 8 sections of the diagram in order, each linked from the list at the top", () => {
     renderFlow();
     const heads = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(heads).toEqual(["Watch the 6-minute video", ...FLOW_SECTIONS.map((s) => s.title)]);
+    expect(heads).toEqual(FLOW_SECTIONS.map((s) => s.title));
     const toc = screen.getByRole("navigation", { name: "On this page" });
     expect(within(toc).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(FLOW_SECTIONS.map((s) => `#${s.id}`));
   });

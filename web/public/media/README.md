@@ -1,11 +1,12 @@
 # The demo video
 
-Home, /how and /flow show a "Watch the 6-minute video" player. It plays one file:
+The home page shows a "Watch the 6-minute video" player near the top (only home: /how and /flow have none).
+It plays one file:
 
     web/public/media/pill-desk-video.mp4
 
-The video is not in git. It is about 100 MB, GitHub refuses files over 100 MB, and it is re-made after each
-change. `.gitignore` keeps every `.mp4` out.
+The video is not in git. It is about 77 MB and it is re-made after each change, so `.gitignore` keeps every
+`.mp4` out.
 
 ## How to put it there
 

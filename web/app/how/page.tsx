@@ -4,8 +4,6 @@ import { howView, liveSeats } from "../../lib/how";
 import { buildingBView } from "../../lib/hq-desk";
 import * as memory from "../../lib/memory";
 import { currentAiMode } from "../../lib/ai-mode-cookie";
-import { videoOnDisk } from "../../lib/video";
-import { VideoPlayer } from "../components/VideoPlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +23,7 @@ export default async function How() {
 
   return (
     <main className="how">
-      <HowStory view={view} video={<VideoPlayer available={videoOnDisk()} />} />
+      <HowStory view={view} />
       <HowLive
         seats={liveSeats(state, aiMode)}
         buildingB={buildingBView(state, new Date(), aiMode)}
