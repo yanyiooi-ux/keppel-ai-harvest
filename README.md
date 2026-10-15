@@ -110,7 +110,7 @@ docs/challenge/     the Keppel brief in our words, submission rules, judging
 docs/problem/       the problem and the Level 23 story
 docs/decisions/     the approved plan and later decisions
 docs/knowhow/       the know-how pack the pill is built from, with sources
-docs/solution/      the overview and the first plan's question map (older than the app; /how is current)
+docs/solution/      README.md: Keppel's 8 questions mapped to the app as built (overview.md is the first plan)
 docs/research/      background research from September
 proof/              BUILD-LOG.md, one row per build session and which tool did it
 .codebuddy/         CodeBuddy setup, the plan for each part, QUESTIONS.md (open questions for YY)
@@ -121,6 +121,6 @@ scripts/            snap.ps1 takes dated proof screenshots on Windows
 
 ## Key dates
 
-Submit by Thu 15 Oct 2026 (official deadline 16 Oct). Finalists 23 Oct. Demo Day 3 Nov (TBC).
+Submission deadline Fri 16 Oct 2026. Finalists 23 Oct. Demo Day 3 Nov (TBC).
 
 Licence: All rights reserved.

@@ -17,9 +17,9 @@ against the repo; the check log sits with the staging copy of this file, outside
 | 4 | CodeBuddy chat history: 3+ screenshots or a recording | Required | ready: 4 screenshots, plus the text below | `proof/screenshots/codebuddy-01` to `-04` |
 | 5 | Cover image, 16:9, about 380 x 216 px | Required | ready | `submission/assets/cover.png` (380 x 216); `submission/assets/cover@2x.png` (760 x 432) |
 | 6 | Solution diagram answering Keppel's 8 questions | Required for this track | ready | below, field 6; `docs/solution/README.md`; the app's `/how` and `/flow` |
-| 7 | Live demo walkthrough | Required for this track | text ready; its link waits on the live server (field 9) | below, field 7 |
+| 7 | Live demo walkthrough | Required for this track | ready | below, field 7 |
 | 8 | Demo video, 5 to 8 min | Optional in the form, **required for us** | ready: 6 min 13 s, live | https://eternal-wreath-5ceq.here.now/ |
-| 9 | Project link (live URL, earns bonus points) | Optional | waiting on the Tencent Cloud Lighthouse server | below, field 9 (placeholder) |
+| 9 | Project link (live URL, earns bonus points) | Optional | ready: live | http://43.160.222.54 |
 | 10 | GitHub repo link (this repo) | Required for this track | private until submission | https://github.com/yanyiooi-ux/keppel-ai-harvest |
 
 ## Form pack
@@ -42,19 +42,17 @@ form.
 
 ### Still open, and only these
 
-1. **Field 9, and the link in field 7:** the address of the Tencent Cloud Lighthouse server in Singapore. The
-   orchestrator fills it in once the server is up and every page is checked from outside.
+1. **Done, 16 Oct:** fields 7 and 9 hold the live server, http://43.160.222.54 (Tencent Cloud Lighthouse,
+   Singapore, saved AI answers only, no AI key on the server). Checked from outside: 12 pages at desktop and phone
+   width, and the film plays on the home page.
 2. **Field 10:** the repo is still private. After the orchestrator pushes `main` (with its secret scans), YY makes the
    repo public on GitHub.
 3. **Sending the form:** YY's team fills it in from this file and the uploads.
 4. **Today's cutoff time:** our notes give the date, Fri 16 Oct 2026, but no time
    (`docs/challenge/submission-rules.md`). YY to check it.
-5. **The film on the server:** fields 7 and 8 say the film plays on `/how`. The orchestrator copies the film file onto
-   the Lighthouse server before building the app there, and checks it plays (field 7's note).
-6. **`README.md`, two old lines:** "Submit by Thu 15 Oct 2026 (official deadline 16 Oct)" under Key dates, and the
-   repo map's line calling `docs/solution/` "the first plan's question map (older than the app)", although
-   `docs/solution/README.md` is now the map of the app as built. The review pass on 16 Oct could change only the
-   film and licence lines there, so the orchestrator or YY changes these two.
+5. **Done, 16 Oct:** the film plays near the top of the home page only (YY moved it there; `/how` and `/flow` have
+   no player). The server has the film file.
+6. **Done, 16 Oct:** `README.md`'s Key dates line and its `docs/solution/` line now match the app as built.
 7. **`docs/solution/overview.md`:** the 6 Oct overview still describes the first plan (a "Building manager" role, six
    steps) and has no out-of-date note at its top; only `docs/solution/README.md` warns about it. YY to decide: add one
    line at its top saying it is the first plan and `/how` is current, or leave it.
@@ -268,22 +266,19 @@ answer it.
 **Paste:**
 
 ```text
-Live demo: [PLACEHOLDER: http://<Lighthouse server address>]
+Live demo: http://43.160.222.54
 
-No login, and nothing to install. About 5 minutes:
+No login, and nothing to install. The home page plays the 6-minute film near the top. About 5 minutes:
 1. Open /demo (Story mode) and let it play. The real app plays the whole demo by itself in 8 steps, about 2 minutes, one seat at a time, with a short caption for each step: a tenant reports a too-cold call; the technician opens the job and rules out two causes; the job goes up to the senior manager with everything attached; the senior manager finds the real cause and turns it into a new rule that passes its tests; head office approves it once, and Building B changes with no work there; the Asset Operations Manager decides who pays; and last, typed safety words bring up a stop in the building's own approved words, with no AI. Play, Pause, Back, Next and Restart sit in the caption panel. It runs on saved real answers from Tencent Hunyuan.
 2. Open /flow, "How a job flows": every button in order, and who is told next, on one page.
-3. Open /how, the page for judges: the problem, the five real chats side by side on one shared memory, Keppel's 8 questions answered in one line each, and the 6-minute film.
+3. Open /how, the page for judges: the problem, the five real chats side by side on one shared memory, Keppel's 8 questions answered in one line each.
 4. To try it yourself, pick a seat in the top bar (Tenant, Technician, Senior manager, Head office (HQ), Asset Operations Manager). Reset demo starts everything over.
 
 One demo runs for everyone: opening /demo, Restart, Back or Reset demo starts it over for anyone else watching too.
 ```
 
-**For YY:** the link is field 9's open item; the orchestrator puts the same server address in both places. Step 3
-promises the film on `/how`. The film file is not in git, so on the server it plays only if
-`web/public/media/pill-desk-video.mp4` is copied there before the app is built and started
-(`web/public/media/README.md`); without it, `/how` shows "The video is not on this copy of the demo." The orchestrator
-copies the file and checks that `/how` plays it. If that cannot be done, cut ", and the 6-minute film" from step 3.
+**For YY:** nothing open. The same server address is in fields 7 and 9. The film file is not in git; it was copied
+onto the server before the app was built there, so the home page plays it.
 
 ---
 
@@ -297,15 +292,15 @@ A 6 min 13 s one-take film of the real Pill Desk app, read by an AI narrator voi
 The film was made before the final seat names: its "senior engineer" is the app's Senior manager, and its "asset manager" is the Asset Operations Manager. Its test screen shows an earlier run (1,174 passed).
 ```
 
-The link is open to anyone, with no password. The same film plays inside the app on home, `/how` and `/flow`
-("Watch the 6-minute video") when that copy of the app has the file; the file is not in git
+The link is open to anyone, with no password. The same film plays inside the app, near the top of the home page
+("Watch the 6-minute video"), when that copy of the app has the file; the file is not in git
 (`web/public/media/README.md`).
 
 **For YY:** the narrator is a preset AI voice, as the film's own script says (`SCRIPT.md` line 3, in the film's
-project folder `Reports\tencent-ai-hackathon\story-video\pill-desk-story\`, outside this repo), and the film's sound is
-its 14 voice clips, S01 to S14. Its captions and its step 5 label still use the old seat names; a new render would fix
-that, but no new recording is planned (YY, 16 Oct), so the paste text says it plainly instead. The test screen in the
-film reads "Tests 1174 passed | 12 todo (1186)", the D4 run in `proof/BUILD-LOG.md`.
+project folder `Reports\tencent-ai-hackathon\story-video\pill-desk-story\`, outside the app repo), and the film's
+sound is its 14 voice clips, S01 to S14. Its captions and its step 5 label still use the old seat names; a new render
+would fix that, but no new recording is planned (YY, 16 Oct), so the paste text says it plainly instead. The test
+screen in the film reads "Tests 1174 passed | 12 todo (1186)", the D4 run in the repo's `proof/BUILD-LOG.md`.
 
 ---
 
@@ -314,13 +309,15 @@ film reads "Tests 1174 passed | 12 todo (1186)", the D4 run in `proof/BUILD-LOG.
 **Paste:**
 
 ```text
-[PLACEHOLDER: http://<Lighthouse server address>/how]
+http://43.160.222.54
 ```
 
-**Status: PLACEHOLDER.** The app is being set up on a Tencent Cloud Lighthouse server in Singapore, on Saved answers
-with no AI key on the server.
+**Status: LIVE.** A Tencent Cloud Lighthouse server in Singapore (paid until 16 Nov 2026), on Saved answers with no AI
+key on the server: if someone picks Live, the app shows the saved real Hunyuan answers by itself. The home page links to
+Story mode, the flow page and the judges' page. Checked from outside on 16 Oct: 12 pages at 1280 and 390 px wide, no
+errors, every Story mode step plays, and the film plays.
 
-**For YY:** the orchestrator fills in the address once the server is up and every page is checked from outside.
+**For YY:** nothing open.
 
 ---
 
