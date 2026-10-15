@@ -159,3 +159,11 @@ Each question names its part and the spec's exact words. Each one has one it.tod
     the Building B card sits alone on a second row (look sample c10a-fix-how-try5col-1280.png). Not changed. Should
     the wall show the 5 chats in one row from 1280 px? Test: `web/tests/c10a-review-ui.test.tsx`, "QUESTION C10a
     review: S22 says "the 5 real chats side by side" ..." (it.todo).
+
+## C10b
+
+14. **Built on CodeBuddy.** The hackathon hard gate says the project must be built on CodeBuddy or WorkBuddy. C3b
+    onward was built by Claude Code after CodeBuddy credit ran out. YY decides how to present this before submitting.
+    The gate's words are in `docs/challenge/submission-rules.md`: "The project must be original and built on CodeBuddy
+    or WorkBuddy." The README's "How we used AI tools" says who built what, row by row from `proof/BUILD-LOG.md`. Not
+    a code question, so no it.todo.

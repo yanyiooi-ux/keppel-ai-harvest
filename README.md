@@ -1,60 +1,109 @@
-# Pill Desk (working name): Keppel "AI HARVEST"
+# Pill Desk: Keppel "AI HARVEST"
 
 Our entry for the **Tencent Cloud "AI CAN DO IT" Hackathon Singapore 2026**, Real Estate track, Keppel challenge
 **"AI HARVEST: Turning Expert Know-How into Reusable Intelligence"**. Case study: **Technical Services**.
 
-> **Status (5 Oct 2026):** the plan is locked and the build has started in CodeBuddy. The sections marked
-> "to come" are filled in from the real code before submission.
-
 ## What it does
 
-A veteran chief engineer knows why one office floor keeps complaining "too cold" in the morning and "too hot" in the
-afternoon. A newcomer nudges the temperature and closes the ticket. Pill Desk turns the veteran's know-how into a
-signed, versioned "Intelligence Pill": a checklist the FM technician follows on a phone, a "Needs your decision"
-screen for the Keppel Asset Operations Manager, and a governed way to correct, test, sign and roll back the rules.
-The AI words things and drafts things. Code decides. People sign.
+Pill Desk helps a building team fix a repeat comfort complaint faster, so the same spot stops calling again.
+Code ranks the likely causes from a signed checklist (the "pill") and past cases, people move the job on with buttons,
+and the AI (Tencent Hunyuan) only words things. When the senior manager finds a new cause, it becomes a new pill
+version that HQ approves after its tests pass, and every building gets it at once, with rollback.
 
-## Run the demo
+## The 5 seats and /how
 
-_To come: live link, and how to run it locally in replay mode without an API key._
+Five role-played people share one memory. Each seat is a chat with Pip, the desk's helper, and the buttons that seat
+may press. The server checks every press against one table (`web/lib/permissions.ts`), not only the screen.
 
-## Solution diagram and Keppel's 8 questions
+- **Tenant, Northwind Advisory** (`/seat/tenant`): reports a problem and answers a hands-off self-check after a
+  safety question. Some answers end with an approved tip and no visit; otherwise a visit is booked.
+- **Technician** (`/seat/technician`): opens the job with its checklist already filled from the spot's history. Found
+  it and Not this re-rank the causes live. Solved, or Not solved with the hours and visits lost. Approves nothing.
+- **Senior manager, the FM contractor's chief engineer** (`/seat/senior-manager`): gets the escalated job with
+  everything attached. Logs a new solution, confirms each part, runs its tests and sends it to HQ, or asks HQ for
+  outside help.
+- **HQ pill owner, Keppel Technical Services lead** (`/seat/hq`): approves a new solution only after its tests pass on
+  that exact draft (A2), and every building goes live on it at once. Rolls back. Decides outside help (A3).
+- **AOM, Tower A, Keppel Asset Operations Manager** (`/seat/aom-tower-a`): decides each charge to the tenant (A4), and
+  watches the impact meter, the speak-first flag and the safety alerts.
 
-_To come in [`docs/solution/`](docs/solution/): each of the 8 questions mapped to the screen, file or test that
-answers it._
+Building B is not a seat: it is a card that shows its live version and how its own open ticket is ranked, so you can
+see a new version reach a second building.
 
-## Real, mocked, and diagram only
+- `/` is "Pick your seat".
+- `/how` is the page for judges: why, what and how in one scroll, then the 5 real chats side by side on the one
+  memory, with the Reset button and the demo steps as text. It also answers Keppel's 8 questions, one line each.
 
-_To come._ Every building, tenant, ticket and reading in this repo is made up for the demo.
+**No login.** The seats are role-played: anyone who opens a seat acts as that person. **All data is made up:** every
+building, tenant, ticket, reading, case, rate and amount (each data file in `web/data/` says so), and every signature and
+approval is role-played.
+
+## Run it on Replay, with no key
+
+You need Node.js 20.9 or newer (we ran it on Node 24).
+
+```
+cd web
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+On Windows PowerShell, the copy line is `Copy-Item .env.example .env.local`. Leave `REPLAY_MODE=1` and leave the key
+empty. Then open <http://localhost:3000/how>.
+
+On Replay the AI switch in the top bar starts on Replay: a worded line comes from a saved real Hunyuan answer in
+`web/data/replay/`, with the banner "replay: saved real AI answer", and no AI call is made. Off shows the
+same cards with the code's own words and the label "AI off". Live needs your own Tencent Cloud TokenHub key in
+`web/.env.local`; with an empty key, Live falls back to Replay by itself.
+
+To run the tests: `npm test` in `web/`. `web/tests/demo-flow.test.ts` runs the whole demo through the same action
+functions the buttons call, on Replay with the network blocked, and prints "demo flow: all steps passed".
+
+## What is real and what is made up
+
+- **Real, running code:** the Next.js app; the ranking, the 30-day rule, the safety stops, who may press what, the
+  tests on a new solution, versions and rollback, all plain TypeScript in `web/lib/`; the signed pill
+  `web/pills/ts-cc/v1.0.yaml`; the Hunyuan calls on Live; the saved real answers in `web/data/replay/`.
+- **Made up for the demo:** all the data above, the seats and every signature. There is no link to a real building
+  system, helpdesk or Keppel system, and nothing is ever written to a BMS.
+- **Known limits:** 2 of the 16 saved answers failed their checks when recorded, so the app shows the code's words
+  there instead. On Live, the model usually gives no answer inside the app's limits, and the code's words show. Both
+  are written up in `.codebuddy/plans/QUESTIONS.md` (questions 3 and 4).
 
 ## How we used AI tools
 
-- **The product is built with Tencent CodeBuddy.** Plans, code, tests and fixes happen in CodeBuddy chats.
-  Evidence: [`proof/BUILD-LOG.md`](proof/BUILD-LOG.md), screenshots in [`proof/screenshots/`](proof/screenshots/),
-  and the plans CodeBuddy saved in `.codebuddy/plans/`.
-- **The product's own AI** is a Tencent Hunyuan model through Tencent Cloud TokenHub. Its prompts are in
+Who built what, row by row from [`proof/BUILD-LOG.md`](proof/BUILD-LOG.md):
+
+- **Tencent CodeBuddy** wrote the parts whose rows say CodeBuddy in the tool column: the first build on 6 Oct 2026,
+  and C1 to C3a (10 and 11 Oct).
+- **Anthropic's Claude Code:** after CodeBuddy's credit ran out on 14 Oct 2026, Claude Code wrote the parts whose
+  rows say "Claude Code (not CodeBuddy)": it finished C3b, which CodeBuddy's run had left uncommitted with one failing
+  test, then built C4 to C10b and the fixes after each review.
+- Claude also helped with the plan, the spec and the prompt wording, and made the design prototype in `docs/design/`.
+- **The product's own AI** is a Tencent Hunyuan model (hy3) through Tencent Cloud TokenHub. Its 3 prompts are in
   `web/prompts/`.
-- **Before the build,** the planning kit (these docs, the approved decisions, the CodeBuddy setup and the wording of
-  the build prompts YY pasted into CodeBuddy) was prepared with Anthropic's Claude Code. No product code was written
-  that way. This is the first row of the build log.
+
+The plan for each part is in `.codebuddy/plans/` (the folder keeps CodeBuddy's name; the plans from C3b on were
+written by Claude Code).
 
 ## Repo map
 
 ```
-CODEBUDDY.md        CodeBuddy's standing brief (read at the start of every chat)
-.codebuddy/         CodeBuddy setup: rules, a judge-panel sub-agent, the /log-proof command, saved plans
-docs/
-  challenge/        the Keppel brief in our words, submission rules, judging
-  problem/          the problem, the Level 23 story, who is who
-  decisions/        the approved plan and later decisions
-  design/           the look
-  knowhow/          the know-how pack the pill is built from, with sources
-  solution/         overview, architecture, the 8-question map
-  research/         background research from September
-web/                the app (Next.js, created during the build)
-proof/              proof we built with CodeBuddy
+web/                the app (Next.js, TypeScript): app/, lib/, data/, pills/, prompts/, tests/
+docs/plan/          BUILD-SPEC.md, the spec the build followed
+docs/design/        the look and the design prototype
+docs/challenge/     the Keppel brief in our words, submission rules, judging
+docs/problem/       the problem and the Level 23 story
+docs/decisions/     the approved plan and later decisions
+docs/knowhow/       the know-how pack the pill is built from, with sources
+docs/solution/      the overview and the first plan's question map (older than the app; /how is current)
+docs/research/      background research from September
+proof/              BUILD-LOG.md, one row per build session and which tool did it
+.codebuddy/         CodeBuddy setup, the plan for each part, QUESTIONS.md (open questions for YY)
+CODEBUDDY.md        CodeBuddy's standing brief
 submission/         the submission form, field by field
-scripts/            helpers (snap.ps1 takes dated proof screenshots on Windows)
+scripts/            snap.ps1 takes dated proof screenshots on Windows
 ```
 
 ## Key dates
