@@ -34,6 +34,11 @@ import type { AiMode } from "../../../lib/ai-mode";
  * nothing happened and a second tap in that time cannot fire (D1 review). A
  * refused press or one that failed on the network frees the chat at once, so
  * the person can fix it and try again straight away.
+ *
+ * Story mode (D2) drives the same chat from outside: it hands in the view it
+ * just read (`view`, so the chat reads nothing itself), turns every control
+ * off (`locked`) and shows "Pip is checking" while its own press is on its
+ * way (`pending`). Without these props nothing here changes.
  */
 
 import type { SeatCard, SeatView } from "../../../lib/seat-view";
@@ -56,6 +61,15 @@ export interface SeatChatProps {
   opening?: { text: string; never: string };
   /** Where the AI switch stands, so a screen can say why no AI line shows (D1 review). */
   aiMode?: AiMode;
+  /**
+   * Story mode (D2): the view to show, handed in by the player, which owns
+   * every read and press. With it set the chat reads nothing by itself.
+   */
+  view?: SeatState;
+  /** Story mode (D2): every control off, so only the story presses. */
+  locked?: boolean;
+  /** Story mode (D2): "Pip is checking" while the story's own press is on its way. */
+  pending?: boolean;
 }
 
 const SAFETY_WORD = "safety";
@@ -155,8 +169,14 @@ export function SeatChat({
   initial,
   opening,
   aiMode,
+  view,
+  locked = false,
+  pending = false,
 }: SeatChatProps) {
-  const [state, setState] = useState<SeatState | null>(initial ?? null);
+  const [held, setState] = useState<SeatState | null>(initial ?? null);
+  // Story mode (D2) hands the view in; otherwise the chat shows what it read itself.
+  const controlled = view !== undefined;
+  const state = view ?? held;
   const [replies, setReplies] = useState<LocalReply[]>([]);
   const [typed, setTyped] = useState("");
   const [reporting, setReporting] = useState(false);
@@ -253,11 +273,13 @@ export function SeatChat({
   }, [apply, fetchView]);
 
   useEffect(() => {
+    // Story mode (D2): the player reads the view and hands it in.
+    if (controlled) return;
     void load();
     if (pollMs <= 0) return;
     const timer = setInterval(() => void load(), pollMs);
     return () => clearInterval(timer);
-  }, [load, pollMs]);
+  }, [load, pollMs, controlled]);
 
   // New cards move in briefly (D1). Only what is added after the first paint
   // is marked: what the page opened with stays still, and a poll that keeps
@@ -430,7 +452,7 @@ export function SeatChat({
     <div
       ref={root}
       className={variant === "column" ? "chat column" : "chat"}
-      aria-busy={busy || undefined}
+      aria-busy={busy || pending || undefined}
       onClickCapture={(event) => noteControl(event.target)}
       onSubmitCapture={(event) => {
         const submitter = (event.nativeEvent as SubmitEvent).submitter ?? event.currentTarget.ownerDocument.activeElement;
@@ -452,7 +474,7 @@ export function SeatChat({
 
       {rail ? <QuestRail title={rail.title} nodes={rail.nodes} /> : null}
 
-      <fieldset className="chat-lock" disabled={busy}>
+      <fieldset className="chat-lock" disabled={busy || locked}>
         <div className="chat-body">
           {opening ? (
             <div className="opening">
@@ -550,7 +572,7 @@ export function SeatChat({
           ) : null}
 
           <div className="pip-checking-slot" aria-live="polite">
-            {checking ? (
+            {checking || pending ? (
               <p className="pip-checking">
                 <span className="typing-dots" aria-hidden="true">
                   <i />

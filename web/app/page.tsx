@@ -3,6 +3,7 @@ import { SEAT_IDS, SEAT_LABELS } from "../lib/permissions";
 import { openingLineFor } from "../lib/seat-opening";
 import { PILL_MEANS, plainOpening, seatLabelWords } from "../lib/plain-words";
 import { BuildingBCard } from "./components/BuildingBCard";
+import { STORY_LINK_WORDS } from "../lib/story";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,9 @@ export default function Home() {
       </p>
       <p className="how-link how-link-top">
         New here? <Link href="/how">Start with how it works, for judges</Link>
+      </p>
+      <p className="how-link story-link">
+        Short on time? <Link href="/demo">{STORY_LINK_WORDS}</Link>. The real app plays the whole demo by itself.
       </p>
       <p className="lede">
         Five people share one brain, each in their own chat with Pip. Pick the seat you want to sit in. {PILL_MEANS}{" "}

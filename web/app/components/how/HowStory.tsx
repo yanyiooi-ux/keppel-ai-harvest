@@ -4,6 +4,7 @@ import { CodeTag, Plain } from "../Plain";
 import { APPROVAL_WHAT, PILL_MEANS, approvalWord, pipNeverLine, rankStepWords, type ApprovalId } from "../../../lib/plain-words";
 import type { HowView, WhyStory, WhyCall } from "../../../lib/how";
 import type { ImpactMeter } from "../../../lib/impact";
+import { STORY_LINK_WORDS } from "../../../lib/story";
 
 /**
  * The judges' page above the live wall (S22, C10a): WHY, WHAT and HOW in one
@@ -60,6 +61,9 @@ export function HowStory({ view }: { view: HowView }) {
       <header className="how-hero">
         <p className="how-kicker">Pill Desk · for judges</p>
         <h1>Fix it faster, so the same spot stops calling</h1>
+        <p className="how-story-link">
+          <a href="/demo">{STORY_LINK_WORDS}</a>. The real app plays the whole demo by itself, one seat at a time.
+        </p>
         <p className="lede">
           {`Pill Desk gives ${view.seats.length} people their own chat with Pip, all on one brain: the signed rules, a list of likely causes and past cases. Code ranks and routes, the AI only puts things into plain words, and people approve only ${view.approvals.length} kinds of decision.`}
         </p>

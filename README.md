@@ -35,6 +35,10 @@ see a new version reach a second building.
 - `/` is "Pick your seat".
 - `/how` is the page for judges: why, what and how in one scroll, then the 5 real chats side by side on the one
   memory, with the Reset button and the demo steps as text. It also answers Keppel's 8 questions, one line each.
+- `/demo` is Story mode: the real app plays the whole demo by itself in 8 steps, one seat at a time, with a short
+  plain caption for each step and the app's own reply to each press. Play or Pause, Back, Next and Restart; space
+  and the arrow keys work too. It presses through the same routes as the seats, nothing is recorded, and it runs on
+  Saved answers. It shares the one demo memory, so its Restart and Back reset what anyone else is looking at.
 
 **No login.** The seats are role-played: anyone who opens a seat acts as that person. **All data is made up:** every
 building, tenant, ticket, reading, case, rate and amount (each data file in `web/data/` says so), and every signature and

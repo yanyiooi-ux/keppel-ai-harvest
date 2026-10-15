@@ -96,6 +96,12 @@
   --pending: var(--accent);
   --pending-dim: 0.55;
   --card-in-ms: 220ms;
+
+  /* D2: Story mode. The shade above the caption panel when it sits at the
+     bottom of a phone, and the outline on what changed in a step. */
+  --story-shade: rgba(0, 0, 0, 0.5);
+  --story-focus: var(--accent);
+  --story-focus-glow: var(--glow);
 }
 
 *,
@@ -2903,5 +2909,399 @@ button:disabled {
   }
   .ai-switch-hint {
     max-width: none;
+  }
+}
+
+/* ---------- Story mode at /demo (D2) ---------- */
+
+/* The way in: on home under "New here?", and under /how's heading. */
+.page .story-link {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+
+.how-story-link {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.story-link a,
+.how-story-link a {
+  font-weight: 600;
+}
+
+/* The caption panel on the left (it stays on screen while the page scrolls),
+   the seat that acts on the right, one at a time and wide. */
+.story {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 22px 16px 48px;
+}
+
+.story-head {
+  margin-bottom: 10px;
+}
+
+.story-head h1 {
+  font-size: 30px;
+  line-height: 1.2;
+  margin: 6px 0 0;
+}
+
+.story-notes {
+  display: grid;
+  gap: 4px;
+  max-width: 920px;
+  margin: 0 0 18px;
+}
+
+.story-notes p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.story-notes .story-real {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.story-panel {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-panel);
+}
+
+.story-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.story-count {
+  margin: 0;
+  font-family: var(--font-hud);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+}
+
+.story-seat {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.story-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+
+.story-progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 300ms ease-out;
+}
+
+.story-words {
+  display: grid;
+  gap: 8px;
+}
+
+.story-title {
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.story-caption {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.story-now {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 26px;
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.story-failed {
+  display: grid;
+  gap: 6px;
+}
+
+/* The app's own reply to the step's last press, word for word. */
+.story-said {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 11px;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-btn);
+  background: var(--card);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.story-said-k {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.story-failed .badge {
+  justify-self: start;
+}
+
+.story-reason {
+  font-weight: 600;
+}
+
+.story-presses {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.story-presses li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.story-presses li.is-doing,
+.story-presses li.is-done,
+.story-presses li.is-failed {
+  color: var(--text);
+}
+
+.story-presses .badge {
+  flex: none;
+  min-width: 70px;
+  justify-content: center;
+}
+
+.story-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.story-controls button {
+  min-height: 48px;
+  padding: 0 6px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--line-2);
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.story-controls .story-play {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.story-controls button:disabled {
+  opacity: var(--pending-dim);
+}
+
+.story-keys {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.story-end {
+  display: grid;
+  gap: 10px;
+}
+
+.story-close {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: var(--head-weight);
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.story-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 15px;
+}
+
+.story-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.story-stage {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+}
+
+.story-stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 14px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.story-stage-head a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.story-wait {
+  padding: 16px;
+}
+
+/* The seat is the real chat, wider here; its own job bar stays in place,
+   since the story presses for it. */
+.story-stage .chat {
+  max-width: none;
+}
+
+.story-stage .job-bar {
+  position: static;
+}
+
+/* Story mode presses for you: the seat's own controls are off, but they read
+   at full strength, so nothing on screen is greyed out. */
+.story-stage .chat-lock:disabled button:not(.is-pending),
+.story-stage .chat-lock:disabled input,
+.story-stage .chat-lock:disabled select,
+.story-stage .chat-lock:disabled textarea {
+  opacity: 1;
+  cursor: default;
+}
+
+/* What changed in this step. */
+.story-focus {
+  outline: 2px solid var(--story-focus);
+  outline-offset: 4px;
+  border-radius: var(--r-card);
+  box-shadow: var(--story-focus-glow);
+  scroll-margin-top: 16px;
+  animation: story-focus-in 700ms ease-out both;
+}
+
+@keyframes story-focus-in {
+  from {
+    outline-color: transparent;
+    box-shadow: none;
+  }
+  to {
+    outline-color: var(--story-focus);
+    box-shadow: var(--story-focus-glow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-focus {
+    animation: none;
+  }
+  .story-progress span {
+    transition: none;
+  }
+}
+
+/* A phone: one column, the caption and the controls fixed at the bottom,
+   and the page leaves room for them (the player measures the panel). */
+@media (max-width: 760px) {
+  .story-player {
+    padding-bottom: calc(var(--story-sheet, 300px) + 20px);
+  }
+  .story-head h1 {
+    font-size: 24px;
+  }
+  .story-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .story-panel {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    max-height: 50vh;
+    gap: 8px;
+    padding: 10px 16px 12px;
+    border-width: 1px 0 0;
+    border-radius: var(--r-panel) var(--r-panel) 0 0;
+    box-shadow: 0 -10px 28px var(--story-shade);
+  }
+  .story-presses,
+  .story-keys,
+  .story-said {
+    display: none;
+  }
+  .story-title {
+    font-size: 17px;
+  }
+  .story-caption {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .story-close {
+    font-size: 17px;
+  }
+  .story-controls button {
+    min-height: 44px;
+    font-size: 14px;
   }
 }
