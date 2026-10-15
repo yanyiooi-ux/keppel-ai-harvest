@@ -39,6 +39,9 @@ see a new version reach a second building.
   plain caption for each step and the app's own reply to each press. Play or Pause, Back, Next and Restart; space
   and the arrow keys work too. It presses through the same routes as the seats, nothing is recorded, and it runs on
   Saved answers. It shares the one demo memory, so its Restart and Back reset what anyone else is looking at.
+- The film: <https://eternal-wreath-5ceq.here.now/>, a 6 min 13 s one-take film of the real app with captions. The
+  same film plays on home, `/how` and `/flow` ("Watch the 6-minute video") when the file is on that copy; it is not
+  in git (`web/public/media/README.md`).
 
 **No login.** The seats are role-played: anyone who opens a seat acts as that person. **All data is made up:** every
 building, tenant, ticket, reading, case, rate and amount (each data file in `web/data/` says so), and every signature and
@@ -119,3 +122,5 @@ scripts/            snap.ps1 takes dated proof screenshots on Windows
 ## Key dates
 
 Submit by Thu 15 Oct 2026 (official deadline 16 Oct). Finalists 23 Oct. Demo Day 3 Nov (TBC).
+
+Licence: All rights reserved.
