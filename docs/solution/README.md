@@ -10,7 +10,10 @@ button that shows it, the code that does it, and the test that proves it.
 - Every building, tenant, ticket, case, rate, amount and signature in the app is made up for the demo. The five seats
   are role-played, with no login.
 - The `/how` page in the app is the live version of this map: it asks the same 8 questions and answers each in one line
-  (`web/lib/how.ts`, `briefAnswers`).
+  (`web/lib/how.ts`, `briefAnswers`). One difference: its one line for question 5 says only that the AI words what
+  code decided. The fuller answer, that for a new rule the AI also drafts the text and suggests from a fixed code
+  menu, is on the same page in its own card, "The AI in a new solution" (`web/lib/how.ts`, `AI_NEW_SOLUTION_LINE`),
+  and in question 5 below.
 - Two more pages show the same flow. `/demo` is Story mode: the real app plays the whole demo by itself in 8 steps,
   one seat at a time, with a short caption for each step (`web/lib/story.ts`). `/flow`, "How a job flows", shows every
   button in order and who is told next (`web/lib/flow.ts`).
@@ -19,6 +22,21 @@ Short forms used below, spelled out once: AOM is the Asset Operations Manager, t
 the property manager and the FM contractors (`docs/problem/level-23-story.md`; the exact Keppel title is not settled,
 `docs/problem/problem-statement.md`). HQ is head office. FM is facilities management (the contractor who runs the building day to day). AI is artificial intelligence.
 YAML is a plain text file format that people and code can both read. A1 to A4 are the four approval points.
+
+Words used below, in plain terms:
+- A **pill** is the rule book for one repeat problem: one YAML file with a version number. The demo's pill is TS-CC.
+- The **pill owner** is head office (HQ), which approves each new version of the pill.
+- A **red stop** is a safety stop: fixed words from the pill that say what to do and who to call. The AI is never
+  used for it.
+- The **never-list** is the pill's 4 "never" items: never quote a price (a free offer counts too), never admit fault,
+  never show one tenant's details to another, and never write to the building management system (BMS) or any
+  building system. Every AI answer is scanned for them.
+- **Golden tests** are fixed test cases with known right answers. The pill lists them, and the test suite runs them.
+- A **lead** is one likely cause in a job's ranked list, "best bet first".
+- A **hash** is a short fingerprint of a file. Change one letter and the hash changes, so a test run is tied to one
+  exact draft.
+- **C1 to C10b** and **D1 to D4** are build step codes in `proof/BUILD-LOG.md`: C for the core build, D for the four
+  finishing parts.
 
 ## The picture: five seats around one shared brain
 
@@ -58,7 +76,8 @@ YAML is a plain text file format that people and code can both read. A1 to A4 ar
 
 ### The four approval points, and only four
 
-People approve in the app at A1 to A4, and nowhere else. Typing in a chat never changes anything; only buttons do.
+People approve at A1 to A4, and nowhere else. A1 was signed before the demo, so the app shows it as already signed,
+with no button; A2 to A4 are buttons in the app. Typing in a chat never changes anything; only buttons do.
 The pill's amber steps also name whose yes a step needs in the building (for example the FM chief engineer, or the
 tenant plus the AOM, `web/pills/ts-cc/v1.0.yaml`, `guardrails`). The app shows that name on the step, and that yes
 happens outside the app.
@@ -107,8 +126,9 @@ visit where the repeat is caught (`web/lib/impact.ts`, `IMPACT_LABEL`).
 ### 2. Whose expertise is captured, and how is knowledge that is not already documented obtained?
 
 The expertise is the FM contractor's chief engineer's (the senior manager seat) and the technicians' on the floor.
-Both are role-played. Version 1 of the rule book was built from 144 research items (drawn from 80 public sources and
-practitioner writing, each checked against its source) and team decisions, and every rule names its source and how it
+Both are role-played. Version 1 of the rule book was built from 144 research items (drawn from 79 public web pages on
+51 sites, practitioner forums among them, each checked against its source: `docs/knowhow/sources.md`) and team
+decisions, and every rule names its source and how it
 was labelled. **No real expert has been interviewed yet**
 (`docs/knowhow/README.md`). An 11-question, 25-minute interview guide for a real chief engineer is ready in
 `docs/knowhow/interview-guide.md`; it is not part of the app.
@@ -348,12 +368,14 @@ job flows", plus the text picture above. Not written: `architecture.md` and an e
 
 ## Who built it
 
-Row by row from `proof/BUILD-LOG.md`: on 5 Oct, before any code, Claude Code prepared a planning kit that held the
-know-how pack (`docs/knowhow/`). Tencent CodeBuddy built the first parts, including the pill file (made from that pack)
-and its checker,
-the rule engine and golden tests (6 Oct), and C1 to C3a (10 and 11 Oct: the AI connection, place tags and facts, the
-cause list, the case library and the 30-day rule, the 4-step ranking, and the safety stops). CodeBuddy's credit ran out on 14 Oct, and
-Anthropic's Claude Code built the rest: it finished C3b, then built C3c and C4 to C10b (the seats, the AI layer, HQ
-approval and rollback, the AOM seat and `/how`), then D1 to D4 (plain words on every screen; Story mode at `/demo`;
-the dark glass look with Bolt Pip; the final seat names, the `/flow` page and the video player), with the fixes after
-each review.
+Row by row from `proof/BUILD-LOG.md`, where each build step has a code (C for the core build, D for the four
+finishing parts). On 5 Oct, before any code, Claude Code prepared a planning kit that held the know-how pack
+(`docs/knowhow/`). Tencent CodeBuddy built the first parts: the pill file (made from that pack) and its checker, the
+rule engine and golden tests (6 Oct), then steps C1 to C3a (10 and 11 Oct: the AI connection, place tags and facts,
+the cause list, the case library and the 30-day rule, the 4-step ranking, and the safety stops). It also wrote most of
+step C3b, the never-list scanner, but that run was left uncommitted with one failing test. CodeBuddy's credit ran out
+on 14 Oct, and Anthropic's Claude Code built the rest. It finished C3b (it connected one word list CodeBuddy had
+written but not used, and left the rest as CodeBuddy wrote it), then built C3c (how a new solution becomes a rule)
+and C4 to C10b (the seats, the AI layer, HQ approval and rollback, the AOM seat and `/how`), then D1 to D4 (plain
+words on every screen; Story mode at `/demo`; the dark glass look with Bolt Pip; the final seat names, the `/flow`
+page and the video player), with the fixes after each review.

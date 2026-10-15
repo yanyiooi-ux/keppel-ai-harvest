@@ -6,7 +6,8 @@ be checked). What each item needs: `docs/challenge/submission-rules.md`.
 This file is the form's checklist plus the text to paste. Each field below has a **Paste** block, ready to copy into
 the form, and a **For YY** note that does not get pasted. Written 16 Oct 2026 against `main` at `4b44bdc` ("fix:
 review findings for D4"), with D1 to D4 shipped. Every number and claim in the Paste blocks was checked line by line
-against the repo; the check log sits with the staging copy of this file, outside the repo.
+against the repo; the check log sits with the staging copy of this file, outside the repo. A review the same day found
+13 points; the fixes are in `proof/BUILD-LOG.md`, newest row.
 
 | # | Item | Required? | Status | Draft or file |
 |---|---|---|---|---|
@@ -48,6 +49,15 @@ form.
 3. **Sending the form:** YY's team fills it in from this file and the uploads.
 4. **Today's cutoff time:** our notes give the date, Fri 16 Oct 2026, but no time
    (`docs/challenge/submission-rules.md`). YY to check it.
+5. **The film on the server:** fields 7 and 8 say the film plays on `/how`. The orchestrator copies the film file onto
+   the Lighthouse server before building the app there, and checks it plays (field 7's note).
+6. **`README.md`, two old lines:** "Submit by Thu 15 Oct 2026 (official deadline 16 Oct)" under Key dates, and the
+   repo map's line calling `docs/solution/` "the first plan's question map (older than the app)", although
+   `docs/solution/README.md` is now the map of the app as built. The review pass on 16 Oct could change only the
+   film and licence lines there, so the orchestrator or YY changes these two.
+7. **`docs/solution/overview.md`:** the 6 Oct overview still describes the first plan (a "Building manager" role, six
+   steps) and has no out-of-date note at its top; only `docs/solution/README.md` warns about it. YY to decide: add one
+   line at its top saying it is the first plan and `/how` is current, or leave it.
 
 ---
 
@@ -92,7 +102,7 @@ Backups, also 9 words each:
 **Paste:**
 
 ```text
-Pill Desk is our answer to Keppel's "AI HARVEST" challenge, in the Technical Services area. It turns what a senior engineer learns on one job into an approved rule that every building uses next time.
+Pill Desk is our answer to Keppel's "AI HARVEST" challenge, in the Technical Services area. It turns what a chief engineer learns on one job into an approved rule that every building uses next time.
 
 The scenario is a repeat comfort complaint on an office floor. On our made-up Tower A, Level 23 has called 5 times in 21 days: too cold near the lift core in the mornings, too hot in the west glass boardroom in the afternoons. The first 4 calls were each closed with a turn of the thermostat dial, and each time the problem came back. The 5th call is still open.
 
@@ -131,8 +141,8 @@ The core problem is not a missing answer. Hard-won judgement is never written do
 ```text
 BUSINESS ARCHITECTURE
 - The rule book for one recurring problem is called a pill. It is one plain-text file (YAML) with a version number. Ours, TS-CC (repeat comfort complaints), version 1.0, holds 26 rules, a 31-step checklist, 10 safety stops, 4 "never" items, 5 guardrails, 8 approved tenant tips and 20 golden tests (fixed test cases with known right answers).
-- Where the know-how comes from. Version 1.0 was built from 144 research items, drawn from 80 public sources (including practitioner writing) and each checked against its source, plus the team's own decisions. Each of the 26 rules is labelled with where it came from: 5 public source, 6 team decision, 2 corrections from a review that role-played a chief engineer, and 13 a mix. No real Keppel expert has been interviewed yet, so the expert who signs it is role-played. Inside the app, new know-how comes from the senior manager: when they solve an escalated job, their fix line and why line become a draft rule.
-- People approve at exactly four moments: A1, version 1 of the rule book (two senior experts, role-played); A2, a new rule (HQ, only after its tests pass on that exact draft); A3, outside help or money (HQ); A4, charging the tenant (AOM). Using a fix the rule book already holds needs no approval. Safety stops are stops, not approvals. These four are the only approvals inside the app. The rule book's amber steps also name whose yes a step needs (for example the FM chief engineer, or the tenant plus the AOM); the app shows that name on the step, and that yes happens outside the app.
+- Where the know-how comes from. Version 1.0 was built from 144 research items, drawn from 79 public web pages on 51 sites (practitioner forums among them) and each checked against its source, plus the team's own decisions. Each of the 26 rules is labelled with where it came from: 5 public source, 6 team decision, 2 corrections from a review that role-played a chief engineer, and 13 a mix. No real Keppel expert has been interviewed yet, so the expert who signs it is role-played. Inside the app, new know-how comes from the senior manager: when they solve an escalated job, their fix line and why line become a draft rule.
+- People approve at exactly four moments. A1 is version 1 of the rule book, signed before the demo by two senior experts (role-played): the app shows it as already signed, with no button. The other three are buttons in the app: A2, a new rule (HQ, only after its tests pass on that exact draft); A3, outside help or money (HQ); A4, charging the tenant (AOM). Using a fix the rule book already holds needs no approval. Safety stops are stops, not approvals. No other approval happens inside the app. The rule book's amber steps also name whose yes a step needs (for example the FM chief engineer, or the tenant plus the AOM); the app shows that name on the step, and that yes happens outside the app.
 - A fix counts as a win only after 30 days with no repeat call at the same spot. Someone other than the fixer confirms the cause: the fixer's own "Confirm cause" is refused, and HQ's approval of a new rule confirms that job's cause. Not built yet: a fix that nobody confirms still counts as a win after 30 days, although our spec says it should wait for a second person.
 - Versions work like code commits: each records its parent, a short fingerprint, who approved it and when. Rollback puts every building back on the parent version and deletes nothing.
 
@@ -146,7 +156,7 @@ TECHNICAL ARCHITECTURE
 HOW PROMPTS DRIVE THE AI
 - The AI is Tencent Hunyuan (model hy3) through Tencent Cloud TokenHub. It has 3 jobs, each with its own prompt file that judges can read in web/prompts/: rank-wording.md says one ranked cause's reason in plainer words; tenant-reply.md drafts the tenant's reply from approved tips only; new-solution.md drafts the rule text from the senior manager's typed fix, and suggests when the rule applies and what it changes, picked only from a fixed menu in code.
 - The AI never ranks, never sees a safety card, and never sees or writes an amount. The senior manager confirms each part of an AI-drafted rule with its own button, and code refuses anything off the menu.
-- Every AI answer is scanned before anyone sees it: no prices or free offers, no admission of fault, no other tenant's details, no writing to the building management system (BMS). Worded lines also pass a wording check: at most 2 or 3 sentences, every number must already be in the code's own text, and no risky action words. If a check fails, the code's own words show instead.
+- Every AI answer is scanned before anyone sees it: no prices or free offers, no admission of fault, no other tenant's details, no writing to the building management system (BMS). Worded lines also pass a wording check: at most 2 sentences for a cause's reason and 3 for a tenant reply, every number must already be in the code's own text, and no risky action words. If a check fails, the code's own words show instead.
 - An AI switch in the top bar has 3 positions: Live (a new Hunyuan call), Saved answers (16 real Hunyuan answers recorded on 15 Oct, no new call) and Off (the code's words only). Hunyuan thinks before it answers, so on Live it usually gives no answer inside the app's limit of 600 tokens and 8 seconds, and the code's own words show. The demo therefore runs on Saved answers, and Story mode moves the switch there by itself. 14 of the 16 saved answers passed their checks; the 2 that failed are never shown.
 ```
 
@@ -163,7 +173,7 @@ Only numbers we can back. Unless marked, they are worked out by the app's own co
 - A fix counts only when it holds: 30 days with no repeat at the spot, and the person who fixed it cannot confirm the cause. "Attended" stops being reported as "fixed".
 - One fix reaches every building. In the demo, HQ's single approval moves both buildings to version 1.1, and Building B's own open cold-morning ticket now puts "Thermostat in the wrong spot after a fit-out" first, with no extra work in Building B.
 - Some calls need no visit. When the tenant's answers match an approved tip (the blinds are up in the hot west boardroom, or the call is after air-con hours), the tenant gets the tip and no visit is booked. Any after-hours cost waits for the AOM's decision.
-- Energy (public figure, not our measurement): Singapore's Go 25 campaign cites a study showing up to 12 percent air-con energy saving for each degree raised from 23 to 25 deg C in offices. Every "make it colder" fix that is avoided keeps that saving.
+- Energy (public figure, not our measurement): Singapore's Go 25 movement cites a Ngee Ann Polytechnic study that found up to 12 percent energy savings for each degree raised from 23 to 25 deg C in offices. That is a whole office kept warmer, not one dial turn, so we claim no energy saving for the demo. The rule book uses the figure to show that a colder floor has a cost: a tenant's request to run a floor colder than the building's set temperature goes to the Asset Operations Manager (rule TS-CC-25).
 - Built to be trusted: 1,188 automated tests passed on 16 Oct (plus 12 marked to-do), run with "npx vitest run --maxWorkers=4 --minWorkers=1". Some earlier runs on Windows hit a file-lock error when a test renamed a temp file; each test that hit it passed when run alone. One test runs the whole demo end to end with the network blocked. A new rule must pass its tests on the exact draft before HQ can approve it (in the demo: 23 passed, 0 failed, 2 not applicable).
 - Estimate, not measured: on a real portfolio, each repeat spot would save roughly the visits between its 2nd call and the call that finally finds the cause. We have no real portfolio data to size this yet; a one-building pilot would.
 ```
@@ -239,7 +249,7 @@ widened because the AI also suggests part of a new rule):
 
 ```text
 1. What business problem? Tickets close but causes stay: Tower A Level 23 called 5 times in 21 days, and every dial turn came back.
-2. Whose expertise, and how is undocumented knowledge captured? The FM contractor's chief engineer (role-played): when they solve a job that came up to them, their fix line and why line become a draft rule that is tested before it counts. Version 1.0 was built from 144 research items, checked against 80 public sources, plus the team's own decisions; no real expert has been interviewed yet.
+2. Whose expertise, and how is undocumented knowledge captured? The FM contractor's chief engineer (role-played): when they solve a job that came up to them, their fix line and why line become a draft rule that is tested before it counts. Version 1.0 was built from 144 research items, checked against 79 public web pages on 51 sites, plus the team's own decisions; no real expert has been interviewed yet.
 3. How does it become reusable? Every solved job is saved as a case that ranks the next job (12 made-up past cases to start), and an approved rule goes live in every building at once.
 4. How does an AOM use and supervise it? The Asset Operations Manager (AOM) watches the impact meter, gets every safety alert for Tower A, sees the live version and decides every charge to a tenant (A4). A red safety stop always says who to call.
 5. Why more than a chatbot or search tool? Code ranks, routes and locks, and only button presses change anything. The AI puts what code decided into words; for a new rule it also drafts the text and suggests when it applies, picked only from a fixed menu in code, and the senior manager confirms each part.
@@ -269,8 +279,11 @@ No login, and nothing to install. About 5 minutes:
 One demo runs for everyone: opening /demo, Restart, Back or Reset demo starts it over for anyone else watching too.
 ```
 
-**For YY:** the link is field 9's open item; the orchestrator puts the same server address in both places. Nothing
-else open.
+**For YY:** the link is field 9's open item; the orchestrator puts the same server address in both places. Step 3
+promises the film on `/how`. The film file is not in git, so on the server it plays only if
+`web/public/media/pill-desk-video.mp4` is copied there before the app is built and started
+(`web/public/media/README.md`); without it, `/how` shows "The video is not on this copy of the demo." The orchestrator
+copies the file and checks that `/how` plays it. If that cannot be done, cut ", and the 6-minute film" from step 3.
 
 ---
 
@@ -281,12 +294,18 @@ else open.
 ```text
 https://eternal-wreath-5ceq.here.now/
 A 6 min 13 s one-take film of the real Pill Desk app, read by an AI narrator voice, with captions in the picture: the problem, the five seats and the fix that reaches every building. It ends with how we built it, with Tencent CodeBuddy and Claude Code, and one tip.
+The film was made before the final seat names: its "senior engineer" is the app's Senior manager, and its "asset manager" is the Asset Operations Manager. Its test screen shows an earlier run (1,174 passed).
 ```
 
 The link is open to anyone, with no password. The same film plays inside the app on home, `/how` and `/flow`
-("Watch the 6-minute video"); the app's copy of the file is not in git (`web/public/media/README.md`).
+("Watch the 6-minute video") when that copy of the app has the file; the file is not in git
+(`web/public/media/README.md`).
 
-**For YY:** nothing open.
+**For YY:** the narrator is a preset AI voice, as the film's own script says (`SCRIPT.md` line 3, in the film's
+project folder `Reports\tencent-ai-hackathon\story-video\pill-desk-story\`, outside this repo), and the film's sound is
+its 14 voice clips, S01 to S14. Its captions and its step 5 label still use the old seat names; a new render would fix
+that, but no new recording is planned (YY, 16 Oct), so the paste text says it plainly instead. The test screen in the
+film reads "Tests 1174 passed | 12 todo (1186)", the D4 run in `proof/BUILD-LOG.md`.
 
 ---
 
@@ -334,6 +353,7 @@ Making the repo public shows every past commit, not only the latest files.
 - [x] Every image in `proof/screenshots/` checked for private content: no key, password or private chat in the 4
       (checked by eye 15 Oct). Two show a Windows folder path; YY decided on 16 Oct they go in as they are.
 - [ ] README is the judges' front page: what it does, how to run it, the demo link, the 8-question map, proof. The
-      film link is in; the live link waits on the server (field 9).
+      film link is in; the live link waits on the server (field 9); two old lines wait on the orchestrator or YY
+      (still open, item 6).
 - [x] Decide a licence (or state "all rights reserved"): "All rights reserved" (YY, 16 Oct), stated in `README.md`.
 - [x] `proof/screenshots/` holds at least 3 dated development screenshots: 4 (6 Oct and 10 Oct), not 10 or more.
