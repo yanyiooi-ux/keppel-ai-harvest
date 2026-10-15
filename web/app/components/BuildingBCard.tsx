@@ -3,6 +3,8 @@ import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
 import { buildingBNotices } from "../../lib/hq-desk";
+import { noticeWord, tierWord } from "../../lib/plain-words";
+import { CodeTag, Plain } from "./Plain";
 import * as memory from "../../lib/memory";
 import type { MemoryState } from "../../lib/memory";
 
@@ -53,8 +55,11 @@ export async function BuildingBCard() {
 
       {alerts.map((alert, i) => (
         <div className="notice" key={`b-alert-${i}`}>
-          <b>{alert.kind.replace(/-/g, " ")}</b>
-          {alert.text}
+          <b>
+            {noticeWord(alert.kind)} <CodeTag code={alert.kind} />
+          </b>
+          {/* A safety alert carries the stop's own words (S11): word for word, never through the plain layer. */}
+          {alert.kind === "alert" ? alert.text : <Plain text={alert.text} />}
         </div>
       ))}
 
@@ -62,12 +67,18 @@ export async function BuildingBCard() {
         {worded.items.map(({ lead, wording }) => (
           <li key={lead.causeId}>
             <span className="lead-name">{lead.label}</span>
-            <span className="lead-tier hud">{lead.tier.replace(/-/g, " ")}</span>
-            <span className="lead-reason">{lead.reason}</span>
+            <span className="lead-tier">
+              <span className="hud">{tierWord(lead.tier)}</span> <CodeTag code={lead.tier} />
+            </span>
+            <span className="lead-reason">
+              <Plain text={lead.reason} />
+            </span>
             {wording.value.aiWording ? (
               <span className="ai-line">
                 <span className="ai-tag">AI wording</span>
-                <span>{wording.value.aiWording}</span>
+                <span>
+                  <Plain text={wording.value.aiWording} />
+                </span>
               </span>
             ) : null}
             {wording.banner ? <span className="ai-banner">{wording.banner}</span> : null}
@@ -81,7 +92,7 @@ export async function BuildingBCard() {
         <summary className="safety-btn">Safety</summary>
         {openHere.length > 0 ? (
           <p className="open-stop">
-            Open here now: {openHere.map((s) => s.stopId).join(", ")}
+            <Plain text={`Open here now: ${openHere.map((s) => s.stopId).join(", ")}`} />
           </p>
         ) : (
           <p className="card-mean">No red stop open in Building B.</p>
@@ -91,7 +102,7 @@ export async function BuildingBCard() {
             const card = safetyCardForStop(stop, version);
             return (
               <li key={card.id}>
-                <b>{card.id}</b> {card.trigger}
+                {card.trigger} <CodeTag code={card.id} />
               </li>
             );
           })}

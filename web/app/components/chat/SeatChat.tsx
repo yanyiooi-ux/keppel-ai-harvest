@@ -9,6 +9,8 @@ import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPres
 import { HqDesk, hqHolds } from "./HqDesk";
 import { AomDesk, aomHolds, AOM_DESK_NOTICE_KINDS } from "./AomDesk";
 import { bringIntoView } from "./bring-into-view";
+import { CodeTag, Plain } from "../Plain";
+import { noticeWord, pipNeverLine, seatWord } from "../../../lib/plain-words";
 import type { RailNode } from "./QuestRail";
 
 /**
@@ -21,6 +23,14 @@ import type { RailNode } from "./QuestRail";
  * /api/action, which checks the seat and the status on the server (S2); the
  * chat then reloads what the press stored. Tests pass their own fetch and a
  * poll interval of 0, and nothing here touches the network on its own.
+ *
+ * Loading you can see (D1): while a press or a typed message is on its way,
+ * the control that was used is marked busy, every control in the chat is
+ * locked (one disabled fieldset, so nothing double-fires), and "Pip is
+ * checking" shows with typing dots. The reply lands as soon as the server
+ * answers and the lock lifts with it; the mark and "Pip is checking" stay on
+ * screen for at least MIN_PENDING_MS from the press, so even a fast answer
+ * never looks like nothing happened.
  */
 
 import type { SeatCard, SeatView } from "../../../lib/seat-view";
@@ -44,6 +54,15 @@ export interface SeatChatProps {
 }
 
 const SAFETY_WORD = "safety";
+
+/** The shortest time the waiting shows, so a fast reply never looks like nothing happened (D1). */
+export const MIN_PENDING_MS = 400;
+
+/** What moves in when it is new on screen (D1): cards, notices and the seat's own messages. */
+const ENTERING = ".card, .notice, .sent";
+
+/** What a press or a message that failed on the network says (D1). */
+export const NOT_THROUGH = "That did not go through. Check the connection, then try again.";
 
 /** The two buttons behind Report a problem, and the complaint each one sends (run rule 16). */
 const COMPLAINT_BUTTONS = [
@@ -90,6 +109,7 @@ function deskJob(state: SeatState | null): string | undefined {
   return state?.desk?.open?.jobId ?? state?.manager?.open?.open.jobId;
 }
 
+
 export function SeatChat({
   seat,
   jobId,
@@ -104,6 +124,13 @@ export function SeatChat({
   const [replies, setReplies] = useState<LocalReply[]>([]);
   const [typed, setTyped] = useState("");
   const [reporting, setReporting] = useState(false);
+  // A press or a typed message on its way (D1): every control is locked until the reply lands.
+  const [busy, setBusy] = useState(false);
+  // "Pip is checking" and the mark on the pressed control: on from the press,
+  // for at least MIN_PENDING_MS and until the reply lands (D1).
+  const [checking, setChecking] = useState(false);
+  // A typed message that failed on the network (D1), shown at the end of the chat.
+  const [sayFailed, setSayFailed] = useState(false);
   // A refused press: its reason, and what was pressed with what, so the
   // reason can show in the row that was pressed (C8a review).
   const [refused, setRefused] = useState<RefusedPress | null>(null);
@@ -119,11 +146,53 @@ export function SeatChat({
   // How many chat items there were when a followed press or Safety started.
   const followFrom = useRef<number | null>(null);
   const itemCount = useRef(0);
+  // The control last used in this chat (a click or a form's submit button), so
+  // a press can mark it busy (D1). The mark is an attribute React does not own.
+  const lastControl = useRef<HTMLElement | null>(null);
+  // How many presses or messages still show "Pip is checking" (D1).
+  const holds = useRef(0);
 
-  const load = useCallback(async () => {
+  /**
+   * Starts the busy state for one press or message: marks the control that
+   * started it, locks the chat and shows "Pip is checking". Returns the
+   * release, called once the reply has landed: the lock lifts at once, and the
+   * mark and "Pip is checking" stay until at least MIN_PENDING_MS after the
+   * start, so even a fast answer never looks like nothing happened.
+   */
+  const startBusy = useCallback((): (() => void) => {
+    const started = Date.now();
+    const el = lastControl.current;
+    lastControl.current = null;
+    if (el) {
+      el.classList.add("is-pending");
+      el.setAttribute("aria-busy", "true");
+    }
+    holds.current += 1;
+    setBusy(true);
+    setChecking(true);
+    const end = () => {
+      if (el) {
+        el.classList.remove("is-pending");
+        el.removeAttribute("aria-busy");
+      }
+      holds.current -= 1;
+      if (holds.current === 0) setChecking(false);
+    };
+    return () => {
+      setBusy(false);
+      const left = MIN_PENDING_MS - (Date.now() - started);
+      if (left > 0) setTimeout(end, left);
+      else end();
+    };
+  }, []);
+
+  const fetchView = useCallback(async (): Promise<{ show: string | undefined; data: SeatState }> => {
     const show = showJob.current;
     const response = await call.current(`/api/state?seat=${seat}${show ? `&show=${encodeURIComponent(show)}` : ""}`);
-    const data = (await response.json()) as SeatState;
+    return { show, data: (await response.json()) as SeatState };
+  }, [seat]);
+
+  const apply = useCallback(({ show, data }: { show: string | undefined; data: SeatState }) => {
     // The server shows only a job this seat may work on; once the asked job
     // has moved on, the desk is back on its own job.
     if (show && showJob.current === show && deskJob(data) !== show) showJob.current = undefined;
@@ -132,7 +201,11 @@ export function SeatChat({
     // Reset (which empties the log) can never bring it back on its own.
     const stored = data.messages?.length ?? 0;
     setReplies((old) => (old.some((r) => !waiting(r, stored)) ? old.filter((r) => waiting(r, stored)) : old));
-  }, [seat]);
+  }, []);
+
+  const load = useCallback(async () => {
+    apply(await fetchView());
+  }, [apply, fetchView]);
 
   useEffect(() => {
     void load();
@@ -141,32 +214,66 @@ export function SeatChat({
     return () => clearInterval(timer);
   }, [load, pollMs]);
 
+  // New cards move in briefly (D1). Only what is added after the first paint
+  // is marked: what the page opened with stays still, and a poll that keeps
+  // the same nodes marks nothing. The mark is a class React does not own.
+  useEffect(() => {
+    const el = root.current;
+    if (!el || typeof MutationObserver === "undefined") return;
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of Array.from(record.addedNodes)) {
+          if (!(node instanceof Element)) continue;
+          const hits = node.matches(ENTERING) ? [node] : [];
+          hits.push(...Array.from(node.querySelectorAll(ENTERING)));
+          for (const hit of hits) hit.classList.add("is-new");
+        }
+      }
+    });
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  // One press or message at a time: a double tap while one is on its way
+  // sends nothing, so it can never come back as a confusing refusal.
+  const pressing = useRef(false);
+
   const say = useCallback(
     async (text: string, follow = false) => {
-      if (!text.trim()) return;
+      if (!text.trim() || pressing.current) return;
+      pressing.current = true;
+      const release = startBusy();
+      setSayFailed(false);
       // Safety's list lands at the end of the chat, far below the bar on a
       // phone: the chat scrolls it into view (S11 "One tap opens all 10").
       followFrom.current = follow ? itemCount.current : null;
-      const response = await call.current("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seat, text, job: activeJob }),
-      });
-      const data = (await response.json()) as { storedText: string; cards: ServerCard[]; storedCount?: number };
-      setReplies((old) => [...old, { text: data.storedText, cards: data.cards ?? [], storedCount: data.storedCount }]);
-      setTyped("");
+      try {
+        const response = await call.current("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ seat, text, job: activeJob }),
+        });
+        const data = (await response.json()) as { storedText: string; cards: ServerCard[]; storedCount?: number };
+        setReplies((old) => [...old, { text: data.storedText, cards: data.cards ?? [], storedCount: data.storedCount }]);
+        setTyped("");
+      } catch {
+        // The message never reached Pip, or the answer never came back: say so, keep the typed words.
+        followFrom.current = null;
+        setSayFailed(true);
+      } finally {
+        pressing.current = false;
+        release();
+      }
     },
-    [seat, activeJob]
+    [seat, activeJob, startBusy]
   );
-
-  // One press at a time: a double tap while a press is on its way sends
-  // nothing, so it can never come back as a confusing refusal.
-  const pressing = useRef(false);
 
   const press = useCallback<Press>(
     async (action, job, payload) => {
       if (pressing.current) return;
       pressing.current = true;
+      const release = startBusy();
+      setSayFailed(false);
       followFrom.current = FOLLOWED_PRESSES.includes(action) ? itemCount.current : null;
       // A job just opened goes on the desk.
       if (action === "open-job") showJob.current = undefined;
@@ -174,24 +281,36 @@ export function SeatChat({
         const body: Record<string, unknown> = { seat, action };
         if (job) body.job = job;
         if (payload) body.payload = payload;
-        const response = await call.current("/api/action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = (await response.json()) as { ok?: boolean; message?: string; alreadyShown?: boolean };
+        let data: { ok?: boolean; message?: string; alreadyShown?: boolean };
+        try {
+          const response = await call.current("/api/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          data = (await response.json()) as typeof data;
+        } catch {
+          // The press never reached the server, or its answer never came back:
+          // say so where a refusal shows, and change nothing on screen.
+          data = { ok: false, message: NOT_THROUGH };
+        }
         setRefused(
           data.ok === false ? { action, job, payload, message: data.message ?? "That press was refused." } : null
         );
         // A refusal shows where it was pressed, and a pick this chat already
         // shows adds nothing: nothing to scroll to.
         if (data.ok === false || data.alreadyShown) followFrom.current = null;
-        await load();
+        try {
+          await load();
+        } catch {
+          // The view stays as it was; the next poll reads it again.
+        }
       } finally {
         pressing.current = false;
+        release();
       }
     },
-    [seat, load]
+    [seat, load, startBusy]
   );
 
   const showOnDesk = useCallback(
@@ -229,15 +348,31 @@ export function SeatChat({
     bringIntoView(root.current?.querySelector(`[data-item="${from}"]`), "start");
   }, [items]);
 
+  // The control used last, so a press can mark it busy (D1).
+  const noteControl = (target: EventTarget | null) => {
+    const el = target instanceof Element ? target.closest("button") : null;
+    if (el instanceof HTMLElement) lastControl.current = el;
+  };
+
   return (
-    <div ref={root} className={variant === "column" ? "chat column" : "chat"}>
+    <div
+      ref={root}
+      className={variant === "column" ? "chat column" : "chat"}
+      aria-busy={busy || undefined}
+      onClickCapture={(event) => noteControl(event.target)}
+      onSubmitCapture={(event) => {
+        const submitter = (event.nativeEvent as SubmitEvent).submitter ?? event.currentTarget.ownerDocument.activeElement;
+        if (submitter instanceof HTMLButtonElement) lastControl.current = submitter;
+        else noteControl((event.target as HTMLElement).querySelector?.("button[type=submit]") ?? null);
+      }}
+    >
       <header className="chat-head">
         <div className="avatar">
           <PipAvatar />
         </div>
         <div>
           <div className="chat-name">
-            Pip <span className="seat-tag">{seat}</span>
+            Pip <span className="seat-word">{seatWord(seat)}</span> <span className="seat-tag code-tag">{seat}</span>
           </div>
           <div className="chat-sub">{state ? state.label : "role-played"}</div>
         </div>
@@ -245,130 +380,155 @@ export function SeatChat({
 
       {rail ? <QuestRail title={rail.title} nodes={rail.nodes} /> : null}
 
-      <div className="chat-body">
-        {opening ? (
-          <div className="opening">
-            <p>{opening.text}</p>
-            <p className="never">{opening.never}</p>
-          </div>
-        ) : null}
-
-        {state?.desk ? (
-          <TechnicianDesk
-            desk={state.desk}
-            press={press}
-            onSafety={() => void say(SAFETY_WORD, true)}
-            onShow={showOnDesk}
-            refused={refusedInBar ? refusedText : null}
-          />
-        ) : null}
-
-        {state?.manager ? (
-          <SeniorManagerDesk
-            desk={state.manager}
-            press={press}
-            onSafety={() => void say(SAFETY_WORD, true)}
-            onShow={showOnDesk}
-            refused={refusedInBar ? refusedText : null}
-            rowRefused={refusedInRow ? refused : null}
-          />
-        ) : null}
-
-        {state?.hq ? <HqDesk desk={state.hq} press={press} refused={refusedInRow ? refused : null} /> : null}
-
-        {state?.aom ? <AomDesk desk={state.aom} press={press} refused={refusedInRow ? refused : null} /> : null}
-
-        {/* The AOM desk shows its alerts and charge requests itself (C9), so they are not listed twice. */}
-        {state?.notices
-          .filter((notice) => !state.aom || !AOM_DESK_NOTICE_KINDS.includes(notice.kind))
-          .map((notice, i) => (
-            <div className="notice" key={`notice-${i}`}>
-              <b>{notice.kind.replace(/-/g, " ")}</b>
-              {notice.text}
+      <fieldset className="chat-lock" disabled={busy}>
+        <div className="chat-body">
+          {opening ? (
+            <div className="opening">
+              <p>{opening.text}</p>
+              <p className="never">{pipNeverLine(opening.never)}</p>
             </div>
-          ))}
+          ) : null}
 
-        {state?.messages.map((message, i) =>
-          message.from === "person" ? (
-            <div className="sent" key={`m-${i}`} data-item={i}>
-              {message.text}
-            </div>
-          ) : (
-            <div className="msg" key={`m-${i}`} data-item={i}>
-              <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
-            </div>
-          )
-        )}
+          {state?.desk ? (
+            <TechnicianDesk
+              desk={state.desk}
+              press={press}
+              onSafety={() => void say(SAFETY_WORD, true)}
+              onShow={showOnDesk}
+              refused={refusedInBar ? refusedText : null}
+            />
+          ) : null}
 
-        {shownReplies.map((reply, i) => (
-          <div key={`r-${i}`} style={{ display: "contents" }}>
-            <div className="sent" data-item={storedMessages + 2 * i}>
-              {reply.text}
-            </div>
-            <Cards cards={reply.cards} press={press} jobId={activeJob} />
-          </div>
-        ))}
+          {state?.manager ? (
+            <SeniorManagerDesk
+              desk={state.manager}
+              press={press}
+              onSafety={() => void say(SAFETY_WORD, true)}
+              onShow={showOnDesk}
+              refused={refusedInBar ? refusedText : null}
+              rowRefused={refusedInRow ? refused : null}
+            />
+          ) : null}
 
-        {refusedText && !refusedInBar && !refusedInRow ? (
-          <div className="notice refused" role="status">
-            <b>not done</b>
-            {refusedText}
-          </div>
-        ) : null}
-      </div>
+          {state?.hq ? <HqDesk desk={state.hq} press={press} refused={refusedInRow ? refused : null} /> : null}
 
-      {seat === "tenant" ? (
-        <div className="chips report-row">
-          {reporting ? (
-            COMPLAINT_BUTTONS.map((b) => (
-              <button
-                key={b.complaint}
-                onClick={() => {
-                  setReporting(false);
-                  void press("report", undefined, { complaint: b.complaint });
-                }}
-              >
-                {b.label}
-              </button>
-            ))
-          ) : (
-            <button className="report-btn" onClick={() => setReporting(true)}>
-              Report a problem
-            </button>
+          {state?.aom ? <AomDesk desk={state.aom} press={press} refused={refusedInRow ? refused : null} /> : null}
+
+          {/* The AOM desk shows its alerts and charge requests itself (C9), so they are not listed twice. */}
+          {state?.notices
+            .filter((notice) => !state.aom || !AOM_DESK_NOTICE_KINDS.includes(notice.kind))
+            .map((notice, i) => (
+              <div className="notice" key={`notice-${i}`}>
+                <b>
+                  {noticeWord(notice.kind)} <CodeTag code={notice.kind} />
+                </b>
+                {/* A safety alert carries the stop's own words (S11): word for word, never through the plain layer. */}
+                {notice.kind === "alert" ? notice.text : <Plain text={notice.text} />}
+              </div>
+            ))}
+
+          {state?.messages.map((message, i) =>
+            message.from === "person" ? (
+              <div className="sent" key={`m-${i}`} data-item={i}>
+                {message.text}
+              </div>
+            ) : (
+              <div className="msg" key={`m-${i}`} data-item={i}>
+                <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
+              </div>
+            )
           )}
-        </div>
-      ) : null}
 
-      <div className="chips">
-        {state?.chips
-          .filter((chip) => chip.toLowerCase() !== SAFETY_WORD)
-          .map((chip) => (
-            <button key={chip} onClick={() => void say(chip)}>
-              {chip}
-            </button>
+          {shownReplies.map((reply, i) => (
+            <div key={`r-${i}`} style={{ display: "contents" }}>
+              <div className="sent" data-item={storedMessages + 2 * i}>
+                {reply.text}
+              </div>
+              <Cards cards={reply.cards} press={press} jobId={activeJob} />
+            </div>
           ))}
-        <button className="safety-btn" onClick={() => void say(SAFETY_WORD, true)}>
-          Safety
-        </button>
-      </div>
 
-      <form
-        className="compose"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void say(typed);
-        }}
-      >
-        <input
-          value={typed}
-          onChange={(event) => setTyped(event.target.value)}
-          placeholder={`Message Pip${activeJob ? ` about ${activeJob}` : ""}`}
-          aria-label="Message Pip"
-        />
-        <button className="send" type="submit" aria-label="Send">
-          ↑
-        </button>
-      </form>
+          {refusedText && !refusedInBar && !refusedInRow ? (
+            <div className="notice refused" role="status">
+              <b>not done</b>
+              {refusedText}
+            </div>
+          ) : null}
+
+          {sayFailed ? (
+            <div className="notice refused" role="status">
+              <b>not done</b>
+              {NOT_THROUGH}
+            </div>
+          ) : null}
+
+          <div className="pip-checking-slot" aria-live="polite">
+            {checking ? (
+              <p className="pip-checking">
+                <span className="typing-dots" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span>Pip is checking</span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {seat === "tenant" ? (
+          <div className="chips report-row">
+            {reporting ? (
+              COMPLAINT_BUTTONS.map((b) => (
+                <button
+                  key={b.complaint}
+                  onClick={() => {
+                    setReporting(false);
+                    void press("report", undefined, { complaint: b.complaint });
+                  }}
+                >
+                  {b.label}
+                </button>
+              ))
+            ) : (
+              <button className="report-btn" onClick={() => setReporting(true)}>
+                Report a problem
+              </button>
+            )}
+          </div>
+        ) : null}
+
+        <div className="chips">
+          {state?.chips
+            .filter((chip) => chip.toLowerCase() !== SAFETY_WORD)
+            .map((chip) => (
+              <button key={chip} onClick={() => void say(chip)}>
+                {chip}
+              </button>
+            ))}
+          <button className="safety-btn" onClick={() => void say(SAFETY_WORD, true)}>
+            Safety
+          </button>
+        </div>
+
+        <form
+          className="compose"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void say(typed);
+          }}
+        >
+          <input
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            placeholder={`Message Pip${activeJob ? ` about ${activeJob}` : ""}`}
+            aria-label="Message Pip"
+          />
+          <button className="send" type="submit" aria-label="Send">
+            ↑
+          </button>
+        </form>
+      </fieldset>
     </div>
   );
 }
@@ -379,7 +539,8 @@ function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; job
       {cards.map((card, i) => {
         if (card.kind === "safety-list") {
           // A pick raises that stop on the list's own job (a self-check's Q0 Yes),
-          // else on the seat's job (S11).
+          // else on the seat's job (S11). Each stop shows in the pill's own
+          // words, its code after them as a grey tag (D1).
           const on = card.jobId ?? jobId;
           return (
             <ChatCard key={i} from="Safety" title={card.title} receipt={card.receipt}>
@@ -387,7 +548,7 @@ function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; job
                 {card.items?.map((item) => (
                   <li key={item.id}>
                     <span>
-                      <b>{item.id}</b> {item.title}
+                      {item.title} <CodeTag code={item.id} />
                     </span>
                     <button
                       className="pick-btn"

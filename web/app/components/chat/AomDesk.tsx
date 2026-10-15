@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
+import { CodeTag, Plain } from "../Plain";
+import { noticeWord } from "../../../lib/plain-words";
 import type { RefusedPress } from "./SeniorManagerDesk";
 import type { AomDesk as AomDeskView, AomChargeView } from "../../../lib/aom-desk";
 import type { ImpactMeter, ImpactSide } from "../../../lib/impact";
@@ -17,6 +19,9 @@ import type { ImpactMeter, ImpactSide } from "../../../lib/impact";
  * charge, goes to /api/action, where the server checks the seat, the request,
  * the amount and the reason again. A refused press shows its reason in the
  * request's card, next to the button on a phone. The tabs are only a view.
+ *
+ * Plain words first (D1): approvals, rules, stops and notices show in plain
+ * words with the code kept after them as a grey tag (components/Plain.tsx).
  */
 
 type Press = (action: string, job?: string, payload?: Record<string, unknown>) => Promise<void>;
@@ -63,7 +68,9 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
         <p className="desk-status">No calls at Tower A Level 23 yet.</p>
       )}
 
-      <h4 className="desk-sub">Charge requests (A4)</h4>
+      <h4 className="desk-sub">
+        Who pays? Your decisions <CodeTag code="A4" />
+      </h4>
       {desk.charges.length === 0 ? <p className="desk-status">No charge request is waiting on you.</p> : null}
       {desk.charges.map((c) => (
         <ChargeCard key={c.id} charge={c} desk={desk} press={press} refused={c.id === pressedCard ? mine!.message : null} />
@@ -72,14 +79,19 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
       <h4 className="desk-sub">Safety alerts, Tower A</h4>
       <div className="desk" data-testid="aom-alerts">
         <p className="desk-status">
-          {desk.openStops.length > 0
-            ? `Open now in Tower A: ${desk.openStops.join(", ")}`
-            : "No red stop open in Tower A."}
+          {desk.openStops.length > 0 ? (
+            <Plain text={`Open now in Tower A: ${desk.openStops.join(", ")}`} />
+          ) : (
+            "No red stop open in Tower A."
+          )}
         </p>
         {desk.alerts.length === 0 ? <p className="desk-status">No safety alert has come to you.</p> : null}
         {desk.alerts.map((alert, i) => (
           <div className="notice" key={`a-${i}`}>
-            <b>alert</b>
+            <b>
+              {noticeWord("alert")} <CodeTag code="alert" />
+            </b>
+            {/* A safety alert carries the stop's own words (S11): word for word, never through the plain layer. */}
             {alert.text}
           </div>
         ))}
@@ -125,8 +137,12 @@ function MeterCard({ meter, flags }: { meter: ImpactMeter; flags: AomDeskView["s
       <ChatCard from={`Impact meter · ${meter.place}`} receipt="Impact meter · made-up rates · AI calls: 0">
         {flags.map((f) => (
           <div className="flag-line" key={f.spotKey}>
-            <span className="badge amber">Speak first</span>
-            <span>{f.text}</span>
+            <span className="flag-head">
+              <span className="badge amber">{noticeWord("speak-first")}</span> <CodeTag code="speak-first" />
+            </span>
+            <span>
+              <Plain text={f.text} />
+            </span>
           </div>
         ))}
 
@@ -212,7 +228,8 @@ function ChargeCard({
   return (
     <div data-testid={`aom-charge-${c.id}`}>
       <ChatCard
-        from={`Charge request · ${c.id} · job ${c.jobId}`}
+        from={`Who pays? · job ${c.jobId}`}
+        fromCode={c.id}
         colour={c.colour}
         colourWord={c.statusWord}
         body={c.text}

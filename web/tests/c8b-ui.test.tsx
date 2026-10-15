@@ -107,7 +107,7 @@ function renderHq(view: SeatView, action: (body: Body | null) => unknown = () =>
 describe("C8b: the A1 card and the live versions", () => {
   it("the A1 card shows v1.0 signed by two senior experts (role-played), with each building's live version", async () => {
     renderHq(hqView());
-    const a1 = (await screen.findByText("A1: version 1 of the brain")).closest("article")!;
+    const a1 = (await screen.findByText("Version 1 of the brain")).closest("article")!;
     expect(within(a1 as HTMLElement).getByText("v1.0 signed by two senior experts (role-played)")).toBeTruthy();
     expect(within(a1 as HTMLElement).getByText("Signed")).toBeTruthy();
     expect(screen.getByText("Tower A: v1.0")).toBeTruthy();
@@ -129,7 +129,7 @@ describe("C8b: a solution sent to HQ", () => {
     expect(c.getByText(DEMO_WHY)).toBeTruthy();
     expect(c.getByText("typed")).toBeTruthy();
     expect(c.getAllByText("picked by hand")).toHaveLength(3);
-    expect(c.getByText("renovation in the last 12 months")).toBeTruthy();
+    expect(c.getByText("Renovated in the last 12 months")).toBeTruthy();
     expect(c.getByText("Block step 25")).toBeTruthy();
     expect(c.getByText("Put step 21 first")).toBeTruthy();
     expect(c.getByText("23 passed")).toBeTruthy();

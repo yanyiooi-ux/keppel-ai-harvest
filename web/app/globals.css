@@ -86,6 +86,16 @@
   --r: var(--red);
   --r-ink: var(--red);
   --r-bg: var(--red-card);
+
+  /* D1: the small grey tag that keeps a code on screen after its plain words,
+     and the pending state of a press (the spinner on the control, the typing
+     dots). Muted on card-2 clears 4.5:1 (tests/d1-pending-ui.test.tsx). */
+  --code-ink: var(--muted);
+  --code-bg: var(--card-2);
+  --code-line: var(--line-2);
+  --pending: var(--accent);
+  --pending-dim: 0.55;
+  --card-in-ms: 220ms;
 }
 
 *,
@@ -1705,6 +1715,14 @@ a {
   justify-self: start;
 }
 
+/* The flag's plain word and its code, side by side (D1). */
+.flag-line .flag-head {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .meter-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2207,7 +2225,7 @@ a {
 
 .approval-list li {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 4px 12px;
   padding: 11px 14px;
   font-size: 14px;
@@ -2227,8 +2245,15 @@ a {
   color: var(--text);
 }
 
+/* The approval's own words from the view, under its plain name (D1). */
+.approval-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .approval-line {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
   font-size: 13px;
 }
 
@@ -2490,12 +2515,12 @@ a {
     grid-template-areas: "core" "tenant" "technician" "senior" "hq" "aom" "b";
   }
   .approval-list li {
-    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
   .approval-who,
   .approval-where,
   .approval-line {
-    grid-column: 2;
+    grid-column: 1;
   }
   .how-roles,
   .how-grid {
@@ -2512,5 +2537,192 @@ a {
   }
   .close-line {
     font-size: 19px;
+  }
+}
+
+/* ---------- D1: plain words first, the code after as a grey tag ---------- */
+
+/* The code stays on screen, small and quiet, after its plain words. It never
+   takes the HUD capitals of the line it sits in, so it reads as the code. */
+.code-tag {
+  display: inline-block;
+  vertical-align: 0.08em;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--code-line);
+  border-radius: 4px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+
+.plain-word {
+  font-weight: 600;
+}
+
+/* The seat's plain name in the chat head, in the look the bare seat code had;
+   the seat code itself now sits after it as a grey tag (.seat-tag.code-tag). */
+.seat-word {
+  font-family: var(--font-hud);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--hud-track);
+  text-transform: var(--hud-case);
+  color: var(--accent);
+  border: 1px solid var(--line-2);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+/* A HUD label holding plain words reads a little bigger than a bare code did. */
+.card-from {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notice b .code-tag,
+.card-from .code-tag,
+.desk-sub .code-tag {
+  margin-left: 2px;
+}
+
+.lead-tier {
+  font-size: 12px;
+}
+
+/* ---------- D1: loading you can see ---------- */
+
+/* The lock around a chat's controls: one disabled fieldset while a press or a
+   message is on its way. It draws nothing itself. */
+.chat-lock {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.chat-lock:disabled button:not(.is-pending),
+.chat-lock:disabled input,
+.chat-lock:disabled select,
+.chat-lock:disabled textarea {
+  opacity: var(--pending-dim);
+  cursor: progress;
+}
+
+button:disabled {
+  cursor: progress;
+}
+
+/* The control that was pressed: a small spinning ring after its label. */
+.is-pending {
+  position: relative;
+  cursor: progress;
+}
+
+.is-pending::after {
+  content: "";
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.5em;
+  vertical-align: -0.1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: pending-spin 0.7s linear infinite;
+}
+
+/* "Pip is checking", with typing dots, at the end of the chat. The slot is a
+   live region that is always there and draws no box of its own. */
+.pip-checking-slot {
+  display: contents;
+}
+
+.pip-checking {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 9px 14px;
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-line);
+  border-radius: 10px 10px 10px 2px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.typing-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pending);
+  animation: typing-dot 1s ease-in-out infinite;
+}
+
+.typing-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* New cards and messages move in briefly. The chat marks only what is added
+   after the first paint (.is-new, SeatChat), so the page opens still and a
+   poll that keeps the same nodes moves nothing. */
+.is-new,
+.pip-checking {
+  animation: card-in var(--card-in-ms) ease-out both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-new,
+  .pip-checking,
+  .typing-dots i,
+  .is-pending::after {
+    animation: none;
   }
 }

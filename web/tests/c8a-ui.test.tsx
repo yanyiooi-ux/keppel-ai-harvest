@@ -225,7 +225,7 @@ describe("C8a: the escalated job with everything attached", () => {
   it("shows how it came up, the facts, both ticks with who made them, the impact record and the self-check answers", async () => {
     renderDesk(managerDesk());
     expect(await screen.findByText("Not solved by Technician (role-played), 6 Oct, 10:00.")).toBeTruthy();
-    expect(screen.getByText("renovation in the last 12 months")).toBeTruthy();
+    expect(screen.getByText("Renovated in the last 12 months")).toBeTruthy();
     expect(screen.getByText("Morning start-up runs too cold: Not this (Technician (role-played))")).toBeTruthy();
     expect(screen.getByText("Core box held at minimum airflow: Not this (Technician (role-played))")).toBeTruthy();
     expect(screen.getByText(/3 hours lost, 2 extra visits/)).toBeTruthy();
@@ -292,7 +292,7 @@ describe("C8a: the bar while escalated", () => {
     fireEvent.click(screen.getByLabelText("A contractor"));
     fireEvent.change(screen.getByLabelText("Reason (3 words or more)"), { target: { value: "The air needs a specialist balance" } });
     fireEvent.click(screen.getByLabelText("Yes, it needs money"));
-    fireEvent.click(screen.getByRole("button", { name: "Send to HQ (A3)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to HQ A3" }));
     await waitFor(() => expect(presses(calls)).toHaveLength(1));
     expect(presses(calls)[0]).toEqual({
       seat: "senior-manager",
@@ -424,7 +424,7 @@ describe("C8a: the new solution, part by part", () => {
   it("a red word in the fix line shows a small flag", async () => {
     renderDesk(drafted(aiSolution({ fixFlags: ["RS-04"] })));
     const card = within(await screen.findByTestId("solution-card"));
-    expect(card.getByText("red word: RS-04")).toBeTruthy();
+    expect(card.getByText("RS-04").closest(".flag")!.textContent).toBe("red word: Water near the electrics RS-04");
   });
 
   it("a note the menu has no rule for shows as advisory, not enforced", async () => {

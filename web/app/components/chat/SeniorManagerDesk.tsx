@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChatCard } from "./ChatCard";
-import { DeskCardView, LeadCard, StepList } from "./TechnicianDesk";
+import { DeskCardView, LeadCard, StepList, StatusLine } from "./TechnicianDesk";
 import { bringIntoView } from "./bring-into-view";
+import { CodeTag, Coded, Plain } from "../Plain";
+import { effectWord, factIdFromLabel, factWord, statusWord } from "../../../lib/plain-words";
 import type {
   ManagerDesk,
   ManagerOpenJob,
@@ -27,6 +29,9 @@ import type {
  * status and the menu and plans again; the chat reloads right after each
  * press. A picker only offers what the code menu allows, and the server
  * refuses anything else anyway.
+ *
+ * Plain words first (D1): statuses, facts, effects and approvals show in plain
+ * words with the code kept after them as a grey tag (components/Plain.tsx).
  */
 
 type Press = (action: string, job?: string, payload?: Record<string, unknown>) => Promise<void>;
@@ -93,7 +98,10 @@ export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = nul
               <span>
                 <b>{job.id}</b>
                 {job.place} · {job.complaint}
-                <span className="job-status">{job.isOpen ? `on the desk · ${job.statusWord}` : job.statusWord}</span>
+                <span className="job-status">
+                  {job.isOpen ? `On your desk · ${statusWord(job.status)} ` : `${statusWord(job.status)} `}
+                  <CodeTag code={job.status} />
+                </span>
               </span>
               {job.canShow && onShow ? (
                 <button className="open-btn" aria-label={`Show job ${job.id}`} onClick={() => onShow(job.id)}>
@@ -107,7 +115,7 @@ export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = nul
 
       {desk.stops.length > 0 ? (
         <>
-          <h4 className="desk-sub">Open red stops</h4>
+          <h4 className="desk-sub">Open safety stops</h4>
           {desk.stops.map((stop) => (
             <StopRow
               key={stop.key}
@@ -197,7 +205,7 @@ function StopRow({ stop, press, refused }: { stop: ManagerStopRow; press: Press;
 
 function CaseList({ cases, press, refused }: { cases: ManagerCaseRow[]; press: Press; refused: RefusedPress | null }) {
   return (
-    <ChatCard from="Cases to confirm (S8)" title="A cause needs a second person before it counts as won.">
+    <ChatCard from="Fixes to double-check" fromCode="S8" title="A cause needs a second person before it counts as won.">
       <ul className="job-rows">
         {cases.map((c) => (
           <li key={c.id} className="job-row" data-testid={`case-${c.id}`}>
@@ -272,7 +280,7 @@ function ManagerJob({
   return (
     <div className="open-job">
       <h3 className="desk-head">{open.title}</h3>
-      <p className="desk-status">{open.statusLine}</p>
+      <StatusLine status={open.status} line={open.statusLine} />
 
       <div ref={solutionBox} className="solution-box" data-testid={job.solution ? "solution-card" : undefined}>
         {job.solution ? (
@@ -281,10 +289,18 @@ function ManagerJob({
       </div>
 
       {job.outsideHelp ? (
-        <ChatCard from="Outside help (A3)" colour="amber" colourWord="Waiting on HQ" receipt="Outside help · AI calls: 0">
+        <ChatCard
+          from="Outside help: head office decides"
+          fromCode="A3"
+          colour="amber"
+          colourWord="Waiting on HQ"
+          receipt="Outside help · AI calls: 0"
+        >
           <ul className="card-lines">
             {job.outsideHelp.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>
+                <Plain text={line} />
+              </li>
             ))}
           </ul>
         </ChatCard>
@@ -292,14 +308,15 @@ function ManagerJob({
 
       <h4 className="desk-sub">Everything attached</h4>
       {job.cameUp ? <ChatCard from="How it came up" title={job.cameUp} /> : null}
-      <ChatCard from="Facts (code)">
+      <ChatCard from="What code knows about this job">
         <ul className="fact-list">
-          {job.facts.map((fact) => (
-            <li key={fact}>{fact}</li>
-          ))}
+          {job.facts.map((fact) => {
+            const id = factIdFromLabel(fact);
+            return <li key={fact}>{id ? <Coded word={factWord(id)} code={id} /> : fact}</li>;
+          })}
         </ul>
       </ChatCard>
-      <ChatCard from="Ticks, with who made them">
+      <ChatCard from="Ticks, and who made them">
         {job.ticks.length === 0 ? <p>No tick yet.</p> : null}
         <ul className="card-lines">
           {job.ticks.map((line) => (
@@ -307,14 +324,14 @@ function ManagerJob({
           ))}
         </ul>
       </ChatCard>
-      {job.impact ? <ChatCard from="Impact record (S3)" body={job.impact} /> : null}
+      {job.impact ? <ChatCard from="Time and money lost so far" fromCode="S3" body={job.impact} /> : null}
 
-      <h4 className="desk-sub">Filled checklist</h4>
+      <h4 className="desk-sub">Filled checklist: what we already know</h4>
       {open.checklist.map((card) => (
         <DeskCardView key={card.id} card={card} />
       ))}
 
-      <h4 className="desk-sub">Leads, ranked by code for the senior manager</h4>
+      <h4 className="desk-sub">Likely causes, best bet first (your list)</h4>
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={job.editable} />
@@ -333,14 +350,17 @@ function ManagerJob({
           {open.removed.map((r) => (
             <li key={r.causeId}>
               <b>{r.label}</b>
-              <span>{` ${r.reason}`}</span>
+              <span>
+                {" "}
+                <Plain text={r.reason} />
+              </span>
             </li>
           ))}
         </ul>
       </details>
 
       <details className="desk-details" data-list="steps">
-        <summary>{`Pill steps (${open.steps.length})`}</summary>
+        <summary>{`Checklist steps from the pill (${open.steps.length})`}</summary>
         <StepList steps={open.steps} />
       </details>
 
@@ -399,7 +419,8 @@ function SolutionCard({
   const approved = solution.status === "approved-and-distributed";
   return (
     <ChatCard
-        from={`New solution · ${solution.id}`}
+        from="New fix (new solution)"
+        fromCode={solution.id}
         colour={declined ? "red" : sent || approved ? "green" : "amber"}
         colourWord={declined ? "Declined by HQ" : approved ? "Approved by HQ" : sent ? "Sent to HQ" : "Draft"}
         title={`Cause: ${solution.causeLabel}`}
@@ -408,7 +429,9 @@ function SolutionCard({
         aiOff={solution.aiOff}
         receipt={solution.receipt}
       >
-        <p className="desk-status">{solution.statusLine}</p>
+        <p className="desk-status">
+          <Plain text={solution.statusLine} />
+        </p>
         <TypedLine name="Fix line" text={solution.fixLine} flags={solution.fixFlags} />
         <TypedLine name="Why line" text={solution.whyLine} flags={solution.whyFlags} />
 
@@ -432,7 +455,9 @@ function SolutionCard({
           ))}
         </div>
 
-        <p className="saved-line">{solution.savedLine}</p>
+        <p className="saved-line">
+          <Plain text={solution.savedLine} />
+        </p>
 
         {run ? (
           <div ref={runBox} className="test-run">
@@ -457,7 +482,7 @@ function SolutionCard({
         ) : null}
 
         <p ref={sendLine} className="send-line">
-          {solution.sendLine}
+          <Plain text={solution.sendLine} />
         </p>
       </ChatCard>
   );
@@ -469,7 +494,10 @@ function TypedLine({ name, text, flags }: { name: string; text: string; flags: s
       <span className="lead-k">{name}</span>
       <span>{text}</span>
       {flags.map((id) => (
-        <span key={id} className="flag">{`red word: ${id}`}</span>
+        <span key={id} className="flag">
+          {"red word: "}
+          <Plain text={id} />
+        </span>
       ))}
     </p>
   );
@@ -512,7 +540,7 @@ function PartRow({
         <option value="">Pick a fact</option>
         {menu.facts.map((f) => (
           <option key={f.value} value={f.value}>
-            {f.label}
+            {`${factWord(f.value)} (${f.value})`}
           </option>
         ))}
       </select>
@@ -523,7 +551,7 @@ function PartRow({
         {part.id === "effect-1" ? <option value="">Pick an effect</option> : <option value="none">No second effect</option>}
         {menu.effects.map((e) => (
           <option key={e.value} value={e.value}>
-            {e.label}
+            {`${effectWord(e.value)} (${e.label.toLowerCase()})`}
           </option>
         ))}
       </select>
@@ -665,7 +693,9 @@ function ManagerBar({
             <input type="text" value={reason} onChange={(event) => setReason(event.target.value)} />
           </label>
           <fieldset>
-            <legend>Needs money (no amount here: HQ decides, A3)</legend>
+            <legend>
+              Needs money? No amount here: head office decides. <CodeTag code="A3" />
+            </legend>
             <label className="radio">
               <input type="radio" name={`money-${jobId}`} checked={money === true} onChange={() => setMoney(true)} />
               Yes, it needs money
@@ -676,7 +706,7 @@ function ManagerBar({
             </label>
           </fieldset>
           <button type="submit" className="submit">
-            Send to HQ (A3)
+            Send to HQ <CodeTag code="A3" />
           </button>
         </form>
       ) : null}

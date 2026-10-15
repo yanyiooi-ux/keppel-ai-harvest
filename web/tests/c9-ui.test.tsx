@@ -154,12 +154,12 @@ describe("C9: the impact meter on the AOM seat", () => {
   it("shows the speak-first flag for Tower A Level 23 with its word", async () => {
     renderAom(view("aom-tower-a"));
     const meter = await screen.findByTestId("aom-meter");
-    expect(within(meter).getByText("Speak first")).toBeTruthy();
+    expect(within(meter).getByText("This spot keeps calling")).toBeTruthy();
     expect(
-      within(meter).getByText(
-        "Speak first: Tower A Level 23 has called 5 times in 30 days, with opposite fixes (repeat flag, TS-CC-09). Quick fixes are off for this spot. Find the cause before they call again."
-      )
-    ).toBeTruthy();
+      within(meter).getByText(/^Speak first: /).textContent
+    ).toBe(
+      "Speak first: Tower A Level 23 has called 5 times in 30 days, with opposite fixes (repeat flag, “The repeat rule: no more quick fixes” TS-CC-09). Quick fixes are off for this spot. Find the cause before they call again."
+    );
   });
 
   it("shows the live version in Tower A with no button, and no charge request yet", async () => {
@@ -179,10 +179,10 @@ describe("C9: the charge request and Decide charge", () => {
     const c = within(card);
     expect(c.getByText("Waits on you")).toBeTruthy();
     expect(
-      c.getByText(
-        'Tenant will hear: "Our contractor will move the wall thermostat back to the spot on your approved fit-out drawing, with your OK." This is work on the tenant\'s fit-out (TS-CC-11). Who pays?'
-      )
-    ).toBeTruthy();
+      c.getByText(/^Tenant will hear: /).textContent
+    ).toBe(
+      'Tenant will hear: "Our contractor will move the wall thermostat back to the spot on your approved fit-out drawing, with your OK." This is work on the tenant\'s fit-out (“Renovation items: check who owns them first” TS-CC-11). Who pays?'
+    );
     expect(c.getByRole("radio", { name: "Tenant pays" })).toBeTruthy();
     expect(c.getByRole("radio", { name: "Landlord pays" })).toBeTruthy();
     expect(c.getByRole("radio", { name: "Goodwill, no charge" })).toBeTruthy();
@@ -287,7 +287,7 @@ describe("C9: safety alerts and the impact record on the AOM seat", () => {
     press("aom-tower-a", "safety-pick", undefined, { stopId: "RS-04" });
     renderAom(view("aom-tower-a"));
     const alerts = await screen.findByTestId("aom-alerts");
-    expect(within(alerts).getByText("Open now in Tower A: RS-04 on Level 23")).toBeTruthy();
+    expect(within(alerts).getByText(/^Open now in Tower A: /).textContent).toBe("Open now in Tower A: Water near the electrics RS-04 on Level 23");
     expect(within(alerts).getByText(/Red stop on Tower A, Level 23/)).toBeTruthy();
   });
 

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
+import { CodeTag, Plain } from "../Plain";
+import { statusWord, tierWord } from "../../../lib/plain-words";
 import type {
   TechnicianDesk as Desk,
   DeskCard,
@@ -22,7 +24,24 @@ import type {
  * press goes to /api/action, where the server checks the seat and the status
  * and plans again; the chat reloads the view right after each press, so a tick
  * re-ranks on screen before the next 2-second poll.
+ *
+ * Plain words first (D1): a job's status and a lead's tier show in plain words
+ * with the code kept after them as a grey tag, and a code inside a reason or a
+ * fix line shows its plain words too (components/Plain.tsx).
  */
+
+/** The open job's status line: the engine's own line, with a bare status code put into plain words (D1). */
+export function StatusLine({ status, line }: { status: string; line: string }) {
+  if (line === `Status: ${status.replace(/-/g, " ")}.`) {
+    return (
+      <p className="desk-status">
+        {`Status: ${statusWord(status)}. `}
+        <CodeTag code={status} />
+      </p>
+    );
+  }
+  return <p className="desk-status">{line}</p>;
+}
 
 type Press = (action: string, job?: string, payload?: Record<string, unknown>) => Promise<void>;
 
@@ -48,7 +67,10 @@ export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null }
               <span>
                 <b>{job.id}</b>
                 {job.place} · {job.complaint} · {job.reported}
-                <span className="job-status">{job.isOpen ? `open here · ${job.status}` : job.status}</span>
+                <span className="job-status">
+                  {job.isOpen ? `On your desk · ${statusWord(job.status)} ` : `${statusWord(job.status)} `}
+                  <CodeTag code={job.status} />
+                </span>
               </span>
               {job.canOpen ? (
                 <button className="open-btn" aria-label={`Open job ${job.id}`} onClick={() => void press("open-job", job.id)}>
@@ -83,13 +105,19 @@ export function DeskCardView({ card }: { card: DeskCard }) {
       call={card.call}
       receipt={card.receipt}
     >
-      {card.codeLine ? <p className="code-line">{card.codeLine}</p> : null}
+      {card.codeLine ? (
+        <p className="code-line">
+          <Plain text={card.codeLine} />
+        </p>
+      ) : null}
       {card.lines && card.lines.length > 0 ? (
         <ul className="card-lines">
           {card.lines.map((line, i) => (
             <li key={i}>
               {line.word ? <span className={`badge ${line.colour ?? "none"}`}>{line.word}</span> : null}
-              <span>{line.text}</span>
+              <span>
+                <Plain text={line.text} />
+              </span>
             </li>
           ))}
         </ul>
@@ -115,7 +143,8 @@ export function LeadCard({
     <div data-testid="lead-card" data-cause={lead.causeId}>
       <ChatCard
         colour={lead.tier === "found" ? "green" : "none"}
-        colourWord={lead.tierWord}
+        colourWord={tierWord(lead.tier)}
+        colourCode={lead.tier}
         title={lead.label}
         body={lead.reason}
         aiWording={lead.aiWording}
@@ -125,12 +154,14 @@ export function LeadCard({
         receipt={lead.receipt}
       >
         <p className="lead-check">
-          <span className="lead-k">{`Check · step ${lead.checkStep} · ${lead.checkTime}`}</span>
+          <span className="lead-k">{`How to check · step ${lead.checkStep} · ${lead.checkTime}`}</span>
           <span>{lead.checkText}</span>
         </p>
         <p className="lead-fix">
-          <span className="lead-k">{lead.fixAllowedHere ? "Fix · yours to make" : "Fix · not yours to make"}</span>
-          <span>{lead.fixLine}</span>
+          <span className="lead-k">{lead.fixAllowedHere ? "The fix · you can make it" : "The fix · someone else makes it"}</span>
+          <span>
+            <Plain text={lead.fixLine} />
+          </span>
         </p>
         {editable ? (
           <div className="tick-row">
@@ -164,7 +195,11 @@ export function StepList({ steps }: { steps: DeskStep[] }) {
           <b className="step-no">{`Step ${step.step}`}</b>
           <span className="step-who">{step.who}</span>
           <p>{step.text}</p>
-          {step.filled ? <p className="step-filled">{`Filled: ${step.filled}`}</p> : null}
+          {step.filled ? (
+            <p className="step-filled">
+              <Plain text={`Filled: ${step.filled}`} />
+            </p>
+          ) : null}
         </li>
       ))}
     </ol>
@@ -201,14 +236,14 @@ function OpenJob({
   return (
     <div className="open-job">
       <h3 className="desk-head">{open.title}</h3>
-      <p className="desk-status">{open.statusLine}</p>
+      <StatusLine status={open.status} line={open.statusLine} />
 
-      <h4 className="desk-sub">Filled checklist</h4>
+      <h4 className="desk-sub">Filled checklist: what we already know</h4>
       {open.checklist.map((card) => (
         <DeskCardView key={card.id} card={card} />
       ))}
 
-      <h4 className="desk-sub">Leads, ranked by code</h4>
+      <h4 className="desk-sub">Likely causes, best bet first</h4>
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={open.inProgress} />
@@ -227,14 +262,17 @@ function OpenJob({
           {open.removed.map((r) => (
             <li key={r.causeId}>
               <b>{r.label}</b>
-              <span>{` ${r.reason}`}</span>
+              <span>
+                {" "}
+                <Plain text={r.reason} />
+              </span>
             </li>
           ))}
         </ul>
       </details>
 
       <details className="desk-details" data-list="steps" open>
-        <summary>{`Pill steps (${open.steps.length})`}</summary>
+        <summary>{`Checklist steps from the pill (${open.steps.length})`}</summary>
         <StepList steps={open.steps} />
       </details>
 

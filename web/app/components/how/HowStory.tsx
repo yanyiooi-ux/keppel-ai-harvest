@@ -1,4 +1,7 @@
+import { Fragment } from "react";
 import { PipAvatar } from "../PipAvatar";
+import { CodeTag, Plain } from "../Plain";
+import { APPROVAL_WHAT, approvalWord, pipNeverLine, type ApprovalId } from "../../../lib/plain-words";
 import type { HowView, WhyStory, WhyCall } from "../../../lib/how";
 import type { ImpactMeter } from "../../../lib/impact";
 
@@ -7,7 +10,41 @@ import type { ImpactMeter } from "../../../lib/impact";
  * scroll. It owns no words about the job: every date, number, rule id, label
  * and line comes from howView, which reads the data, the pill, the engine and
  * the one memory. No hooks, so it renders on the server with the first paint.
+ *
+ * Plain words first (D1): approvals and stops show in plain words with the
+ * code kept after them as a grey tag (components/Plain.tsx).
  */
+
+/** A role's line with "A1 to A4" read as the 4 approval points, the codes kept as a grey tag. */
+function RoleText({ text }: { text: string }) {
+  const codes = "A1 to A4";
+  const at = text.indexOf(codes);
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      {"the 4 approval points "}
+      <CodeTag code={codes} />
+      {text.slice(at + codes.length)}
+    </>
+  );
+}
+
+/** "Approves new fixes A2 and outside help or money A3", each code as a grey tag. */
+function Approves({ ids }: { ids: string[] }) {
+  if (ids.length === 0) return <>Approves nothing</>;
+  return (
+    <>
+      {"Approves "}
+      {ids.map((id, i) => (
+        <Fragment key={id}>
+          {i > 0 ? " and " : null}
+          {APPROVAL_WHAT[id as ApprovalId] ?? id} <CodeTag code={id} />
+        </Fragment>
+      ))}
+    </>
+  );
+}
 
 function upperFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -185,6 +222,7 @@ function WhatSection({ view }: { view: HowView }) {
         <div className="brain-core">
           <PipAvatar size={64} />
           <b>One brain</b>
+          <span>The rule book for too-cold and too-hot calls</span>
           <span>{`Pill ${brain.pill} v${brain.version}`}</span>
           <span>{`${brain.causes} causes · ${brain.cases} past cases`}</span>
         </div>
@@ -193,9 +231,9 @@ function WhatSection({ view }: { view: HowView }) {
             <span className="seat-name">{seat.label}</span>
             <span className="seat-line">{seat.does}</span>
             <span className={seat.approves.length > 0 ? "ring-approves has" : "ring-approves"}>
-              {seat.approves.length > 0 ? `Approves ${seat.approves.join(" and ")}` : "Approves nothing"}
+              <Approves ids={seat.approves} />
             </span>
-            <span className="never">{seat.never}</span>
+            <span className="never">{pipNeverLine(seat.never)}</span>
           </a>
         ))}
         <div className="ring-b">
@@ -209,8 +247,10 @@ function WhatSection({ view }: { view: HowView }) {
       <ul className="approval-list" data-testid="how-approvals">
         {view.approvals.map((a) => (
           <li key={a.id}>
-            <b className="approval-id">{a.id}</b>
-            <span className="approval-what">{a.what}</span>
+            <span className="approval-what">
+              <b>{approvalWord(a.id)}</b> <CodeTag code={a.id} />
+              <span className="approval-sub">{a.what}</span>
+            </span>
             <span className="approval-who">{a.who}</span>
             <span className="approval-where">{a.where}</span>
             {a.line ? <span className="approval-line">{a.line}</span> : null}
@@ -251,7 +291,9 @@ function HowSection({ view }: { view: HowView }) {
         {view.roles.map((r) => (
           <article className="card" key={r.who}>
             <p className="card-title">{r.who}</p>
-            <p>{r.text}</p>
+            <p>
+              <RoleText text={r.text} />
+            </p>
           </article>
         ))}
       </div>
@@ -288,7 +330,7 @@ function HowSection({ view }: { view: HowView }) {
           <ul className="stop-list" data-testid="how-stops">
             {view.safety.stops.map((s) => (
               <li key={s.id}>
-                <b>{s.id}</b> {s.trigger}
+                {s.trigger} <CodeTag code={s.id} />
               </li>
             ))}
           </ul>
@@ -298,8 +340,8 @@ function HowSection({ view }: { view: HowView }) {
           <div className="card-from">The AI in a new solution</div>
           <p>{view.aiNewSolution}</p>
           <p className="card-mean">
-            Code refuses anything off the menu, the solution&apos;s tests must pass on that exact draft, and only HQ
-            approves it (A2).
+            Code refuses anything off the menu, the solution&apos;s tests must pass on that exact draft, and only head
+            office approves it. <CodeTag code="A2" />
           </p>
         </article>
       </div>
@@ -309,7 +351,9 @@ function HowSection({ view }: { view: HowView }) {
         {view.questions.map((q) => (
           <li key={q.n}>
             <span className="q-text">{q.question}</span>
-            <span className="q-answer">{q.answer}</span>
+            <span className="q-answer">
+              <Plain text={q.answer} />
+            </span>
           </li>
         ))}
       </ol>

@@ -37,10 +37,13 @@ const noPress = async () => {};
 export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reload }: HowLiveProps) {
   const call = useRef<Fetcher>(fetcher ?? ((input, init) => fetch(input, init)));
   const resetting = useRef(false);
+  // Reset demo shows it is working until the page reloads (D1).
+  const [busy, setBusy] = useState(false);
 
   const reset = async () => {
     if (resetting.current) return;
     resetting.current = true;
+    setBusy(true);
     try {
       await call.current("/api/reset", { method: "POST" });
     } finally {
@@ -60,7 +63,13 @@ export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reloa
       </div>
 
       <div className="live-bar" data-testid="live-bar" role="region" aria-label="Demo bar">
-        <button type="button" className="reset-btn live-reset" onClick={() => void reset()}>
+        <button
+          type="button"
+          className={busy ? "reset-btn live-reset is-pending" : "reset-btn live-reset"}
+          aria-busy={busy || undefined}
+          disabled={busy}
+          onClick={() => void reset()}
+        >
           Reset demo
         </button>
         <details className="live-steps">

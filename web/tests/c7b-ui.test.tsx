@@ -202,7 +202,7 @@ describe("C7b: a tick re-ranks at once, before the next poll", () => {
     expect(card.getByText(PRECOOL.fixLine)).toBeTruthy();
     expect(card.getByText("Start with the morning start-up.")).toBeTruthy();
     expect(card.getByText("replay: saved real AI answer")).toBeTruthy();
-    expect(card.getByText("case backed")).toBeTruthy();
+    expect(card.getByText("Past cases back this up")).toBeTruthy();
   });
 });
 
