@@ -274,10 +274,14 @@ describe("D4 review: the safety box, the outside-help card and the video", () =>
     });
   });
 
-  it("when the file cannot load, the player turns into the plain line", () => {
+  it("when the file cannot load and the server answers HEAD 404, the player turns into the plain line", async () => {
+    const head = vi.fn(() => Promise.resolve({ ok: false, status: 404 }));
+    vi.stubGlobal("fetch", head);
     const { container } = render(<VideoPlayer available />);
     const source = container.querySelector("video source")!;
     fireEvent.error(source);
+    expect(await screen.findByTestId("video-missing")).toBeTruthy();
+    expect(head).toHaveBeenCalledWith("/media/pill-desk-video.mp4", { method: "HEAD", cache: "no-store" });
     expect(container.querySelector("video")).toBeNull();
     expect(screen.getByTestId("video-missing").textContent).toBe(VIDEO_MISSING);
   });
