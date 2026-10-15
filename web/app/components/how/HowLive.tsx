@@ -5,6 +5,9 @@ import { SeatChat } from "../chat/SeatChat";
 import { BuildingBView } from "../chat/HqDesk";
 import type { LiveSeat, DemoStep } from "../../../lib/how";
 import type { HqBuildingB } from "../../../lib/hq-desk";
+import type { AiMode } from "../../../lib/ai-mode";
+import { seatWord } from "../../../lib/plain-words";
+import { DEMO_FIX_LINE, DEMO_WHY_LINE } from "../../../lib/demo-words";
 
 /**
  * The live wall on /how (S22, C10a): the 5 real chats side by side, AOM Tower
@@ -30,11 +33,13 @@ export interface HowLiveProps {
   /** 0 means never poll. The live app uses 2000 (S20). */
   pollMs?: number;
   reload?: () => void;
+  /** Where the AI switch stands, handed to each chat (D1 review). */
+  aiMode?: AiMode;
 }
 
 const noPress = async () => {};
 
-export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reload }: HowLiveProps) {
+export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reload, aiMode }: HowLiveProps) {
   const call = useRef<Fetcher>(fetcher ?? ((input, init) => fetch(input, init)));
   const resetting = useRef(false);
   // Reset demo shows it is working until the page reloads (D1).
@@ -80,8 +85,14 @@ export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reloa
           <ol data-testid="demo-steps">
             {steps.map((step, i) => (
               <li key={i}>
-                <b>{step.who}</b>
+                {/* The seat's plain name, as the top bar shows it (D1 review). */}
+                <b>{step.seat === "bar" ? step.who : seatWord(step.seat)}</b>
                 <span>{step.text}</span>
+                {step.seat === "senior-manager" ? (
+                  <span className="demo-words-line" data-testid="demo-words">
+                    {`The demo's own words, which the saved AI answer covers: fix line "${DEMO_FIX_LINE}" Why line "${DEMO_WHY_LINE}" The Log form's "Use the demo words" button types them for you.`}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ol>
@@ -99,6 +110,7 @@ export function HowLive({ seats, buildingB, steps, fetcher, pollMs = 2000, reloa
               variant="column"
               fetcher={fetcher}
               pollMs={pollMs}
+              aiMode={aiMode}
             />
             <a className="live-open" href={s.href}>
               Open this seat alone

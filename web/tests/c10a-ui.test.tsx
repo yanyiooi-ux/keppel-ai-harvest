@@ -23,6 +23,7 @@ import { seatView } from "../lib/seat-view";
 import { buildingBView } from "../lib/hq-desk";
 import { loadCauses } from "../lib/causes";
 import { SEAT_LABELS } from "../lib/permissions";
+import { seatLabelWords, seatWord } from "../lib/plain-words";
 import { howView, liveSeats, loadHowSources, ROLE_PLAYED_LINE, AI_NEW_SOLUTION_LINE } from "../lib/how";
 import type { Ticket } from "../lib/rule-engine";
 
@@ -230,7 +231,7 @@ describe("T-C10a: the 5 real chats side by side, AOM Tower A first, plus the Bui
       const seat = tile.getAttribute("data-seat") as keyof typeof SEAT_LABELS;
       expect(tile.querySelector(".chat.column")).toBeTruthy();
       expect(tile.querySelector(".seat-tag")!.textContent).toBe(seat);
-      expect(tile.querySelector(".chat-sub")!.textContent).toBe(SEAT_LABELS[seat]);
+      expect(tile.querySelector(".chat-sub")!.textContent).toBe(seatLabelWords(SEAT_LABELS[seat]));
       expect(tile.querySelector(`a[href='/seat/${seat}']`)).toBeTruthy();
     }
     // Each chat is the real one: the AOM's desk with its meter, the tenant's Report a problem.
@@ -286,7 +287,7 @@ describe("T-C10a: the 5 real chats side by side, AOM Tower A first, plus the Bui
     expect(items).toHaveLength(6);
     const view = howView(memory.read());
     view.demoSteps.forEach((step, i) => {
-      expect(items[i].textContent).toContain(step.who);
+      expect(items[i].textContent).toContain(step.seat === "bar" ? step.who : seatWord(step.seat));
       expect(items[i].textContent).toContain(step.text);
     });
   });

@@ -4,7 +4,16 @@ import { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { LeadCard } from "./TechnicianDesk";
 import { CodeTag, Coded, Plain } from "../Plain";
-import { effectValueFromLabel, effectWord, factIdFromLabel, factWord, gateWord, noticeWord } from "../../../lib/plain-words";
+import {
+  BUILDING_B_INTRO,
+  effectStepLead,
+  effectValueFromLabel,
+  effectWord,
+  factIdFromLabel,
+  factWord,
+  gateWord,
+  noticeWord,
+} from "../../../lib/plain-words";
 import type { RefusedPress } from "./SeniorManagerDesk";
 import type { HqDesk as HqDeskView, HqSolutionView, HqRequestRow, HqBuildingB } from "../../../lib/hq-desk";
 import type { VersionRow } from "../../../lib/versions";
@@ -62,9 +71,15 @@ function Refusal({ message }: { message: string }) {
   return (
     <div className="notice refused" role="status">
       <b>not done</b>
-      {message}
+      <Plain text={message} />
     </div>
   );
+}
+
+/** A condition line's step, said as what the effect does to it, so it never reads as the opposite (D1 review). */
+function stepLeadFor(display: string): string | null {
+  const value = effectValueFromLabel(display);
+  return value ? effectStepLead(value) : null;
 }
 
 export function HqDesk({ desk, press, refused = null }: HqDeskProps) {
@@ -111,7 +126,13 @@ export function HqDesk({ desk, press, refused = null }: HqDeskProps) {
       </h4>
       {desk.solutions.length === 0 ? <p className="desk-status">No new solution has been sent to HQ yet.</p> : null}
       {desk.solutions.map((s) => (
-        <SolutionCard key={s.id} solution={s} press={press} refused={s.id === solutionWithRefusal ? onSolution(s) : null} />
+        <SolutionCard
+          key={s.id}
+          solution={s}
+          press={press}
+          refused={s.id === solutionWithRefusal ? onSolution(s) : null}
+          buildingBFirst={desk.buildingB?.leads[0]?.label ?? null}
+        />
       ))}
 
       <h4 className="desk-sub">Versions, newest first</h4>
@@ -125,16 +146,28 @@ export function HqDesk({ desk, press, refused = null }: HqDeskProps) {
         <RequestCard key={r.id} request={r} press={press} refused={r.id === requestWithRefusal ? onRequest(r) : null} />
       ))}
 
-      {desk.buildingB ? <BuildingBView card={desk.buildingB} press={press} /> : null}
+      {desk.buildingB ? <BuildingBView card={desk.buildingB} press={press} anchorId="hq-building-b" /> : null}
     </section>
   );
 }
 
 // ---- A solution sent to HQ (A2) ----
 
-function SolutionCard({ solution: s, press, refused }: { solution: HqSolutionView; press: Press; refused: string | null }) {
+function SolutionCard({
+  solution: s,
+  press,
+  refused,
+  buildingBFirst,
+}: {
+  solution: HqSolutionView;
+  press: Press;
+  refused: string | null;
+  /** Building B's first likely cause now, for the line that shows the payoff once approved (D1 review). */
+  buildingBFirst: string | null;
+}) {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState("");
+  const approved = s.status === "approved-and-distributed";
   return (
     <div data-testid={`hq-solution-${s.id}`}>
       <ChatCard
@@ -149,6 +182,12 @@ function SolutionCard({ solution: s, press, refused }: { solution: HqSolutionVie
         <p className="desk-status">
           <Plain text={s.statusLine} />
         </p>
+        {approved && buildingBFirst ? (
+          <p className="payoff-line" data-testid="hq-payoff">
+            {`Building B uses it now: its list starts with "${buildingBFirst}". `}
+            <a href="#hq-building-b">See the Building B card</a>
+          </p>
+        ) : null}
 
         <p className="typed-line">
           <span className="lead-k">Fix line</span>
@@ -173,7 +212,12 @@ function SolutionCard({ solution: s, press, refused }: { solution: HqSolutionVie
                 <ConditionValue id={c.id} display={c.display} />
               </span>{" "}
               <span className="part-label">{c.label}</span>
-              {c.stepText ? <span className="job-status">{c.stepText}</span> : null}
+              {c.stepText ? (
+                <span className="job-status">
+                  {stepLeadFor(c.display) ? <span className="part-step-lead">{stepLeadFor(c.display)}</span> : null}
+                  {c.stepText}
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -191,9 +235,7 @@ function SolutionCard({ solution: s, press, refused }: { solution: HqSolutionVie
 
         {s.gates.length > 0 ? (
           <>
-            <span className="lead-k">
-              Checks before it can go live <CodeTag code="S16" />
-            </span>
+            <span className="lead-k">Checks before it can go live</span>
             <ul className="card-lines">
               {[...s.gates, ...(s.baseCheck ? [s.baseCheck] : [])].map((g) => (
                 <li key={g.id}>
@@ -356,10 +398,11 @@ function RequestCard({ request: r, press, refused }: { request: HqRequestRow; pr
 // ---- The Building B card (S21) ----
 
 /** Exported so /how's live wall shows the very same card (C10a). */
-export function BuildingBView({ card, press }: { card: HqBuildingB; press: Press }) {
+export function BuildingBView({ card, press, anchorId }: { card: HqBuildingB; press: Press; anchorId?: string }) {
   return (
-    <div className="desk" data-testid="hq-building-b">
+    <div className="desk" data-testid="hq-building-b" id={anchorId}>
       <h4 className="desk-sub">Building B card</h4>
+      <p className="card-intro">{BUILDING_B_INTRO}</p>
       <ChatCard from={card.from} title={card.title} body={`Live version v${card.version}. ${card.ticket}`} aiOff={card.aiOff} receipt={card.receipt}>
         {card.alerts.map((alert, i) => (
           <div className="notice" key={`b-${i}`}>

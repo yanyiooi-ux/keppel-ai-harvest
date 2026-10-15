@@ -6,10 +6,12 @@
  * Loading you can see: a press or a typed message marks the control that was
  * used (aria-busy), locks every control in the chat (one disabled fieldset),
  * and shows "Pip is checking" with typing dots. The reply lands as soon as the
- * server answers and the lock lifts with it; the mark and "Pip is checking"
- * stay on screen at least 400 ms from the press, and as long as the server is
- * slow. A second press while one is on its way sends nothing. A press that
- * fails on the network says so in plain words and frees the chat.
+ * server answers; the mark, "Pip is checking" and the lock stay on screen at
+ * least 400 ms from the press (D1 review: so a second tap in that gap cannot
+ * fire), and as long as the server is slow. A refused press frees the lock at
+ * once. A second press while one is on its way sends nothing. A press that
+ * fails on the network says so in plain words and frees the chat. The 400 ms
+ * is checked on a held clock, never on the wall clock.
  *
  * Plain words first: a lead's tier, a rule id in a reason, a notice's kind and
  * the seat show their plain words with the code kept after them as a grey tag.
@@ -19,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { render, screen, waitFor, cleanup, fireEvent, within } from "@testing-library/react";
+import { render, screen, waitFor, cleanup, fireEvent, within, act } from "@testing-library/react";
 import { SeatChat } from "../app/components/chat/SeatChat";
 import { ChatCard } from "../app/components/chat/ChatCard";
 import { HowLive } from "../app/components/how/HowLive";
@@ -119,8 +121,26 @@ function fakeFetch(answer: (url: string, body: Body | null) => unknown) {
 const lock = (root: HTMLElement) => root.querySelector("fieldset.chat-lock") as HTMLFieldSetElement;
 const actions = (calls: { url: string }[]) => calls.filter((c) => c.url === "/api/action").length;
 
+/** Lets the fake server's answers land: every pending promise and render, no timer moved. */
+async function settle() {
+  for (let i = 0; i < 12; i++) {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  }
+}
+
+/** The clock and setTimeout under the test's hand, so the 400 ms is checked exactly, never by the wall clock. */
+function holdTheClock() {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+}
+
 describe("D1: a press shows that Pip is working", () => {
-  it("marks the pressed button, locks the chat, shows Pip is checking, and keeps it at least 400 ms", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("marks the pressed button, locks the chat, shows Pip is checking; the reply lands at once and the lock holds to 400 ms", async () => {
     let ticked = false;
     const { fn, calls } = fakeFetch((url) => {
       if (url === "/api/action") {
@@ -134,7 +154,7 @@ describe("D1: a press shows that Pip is working", () => {
     expect(lock(container).disabled).toBe(false);
     expect(screen.queryByText("Pip is checking")).toBeNull();
 
-    const t0 = Date.now();
+    holdTheClock();
     fireEvent.click(button);
 
     // Pending: the pressed button says so, every control is locked, and Pip says it is checking.
@@ -146,22 +166,55 @@ describe("D1: a press shows that Pip is working", () => {
 
     // A second press while the first is on its way sends nothing.
     fireEvent.click(screen.getByRole("button", { name: "Not this: Core box held at minimum airflow" }));
-    await waitFor(() => expect(actions(calls)).toBe(1));
 
-    // The reply lands as soon as the server answers, and the lock lifts with it;
-    // the mark and "Pip is checking" are still on screen then.
-    await screen.findByText("Ruled out (1)");
-    expect(Date.now() - t0).toBeLessThan(395);
-    await waitFor(() => expect(lock(container).disabled).toBe(false));
+    // The reply lands as soon as the server answers, with no time gone by.
+    await settle();
+    expect(screen.getByText("Ruled out (1)")).toBeTruthy();
+    expect(actions(calls)).toBe(1);
+
+    // The mark, "Pip is checking" and the lock stay with the reply until 400 ms
+    // from the press, so a second tap in that gap cannot fire (D1 review): every
+    // control in the chat is disabled, the next lead's Not this too.
+    expect(lock(container).disabled).toBe(true);
     expect(screen.getByText("Pip is checking")).toBeTruthy();
     expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByRole("button", { name: "Not this: Core box held at minimum airflow" }).matches(":disabled")).toBe(true);
+    await act(async () => {
+      vi.advanceTimersByTime(399);
+    });
+    expect(lock(container).disabled).toBe(true);
+    expect(screen.getByText("Pip is checking")).toBeTruthy();
 
-    // They stay at least 400 ms from the press, then go.
-    await waitFor(() => expect(screen.queryByText("Pip is checking")).toBeNull(), { timeout: 3000 });
-    expect(Date.now() - t0).toBeGreaterThanOrEqual(395);
+    // At 400 ms they all go together, and the chat is free again.
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.queryByText("Pip is checking")).toBeNull();
+    expect(lock(container).disabled).toBe(false);
     expect(button.getAttribute("aria-busy")).toBeNull();
     expect(button.classList.contains("is-pending")).toBe(false);
+    expect(screen.getByRole("button", { name: "Not this: Core box held at minimum airflow" }).matches(":disabled")).toBe(false);
     expect(actions(calls)).toBe(1);
+  });
+
+  it("a refused press frees the chat at once, so a fix and a retry are never held up (D1 review)", async () => {
+    let n = 0;
+    const { fn, calls } = fakeFetch((url) => {
+      if (url === "/api/action") return ++n === 1 ? { ok: false, message: "Refused for a reason." } : { ok: true, message: "Done." };
+      return techState(openDesk([PRECOOL, MIN_AIR, THERMO]));
+    });
+    const { container } = render(<SeatChat seat="technician" fetcher={fn} pollMs={0} jobId="2318" />);
+    const button = await screen.findByRole("button", { name: "Not this: Morning start-up runs too cold" });
+    holdTheClock();
+    fireEvent.click(button);
+    await settle();
+    expect(screen.getByText("Refused for a reason.")).toBeTruthy();
+    // No time has gone by: the mark and "Pip is checking" still show, but the lock is already off.
+    expect(screen.getByText("Pip is checking")).toBeTruthy();
+    expect(lock(container).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Not this: Morning start-up runs too cold" }));
+    await settle();
+    expect(actions(calls)).toBe(2);
   });
 
   it("while the server is slow, the chat stays locked and Pip keeps checking until the reply lands", async () => {
@@ -195,7 +248,7 @@ describe("D1: a press shows that Pip is working", () => {
     expect(calls.filter((u) => u === "/api/action")).toHaveLength(1);
   });
 
-  it("a typed message marks the send button and shows Pip is checking until the reply lands", async () => {
+  it("a typed message marks the send button and shows Pip is checking until the reply lands, and at least 400 ms", async () => {
     const { fn, calls } = fakeFetch((url) => {
       if (url === "/api/chat") return { storedText: "why", cards: [{ kind: "rank", title: "Why this order", body: "Code reason." }] };
       return techState(openDesk([PRECOOL, MIN_AIR, THERMO]));
@@ -204,17 +257,21 @@ describe("D1: a press shows that Pip is working", () => {
     const input = await screen.findByLabelText("Message Pip");
     fireEvent.change(input, { target: { value: "why" } });
     const send = screen.getByRole("button", { name: "Send" });
-    const t0 = Date.now();
+    holdTheClock();
     fireEvent.click(send);
 
     expect(send.getAttribute("aria-busy")).toBe("true");
     expect(lock(container).disabled).toBe(true);
     expect(screen.getByText("Pip is checking")).toBeTruthy();
 
-    await screen.findByText("Why this order", undefined, { timeout: 3000 });
+    await settle();
+    expect(screen.getByText("Why this order")).toBeTruthy();
     expect(screen.getByText("Pip is checking")).toBeTruthy();
-    await waitFor(() => expect(screen.queryByText("Pip is checking")).toBeNull(), { timeout: 3000 });
-    expect(Date.now() - t0).toBeGreaterThanOrEqual(395);
+    expect(lock(container).disabled).toBe(true);
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(screen.queryByText("Pip is checking")).toBeNull();
     expect(send.getAttribute("aria-busy")).toBeNull();
     expect(lock(container).disabled).toBe(false);
     expect(calls.filter((c) => c.url === "/api/chat")).toHaveLength(1);
@@ -327,6 +384,13 @@ describe("D1: new cards move in briefly, and not at all for reduced motion", () 
     const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
     expect(css.indexOf("@media (prefers-reduced-motion: reduce)")).toBeGreaterThan(-1);
     expect(reduced).toMatch(/animation:\s*none/);
+    // D1 review: the very rule in that block names what moves in, and turns it off.
+    const block = /@media \(prefers-reduced-motion: reduce\)\s*\{\s*([^{}]*)\{\s*animation:\s*none;\s*\}/.exec(css);
+    expect(block).not.toBeNull();
+    const selectors = block![1].split(",").map((s) => s.trim());
+    for (const moving of [".is-new", ".pip-checking", ".typing-dots i", ".is-pending::after"]) {
+      expect(selectors, moving).toContain(moving);
+    }
   });
 
   it("only what lands after the first paint is marked to move in", async () => {

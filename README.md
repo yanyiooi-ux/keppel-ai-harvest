@@ -54,7 +54,7 @@ npm run dev
 On Windows PowerShell, the copy line is `Copy-Item .env.example .env.local`. Leave `REPLAY_MODE=1` and leave the key
 empty. Then open <http://localhost:3000/how>.
 
-On Replay the AI switch in the top bar starts on Replay: a worded line comes from a saved real Hunyuan answer in
+On Replay the AI switch in the top bar starts on Replay, which the switch shows as "Saved answers": a worded line comes from a saved real Hunyuan answer in
 `web/data/replay/`, with the banner "replay: saved real AI answer", and no AI call is made. Off shows the
 same cards with the code's own words and the label "AI off". Live needs three lines of your own in `web/.env.local`,
 all from your Tencent Cloud TokenHub console: `LLM_BASE_URL` (the TokenHub base URL), `LLM_API_KEY` (your key) and

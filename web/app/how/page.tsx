@@ -28,6 +28,7 @@ export default async function How() {
         seats={liveSeats(state, aiMode)}
         buildingB={buildingBView(state, new Date(), aiMode)}
         steps={view.demoSteps}
+        aiMode={aiMode}
       />
       <footer className="how-close">
         <p className="close-line">{view.closeLine}</p>

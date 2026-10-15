@@ -37,7 +37,7 @@ describe("C6a: the AI switch in the top bar", () => {
     const group = screen.getByRole("group", { name: "AI switch" });
     expect(group).toBeDefined();
     expect(screen.getByRole("button", { name: "Live" }).getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByRole("button", { name: "Replay" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Saved answers" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("button", { name: "Off" }).getAttribute("aria-pressed")).toBe("false");
   });
 

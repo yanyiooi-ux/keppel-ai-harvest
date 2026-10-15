@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { PipAvatar } from "../PipAvatar";
 import { CodeTag, Plain } from "../Plain";
-import { APPROVAL_WHAT, approvalWord, pipNeverLine, type ApprovalId } from "../../../lib/plain-words";
+import { APPROVAL_WHAT, PILL_MEANS, approvalWord, pipNeverLine, rankStepWords, type ApprovalId } from "../../../lib/plain-words";
 import type { HowView, WhyStory, WhyCall } from "../../../lib/how";
 import type { ImpactMeter } from "../../../lib/impact";
 
@@ -63,6 +63,7 @@ export function HowStory({ view }: { view: HowView }) {
         <p className="lede">
           {`Pill Desk gives ${view.seats.length} people their own chat with Pip, all on one brain: the signed rules, a list of likely causes and past cases. Code ranks and routes, the AI only puts things into plain words, and people approve only ${view.approvals.length} kinds of decision.`}
         </p>
+        <p className="lede how-pill">{PILL_MEANS}</p>
         <nav className="how-nav" aria-label="On this page">
           <a href="#why">1 · Why</a>
           <a href="#what">2 · What</a>
@@ -95,6 +96,10 @@ function WhySection({ story, meter }: { story: WhyStory | null; meter: ImpactMet
       {story ? (
         <>
           <h3 className="why-headline">{story.headline}</h3>
+          {/* The notices count calls in a 30-day window; say once that these all fall inside it (D1 review). */}
+          {story.days <= 30 ? (
+            <p className="card-mean why-window">All of these calls fall inside the 30-day window that the repeat rule counts.</p>
+          ) : null}
           <ul className="why-patterns">
             {story.patterns.map((p) => (
               <li key={`${p.complaint}-${p.where}`}>
@@ -272,8 +277,9 @@ function WhatSection({ view }: { view: HowView }) {
         ))}
       </ol>
       <p>
-        Code also routes the notices: speak first and low confidence go to the senior manager, and every red stop alert
-        goes to the senior manager and the building&apos;s AOM.
+        Code also routes the notices: warnings about a spot that keeps calling (&quot;speak first&quot;) and notes when
+        Pip is not sure (&quot;low confidence&quot;) go to the senior manager. Every red stop alert goes to the senior
+        manager and the building manager (AOM).
       </p>
     </section>
   );
@@ -314,7 +320,7 @@ function HowSection({ view }: { view: HowView }) {
             {view.rankSteps.map((s) => (
               <li key={s.name}>
                 <b>{s.name}</b>
-                <span>{s.text}</span>
+                <span>{rankStepWords(s.text)}</span>
               </li>
             ))}
           </ol>

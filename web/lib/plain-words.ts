@@ -57,11 +57,12 @@ export const RULE_WORDS: Record<string, Grounded> = {
   "TS-CC-24": { word: "No simple fault, or the renovation: send it up", key: "escalate" },
   "TS-CC-25": { word: "Money questions go to the building manager", key: "money" },
   "TS-CC-26": { word: "Out of scope: stop and send it up", key: "out of scope" },
-  // The demo's new rule (v1.1): the senior manager's fix line, approved by HQ.
-  "TS-CC-27": { word: "Renovated lately: check the thermostat spot first", key: "thermostat" },
+  // No fixed word for TS-CC-27 or later (D1 review): draft.ts gives that id to
+  // whatever rule the senior manager writes first, so a fixed meaning could be
+  // wrong. Every rule after the signed 26 reads as NEW_RULE_WORD.
 };
 
-/** A rule added later than the demo's own. */
+/** A rule the team added after the signed 26 (TS-CC-27 and on). Its meaning is whatever the senior manager wrote. */
 export const NEW_RULE_WORD = "A new rule the team added";
 
 // ---- The red stops (a short name only; the stop's own words always show in full) ----
@@ -93,7 +94,8 @@ export const PUT_FIRST_WORDS: Record<number, Grounded> = {
   18: { word: "Check if the air box is stuck at low airflow first", key: "minimum airflow" },
   19: { word: "Send any warmer-air idea to the chief engineer first", key: "supply air temperature" },
   20: { word: "Agree a visit time with the tenant first", key: "agree a time" },
-  21: { word: "Check where the thermostat sensor sits first", key: "sensor" },
+  // Short enough for the picker on a phone (D1 review); the plan's own draft words.
+  21: { word: "Check where the thermostat sits first", key: "sensor" },
   22: { word: "Check for drafts near the lift first", key: "drafts" },
   23: { word: "Check the sun, the glass and the blinds first", key: "blinds" },
   29: { word: "Ask for an air balancing check first", key: "air balancing" },
@@ -282,24 +284,134 @@ export function versionWord(version: string): string {
   return `version ${version.replace(/^v/, "")}`;
 }
 
+// ---- Words that need a short gloss (D1 review) ----
+
+/**
+ * What "speak first" means, said once where the notice shows. S6: the alert to
+ * the senior manager (the chief engineer) when a spot trips the repeat flag;
+ * quick fixes are off there until the cause is found.
+ */
+export const SPEAK_FIRST_MEANS =
+  "Speak first means: this spot keeps calling, so the chief engineer is told first. No more quick dial turns here until the real cause is found.";
+
+/** Why the Building B card is there, said before it (D1 review). */
+export const BUILDING_B_INTRO =
+  "Building B uses the same rule book. Watch its list of likely causes change once head office approves the new fix.";
+
+/** What "pill" means, said where a judge first meets the word. */
+export const PILL_MEANS = "The pill is the rule book: the signed steps and rules Pip follows for too-cold and too-hot calls.";
+
+/**
+ * A seat's opening line with its two notice names in plain words. The line
+ * itself (seat-opening.ts) is left as it is.
+ */
+export function plainOpening(text: string): string {
+  return text.replace(
+    "the speak-first and low-confidence notices",
+    "warnings about spots that keep calling, and notes when Pip is not sure"
+  );
+}
+
+/** A seat's label (SEAT_LABELS) with its short names in plain words. The label itself is left as it is. */
+export function seatLabelWords(label: string): string {
+  return label
+    .replace(/^HQ pill owner:/, "Head office (HQ), owner of the rule book:")
+    .replace(/^AOM, Tower A:/, "Building manager (AOM), Tower A:");
+}
+
+/** The AI switch's three positions in plain words (S15's Live, Replay, Off). */
+export const AI_MODE_WORDS = {
+  live: "Live",
+  replay: "Saved answers",
+  off: "Off",
+} as const;
+
+/** One short line on what the switch's position does right now. */
+export const AI_MODE_HINTS = {
+  live: "Live: Pip asks Hunyuan now, a new AI call each time.",
+  replay: "Saved answers: real Hunyuan answers saved earlier. No new AI call is made.",
+  off: "Off: no AI at all. Every card shows the code's own words.",
+} as const;
+
+/**
+ * A card's receipt when the AI line on it is a saved answer (S15 replay): its
+ * "AI calls: 0" counts new calls only, so it says so, and says a saved answer
+ * is shown. Any other receipt is left as it is.
+ */
+export function receiptWords(receipt: string, savedShown: number): string {
+  if (savedShown <= 0) return receipt;
+  const said = savedShown === 1 ? "1 saved AI answer shown" : `${savedShown} saved AI answers shown`;
+  return receipt.replace(/AI calls: (\d+)/, (_m, n: string) => `${said}, new AI calls: ${n}`);
+}
+
+/** Short forms in the pill's own words, explained in a line under them (the words themselves never change). */
+export const GLOSSARY: Record<string, string> = {
+  LEW: "licensed electrical worker",
+  AHU: "air handling unit, the big fan unit",
+  VAV: "air box that sets how much cool air comes out",
+  FCU: "fan coil unit",
+  BMS: "building control system",
+  FM: "facilities management",
+  AOM: "building manager",
+  SCDF: "Singapore's fire and ambulance service",
+  CERT: "the building's own emergency response team",
+};
+
+/** The short forms a text uses, in the order the glossary lists them, each with its meaning. */
+export function glossFor(text: string): { short: string; means: string }[] {
+  return Object.entries(GLOSSARY)
+    .filter(([short]) => new RegExp(`\\b${short}\\b`).test(text))
+    .map(([short, means]) => ({ short, means }));
+}
+
+/** /how's ranking steps with their tier codes in plain words (the view's own text is left as it is). */
+export function rankStepWords(text: string): string {
+  return text
+    .replace("then low confidence, then net failed.", "then causes with under 3 past cases, then causes whose past fixes failed more often than they worked.")
+    .replace("Every lead carries its code reason.", "Every cause says why it is in that spot.");
+}
+
+/**
+ * The step an effect works on, said before the step's own words so it never
+ * reads as the opposite of the effect: block stops that step, put-first moves
+ * it to the front.
+ */
+export function effectStepLead(value: string): string | null {
+  if (value.startsWith("block:")) return "This stops the old step that said:";
+  if (value.startsWith("put-first:")) return "This moves this step to the front:";
+  return null;
+}
+
 // ---- Codes inside a sentence ----
 
-export type CodeKind = "rule" | "stop" | "approval";
+export type CodeKind = "rule" | "stop" | "approval" | "status";
 
 export type TextPart = { kind: "text"; text: string } | { kind: "code"; code: string; codeKind: CodeKind; word: string };
 
 /**
- * The codes a sentence can carry: a rule id, a red stop id, or an approval in
- * brackets ("(A2)"). Request ids such as A4-1 and job numbers are left alone.
+ * The codes a sentence can carry: a rule id, a red stop id, an approval in
+ * brackets ("(A2)"), or a job status right after "Status: ". Request ids such
+ * as A4-1 and job numbers are left alone.
  */
-const CODE_PATTERN = /TS-CC-\d{2}|RS-\d{2}|\(A[1-4]\)/g;
+const CODE_PATTERN = new RegExp(
+  `TS-CC-\\d{2}|RS-\\d{2}|\\(A[1-4]\\)|(?<=Status: )(?:${Object.keys(STATUS_WORDS)
+    .sort((a, b) => b.length - a.length)
+    .join("|")})\\b`,
+  "g"
+);
 
 /** Plain words for one code, or null when the code is not one this layer knows. */
 export function codeWord(code: string): string | null {
   if (/^TS-CC-\d{2}$/.test(code)) return ruleWord(code);
   if (/^RS-\d{2}$/.test(code)) return STOP_WORDS[code]?.word ?? null;
   if (/^A[1-4]$/.test(code)) return approvalWord(code);
+  if (code in STATUS_WORDS) return STATUS_WORDS[code as JobStatus];
   return null;
+}
+
+/** A red stop's receipt line ("Red stop RS-04 · ..."): the trace line of a safety card, left word for word. */
+function inStopReceipt(text: string, at: number): boolean {
+  return text.slice(Math.max(0, at - 9), at) === "Red stop " && text.slice(at + 5, at + 8) === " · ";
 }
 
 /**
@@ -314,9 +426,17 @@ export function splitCodes(text: string): TextPart[] {
     const at = m.index ?? 0;
     const raw = m[0];
     const code = raw.startsWith("(") ? raw.slice(1, -1) : raw;
+    // A safety alert's receipt keeps its stop code bare (S11): no name is put into it.
+    if (code.startsWith("RS-") && inStopReceipt(text, at)) continue;
     const word = codeWord(code);
     if (word === null) continue;
-    const kind: CodeKind = code.startsWith("TS-CC") ? "rule" : code.startsWith("RS") ? "stop" : "approval";
+    const kind: CodeKind = code.startsWith("TS-CC")
+      ? "rule"
+      : code.startsWith("RS")
+        ? "stop"
+        : /^A[1-4]$/.test(code)
+          ? "approval"
+          : "status";
     const before = text.slice(last, at) + (raw.startsWith("(") ? "(" : "");
     if (before) parts.push({ kind: "text", text: before });
     parts.push({ kind: "code", code, codeKind: kind, word });

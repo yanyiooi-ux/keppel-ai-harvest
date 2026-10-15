@@ -3,7 +3,7 @@ import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
 import { buildingBNotices } from "../../lib/hq-desk";
-import { noticeWord, tierWord } from "../../lib/plain-words";
+import { BUILDING_B_INTRO, noticeWord, receiptWords, tierWord } from "../../lib/plain-words";
 import { CodeTag, Plain } from "./Plain";
 import * as memory from "../../lib/memory";
 import type { MemoryState } from "../../lib/memory";
@@ -44,9 +44,13 @@ export async function BuildingBCard() {
   // S11: Building B has no AOM seat, so its safety alerts land on this card.
   const alerts = buildingBAlerts(state);
 
+  // A saved AI answer under a reason counts as shown, not as a new call (D1 review).
+  const savedShown = worded.items.filter(({ wording }) => Boolean(wording.banner)).length;
+
   return (
     <article className="card building-b">
       <div className="card-from">Another building, same brain</div>
+      <p className="card-intro">{BUILDING_B_INTRO}</p>
       <p className="card-title">Building B, Level 12 (made up)</p>
       <p>
         Live version v{version}. Ticket {job.id}, {job.tenant}: {job.complaint},{" "}
@@ -110,8 +114,7 @@ export async function BuildingBCard() {
       </details>
 
       <p className="receipt">
-        Ranked by the same engine as the technician seat, at the demo clock. AI calls:{" "}
-        {worded.aiCalls}
+        {receiptWords(`Ranked by the same engine as the technician seat, at the demo clock. AI calls: ${worded.aiCalls}`, savedShown)}
       </p>
     </article>
   );

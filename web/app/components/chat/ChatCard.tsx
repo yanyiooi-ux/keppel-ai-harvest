@@ -14,6 +14,7 @@
 
 import type { CardColour } from "../../../lib/seat-view";
 import { CodeTag, Plain } from "../Plain";
+import { glossFor, receiptWords } from "../../../lib/plain-words";
 
 export type { CardColour };
 
@@ -69,6 +70,8 @@ export function ChatCard({
   // A red stop's words are the pill's, word for word (S11): never through the plain layer.
   const red = colour === "red";
   const words = (text: string) => (red ? text : <Plain text={text} />);
+  // Short forms in a red stop's own words get a line that explains them; the words themselves never change.
+  const gloss = red ? glossFor([title, body, call].filter(Boolean).join(" ")) : [];
 
   return (
     <article className={className}>
@@ -95,6 +98,11 @@ export function ChatCard({
       {title ? <p className="card-title">{words(title)}</p> : null}
       {body ? <p>{words(body)}</p> : null}
       {call ? <p className="card-call">{`Call: ${call}`}</p> : null}
+      {gloss.length > 0 ? (
+        <p className="gloss">
+          {`Short forms: ${gloss.map((g) => `${g.short} means ${g.means}`).join("; ")}.`}
+        </p>
+      ) : null}
       {aiWording ? (
         <p className="ai-line">
           <span className="ai-tag">AI wording</span>
@@ -120,7 +128,8 @@ export function ChatCard({
         </button>
       ) : null}
 
-      {receipt ? <p className="receipt">{receipt}</p> : null}
+      {/* A saved AI answer on the card: the receipt says it is shown and that no new AI call was made (D1 review). */}
+      {receipt ? <p className="receipt">{receiptWords(receipt, aiBanner ? 1 : 0)}</p> : null}
     </article>
   );
 }

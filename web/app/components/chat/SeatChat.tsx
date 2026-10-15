@@ -10,8 +10,9 @@ import { HqDesk, hqHolds } from "./HqDesk";
 import { AomDesk, aomHolds, AOM_DESK_NOTICE_KINDS } from "./AomDesk";
 import { bringIntoView } from "./bring-into-view";
 import { CodeTag, Plain } from "../Plain";
-import { noticeWord, pipNeverLine, seatWord } from "../../../lib/plain-words";
+import { SPEAK_FIRST_MEANS, noticeWord, pipNeverLine, plainOpening, seatLabelWords, seatWord } from "../../../lib/plain-words";
 import type { RailNode } from "./QuestRail";
+import type { AiMode } from "../../../lib/ai-mode";
 
 /**
  * One seat's chat (S21): Pip and the seat label, the messages, the notices in a
@@ -28,9 +29,11 @@ import type { RailNode } from "./QuestRail";
  * the control that was used is marked busy, every control in the chat is
  * locked (one disabled fieldset, so nothing double-fires), and "Pip is
  * checking" shows with typing dots. The reply lands as soon as the server
- * answers and the lock lifts with it; the mark and "Pip is checking" stay on
- * screen for at least MIN_PENDING_MS from the press, so even a fast answer
- * never looks like nothing happened.
+ * answers. The mark, "Pip is checking" and the lock stay on screen for at
+ * least MIN_PENDING_MS from the press, so even a fast answer never looks like
+ * nothing happened and a second tap in that time cannot fire (D1 review). A
+ * refused press or one that failed on the network frees the chat at once, so
+ * the person can fix it and try again straight away.
  */
 
 import type { SeatCard, SeatView } from "../../../lib/seat-view";
@@ -51,6 +54,8 @@ export interface SeatChatProps {
   rail?: { title: string; nodes: RailNode[] };
   /** Pip's first words on this seat (C5b). Plain code, 0 AI. */
   opening?: { text: string; never: string };
+  /** Where the AI switch stands, so a screen can say why no AI line shows (D1 review). */
+  aiMode?: AiMode;
 }
 
 const SAFETY_WORD = "safety";
@@ -109,6 +114,36 @@ function deskJob(state: SeatState | null): string | undefined {
   return state?.desk?.open?.jobId ?? state?.manager?.open?.open.jobId;
 }
 
+/** A chip's words on its button, where the chip itself is too short to read (D1 review). Pressing it still sends the chip. */
+const CHIP_LABELS: Record<string, string> = {
+  "Dial?": "Can I turn the dial?",
+};
+
+/** The job number a notice is about ("job 2318"), or null. */
+function noticeJob(text: string): string | null {
+  return /\bjob (\d{4})\b/i.exec(text)?.[1] ?? null;
+}
+
+/**
+ * The senior manager's jobs that came up (an escalated notice) and are no
+ * longer with the senior manager: solved, or a new fix approved (D1 review).
+ * Read from the view only; every other seat has none.
+ */
+function jobsMovedOn(state: SeatState | null): string[] {
+  const desk = state?.manager;
+  if (!desk) return [];
+  const withYou = new Set(desk.jobs.map((j) => j.id));
+  const cameUp = state.notices.filter((n) => n.kind === "escalated").map((n) => noticeJob(n.text));
+  return [...new Set(cameUp.filter((id): id is string => id !== null && !withYou.has(id)))];
+}
+
+/** An escalated or low-confidence notice about a job that has left the senior manager's desk. */
+function noticeIsDone(notice: { kind: string; text: string }, movedOn: string[]): boolean {
+  if (notice.kind !== "escalated" && notice.kind !== "low-confidence") return false;
+  const id = noticeJob(notice.text);
+  return id !== null && movedOn.includes(id);
+}
+
 
 export function SeatChat({
   seat,
@@ -119,6 +154,7 @@ export function SeatChat({
   rail,
   initial,
   opening,
+  aiMode,
 }: SeatChatProps) {
   const [state, setState] = useState<SeatState | null>(initial ?? null);
   const [replies, setReplies] = useState<LocalReply[]>([]);
@@ -134,6 +170,9 @@ export function SeatChat({
   // A refused press: its reason, and what was pressed with what, so the
   // reason can show in the row that was pressed (C8a review).
   const [refused, setRefused] = useState<RefusedPress | null>(null);
+  // The last tick that worked (Found it, Not this, Clear), so the desk can say
+  // what it did next to the list it changed (D1 review). Same shape as a refusal.
+  const [done, setDone] = useState<RefusedPress | null>(null);
   const call = useRef(fetcher ?? ((input: string, init?: RequestInit) => fetch(input, init)));
   // The job on the desk (the technician's open job, C7b, or the senior
   // manager's, C8a) wins over the page's default job, so the chips, typed words
@@ -155,11 +194,14 @@ export function SeatChat({
   /**
    * Starts the busy state for one press or message: marks the control that
    * started it, locks the chat and shows "Pip is checking". Returns the
-   * release, called once the reply has landed: the lock lifts at once, and the
-   * mark and "Pip is checking" stay until at least MIN_PENDING_MS after the
-   * start, so even a fast answer never looks like nothing happened.
+   * release, called once the reply has landed. When the reply went through,
+   * the mark, "Pip is checking" and the lock all stay until at least
+   * MIN_PENDING_MS after the start, so even a fast answer never looks like
+   * nothing happened and a second tap in that time cannot fire (D1 review).
+   * A refusal or a network failure (`ok` false) frees the lock at once, so a
+   * fix and a retry are never held up.
    */
-  const startBusy = useCallback((): (() => void) => {
+  const startBusy = useCallback((): ((ok: boolean) => void) => {
     const started = Date.now();
     const el = lastControl.current;
     lastControl.current = null;
@@ -176,10 +218,13 @@ export function SeatChat({
         el.removeAttribute("aria-busy");
       }
       holds.current -= 1;
-      if (holds.current === 0) setChecking(false);
+      if (holds.current === 0) {
+        setChecking(false);
+        setBusy(false);
+      }
     };
-    return () => {
-      setBusy(false);
+    return (ok: boolean) => {
+      if (!ok) setBusy(false);
       const left = MIN_PENDING_MS - (Date.now() - started);
       if (left > 0) setTimeout(end, left);
       else end();
@@ -247,6 +292,8 @@ export function SeatChat({
       // Safety's list lands at the end of the chat, far below the bar on a
       // phone: the chat scrolls it into view (S11 "One tap opens all 10").
       followFrom.current = follow ? itemCount.current : null;
+      setDone(null);
+      let ok = false;
       try {
         const response = await call.current("/api/chat", {
           method: "POST",
@@ -256,13 +303,14 @@ export function SeatChat({
         const data = (await response.json()) as { storedText: string; cards: ServerCard[]; storedCount?: number };
         setReplies((old) => [...old, { text: data.storedText, cards: data.cards ?? [], storedCount: data.storedCount }]);
         setTyped("");
+        ok = true;
       } catch {
         // The message never reached Pip, or the answer never came back: say so, keep the typed words.
         followFrom.current = null;
         setSayFailed(true);
       } finally {
         pressing.current = false;
-        release();
+        release(ok);
       }
     },
     [seat, activeJob, startBusy]
@@ -277,6 +325,8 @@ export function SeatChat({
       followFrom.current = FOLLOWED_PRESSES.includes(action) ? itemCount.current : null;
       // A job just opened goes on the desk.
       if (action === "open-job") showJob.current = undefined;
+      setDone(null);
+      let ok = false;
       try {
         const body: Record<string, unknown> = { seat, action };
         if (job) body.job = job;
@@ -297,6 +347,9 @@ export function SeatChat({
         setRefused(
           data.ok === false ? { action, job, payload, message: data.message ?? "That press was refused." } : null
         );
+        ok = data.ok !== false;
+        // A tick that worked says what it did, next to the list it changed (D1 review).
+        if (ok && action === "tick") setDone({ action, job, payload, message: data.message ?? "" });
         // A refusal shows where it was pressed, and a pick this chat already
         // shows adds nothing: nothing to scroll to.
         if (data.ok === false || data.alreadyShown) followFrom.current = null;
@@ -307,18 +360,33 @@ export function SeatChat({
         }
       } finally {
         pressing.current = false;
-        release();
+        release(ok);
       }
     },
     [seat, load, startBusy]
   );
 
+  // Show job: a view only, never a press, but it reads the server, so it shows
+  // that it is working the same way a press does (D1 review).
   const showOnDesk = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      if (pressing.current) return;
+      pressing.current = true;
+      const release = startBusy();
       showJob.current = id;
-      void load();
+      setDone(null);
+      let ok = false;
+      try {
+        await load();
+        ok = true;
+      } catch {
+        // The view stays as it was; the next poll reads it again.
+      } finally {
+        pressing.current = false;
+        release(ok);
+      }
     },
-    [load]
+    [load, startBusy]
   );
 
   const storedMessages = state?.messages.length ?? 0;
@@ -337,6 +405,10 @@ export function SeatChat({
   // reply counts as the 2 it is stored as (the seat's words and Pip's cards),
   // so the numbers stay the same once a poll brings the stored copy.
   const items = storedMessages + 2 * shownReplies.length;
+  // The senior manager's jobs that came up and have since left the desk
+  // (solved, or a fix approved): their old notices show as done, and the empty
+  // job list says the work moved on instead of "nothing came up" (D1 review).
+  const movedOn = jobsMovedOn(state);
 
   // Once the followed press's or Safety's first new item is on screen, scroll
   // it to the top of the view, once.
@@ -374,7 +446,7 @@ export function SeatChat({
           <div className="chat-name">
             Pip <span className="seat-word">{seatWord(seat)}</span> <span className="seat-tag code-tag">{seat}</span>
           </div>
-          <div className="chat-sub">{state ? state.label : "role-played"}</div>
+          <div className="chat-sub">{state ? seatLabelWords(state.label) : "role-played"}</div>
         </div>
       </header>
 
@@ -384,7 +456,7 @@ export function SeatChat({
         <div className="chat-body">
           {opening ? (
             <div className="opening">
-              <p>{opening.text}</p>
+              <p>{plainOpening(opening.text)}</p>
               <p className="never">{pipNeverLine(opening.never)}</p>
             </div>
           ) : null}
@@ -396,6 +468,7 @@ export function SeatChat({
               onSafety={() => void say(SAFETY_WORD, true)}
               onShow={showOnDesk}
               refused={refusedInBar ? refusedText : null}
+              done={done}
             />
           ) : null}
 
@@ -407,6 +480,9 @@ export function SeatChat({
               onShow={showOnDesk}
               refused={refusedInBar ? refusedText : null}
               rowRefused={refusedInRow ? refused : null}
+              done={done}
+              movedOn={movedOn}
+              aiMode={aiMode}
             />
           ) : null}
 
@@ -417,41 +493,52 @@ export function SeatChat({
           {/* The AOM desk shows its alerts and charge requests itself (C9), so they are not listed twice. */}
           {state?.notices
             .filter((notice) => !state.aom || !AOM_DESK_NOTICE_KINDS.includes(notice.kind))
-            .map((notice, i) => (
-              <div className="notice" key={`notice-${i}`}>
-                <b>
-                  {noticeWord(notice.kind)} <CodeTag code={notice.kind} />
-                </b>
-                {/* A safety alert carries the stop's own words (S11): word for word, never through the plain layer. */}
-                {notice.kind === "alert" ? notice.text : <Plain text={notice.text} />}
-              </div>
-            ))}
+            .map((notice, i) => {
+              const finished = noticeIsDone(notice, movedOn);
+              return (
+                <div className={finished ? "notice is-done" : "notice"} key={`notice-${i}`}>
+                  <b>
+                    {noticeWord(notice.kind)} <CodeTag code={notice.kind} />
+                  </b>
+                  {finished ? (
+                    <span className="notice-done">
+                      <span className="badge green">Done</span> This job has left your desk. The note below is from when it came up.
+                    </span>
+                  ) : null}
+                  {/* A safety alert carries the stop's own words (S11): word for word, never through the plain layer. */}
+                  {notice.kind === "alert" ? notice.text : <Plain text={notice.text} />}
+                  {notice.kind === "speak-first" ? <span className="notice-gloss">{SPEAK_FIRST_MEANS}</span> : null}
+                </div>
+              );
+            })}
 
-          {state?.messages.map((message, i) =>
-            message.from === "person" ? (
-              <div className="sent" key={`m-${i}`} data-item={i}>
-                {message.text}
-              </div>
-            ) : (
-              <div className="msg" key={`m-${i}`} data-item={i}>
-                <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
-              </div>
-            )
-          )}
-
-          {shownReplies.map((reply, i) => (
-            <div key={`r-${i}`} style={{ display: "contents" }}>
-              <div className="sent" data-item={storedMessages + 2 * i}>
+          {/* One list, so a typed reply and its stored copy share keys: when a poll swaps one for the other, nothing moves in twice (D1 review). */}
+          {[
+            ...(state?.messages ?? []).map((message, i) =>
+              message.from === "person" ? (
+                <div className="sent" key={`m-${i}`} data-item={i}>
+                  {message.text}
+                </div>
+              ) : (
+                <div className="msg" key={`m-${i}`} data-item={i}>
+                  <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
+                </div>
+              )
+            ),
+            ...shownReplies.flatMap((reply, i) => [
+              <div className="sent" key={`m-${storedMessages + 2 * i}`} data-item={storedMessages + 2 * i}>
                 {reply.text}
-              </div>
-              <Cards cards={reply.cards} press={press} jobId={activeJob} />
-            </div>
-          ))}
+              </div>,
+              <div className="msg" key={`m-${storedMessages + 2 * i + 1}`} data-item={storedMessages + 2 * i + 1}>
+                <Cards cards={reply.cards} press={press} jobId={activeJob} />
+              </div>,
+            ]),
+          ]}
 
           {refusedText && !refusedInBar && !refusedInRow ? (
             <div className="notice refused" role="status">
               <b>not done</b>
-              {refusedText}
+              <Plain text={refusedText} />
             </div>
           ) : null}
 
@@ -483,8 +570,9 @@ export function SeatChat({
                 <button
                   key={b.complaint}
                   onClick={() => {
-                    setReporting(false);
-                    void press("report", undefined, { complaint: b.complaint });
+                    // The pressed button stays until the reply lands, so it can show
+                    // that it is working; then the row goes back (D1 review).
+                    void press("report", undefined, { complaint: b.complaint }).then(() => setReporting(false));
                   }}
                 >
                   {b.label}
@@ -503,7 +591,7 @@ export function SeatChat({
             .filter((chip) => chip.toLowerCase() !== SAFETY_WORD)
             .map((chip) => (
               <button key={chip} onClick={() => void say(chip)}>
-                {chip}
+                {CHIP_LABELS[chip] ?? chip}
               </button>
             ))}
           <button className="safety-btn" onClick={() => void say(SAFETY_WORD, true)}>
@@ -521,11 +609,11 @@ export function SeatChat({
           <input
             value={typed}
             onChange={(event) => setTyped(event.target.value)}
-            placeholder={`Message Pip${activeJob ? ` about ${activeJob}` : ""}`}
+            placeholder={seat !== "tenant" && activeJob ? `Message Pip about ${activeJob}` : "Message Pip"}
             aria-label="Message Pip"
           />
           <button className="send" type="submit" aria-label="Send">
-            ↑
+            Send
           </button>
         </form>
       </fieldset>

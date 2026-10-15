@@ -54,9 +54,45 @@ export interface TechnicianDeskProps {
   onShow?: (jobId: string) => void;
   /** A refused press's reason, shown in the bar so it is on screen next to the press. */
   refused?: string | null;
+  /** The last tick that worked, so the list says what changed (D1 review). */
+  done?: TickDone | null;
 }
 
-export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null }: TechnicianDeskProps) {
+/** A tick that worked: what was pressed, on which job, with what (the same shape as a refused press). */
+export interface TickDone {
+  action: string;
+  job?: string;
+  payload?: Record<string, unknown>;
+}
+
+/**
+ * What the last tick did, in plain words, next to the list it changed (D1
+ * review): "Ruled out: X. The list re-ranked: Y is now first." Read from the
+ * view the press brought back, so it says what the screen shows.
+ */
+export function tickLine(done: TickDone | null | undefined, open: OpenJobDesk): string | null {
+  if (!done || done.action !== "tick" || done.job !== open.jobId) return null;
+  const causeId = String(done.payload?.causeId ?? "");
+  const type = String(done.payload?.type ?? "");
+  const all = [...open.leads, ...open.ruledOut];
+  const label = all.find((l) => l.causeId === causeId)?.label;
+  if (!label) return null;
+  const first = open.leads[0]?.label;
+  if (type === "not-this") {
+    const next = first ? ` The list re-ranked: "${first}" is now first.` : " No likely cause is left on the list.";
+    return `Ruled out: "${label}".${next}`;
+  }
+  if (type === "found") return `Found it: "${label}". It is now at the top.`;
+  if (type === "clear") return `Cleared: "${label}" is back on the list.${first ? ` "${first}" is first.` : ""}`;
+  return null;
+}
+
+/** The trend card's zone, from its own line ("the west zone's VAV damper ..."), or null. */
+function trendZone(card: DeskCard): string | null {
+  return card.id.startsWith("trend-") ? (/the (\w+) zone's/.exec(card.codeLine ?? "")?.[1] ?? null) : null;
+}
+
+export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null, done = null }: TechnicianDeskProps) {
   return (
     <section className="desk" aria-label="Technician desk">
       <article className="card">
@@ -87,14 +123,34 @@ export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null }
       </article>
 
       {desk.open ? (
-        <OpenJob key={desk.open.jobId} open={desk.open} press={press} onSafety={onSafety} refused={refused} />
+        <OpenJob key={desk.open.jobId} open={desk.open} press={press} onSafety={onSafety} refused={refused} done={done} />
       ) : null}
     </section>
   );
 }
 
-/** One checklist card. The senior manager's desk shows the same cards (C8a). */
-export function DeskCardView({ card }: { card: DeskCard }) {
+/**
+ * One checklist card. The senior manager's desk shows the same cards (C8a).
+ * `jobZone` is the open job's zone: a trend warning about another zone says
+ * so before the stop's own words, so it never reads as this job's emergency
+ * (D1 review). The stop's words stay word for word.
+ */
+export function DeskCardView({ card, jobZone }: { card: DeskCard; jobZone?: string }) {
+  const zone = trendZone(card);
+  const intro = zone
+    ? `Also seen in the trend data: a warning for the ${zone} zone of this floor${
+        jobZone && jobZone !== zone ? `, not this job's ${jobZone} zone` : ""
+      }. Nothing is locked, and this job carries on.`
+    : null;
+  return (
+    <>
+      {intro ? <p className="card-intro">{intro}</p> : null}
+      <DeskCardBody card={card} />
+    </>
+  );
+}
+
+function DeskCardBody({ card }: { card: DeskCard }) {
   return (
     <ChatCard
       from={card.from}
@@ -206,17 +262,27 @@ export function StepList({ steps }: { steps: DeskStep[] }) {
   );
 }
 
+/** The open job's zone, from its place card ("Tower A, Level 23, core"), for the trend card's intro. */
+export function zoneOf(open: OpenJobDesk): string | undefined {
+  const place = open.checklist.find((c) => c.id === "place")?.title;
+  return place ? place.split(", ").at(-1) : undefined;
+}
+
 function OpenJob({
   open,
   press,
   onSafety,
   refused,
+  done,
 }: {
   open: OpenJobDesk;
   press: Press;
   onSafety: () => void;
   refused: string | null;
+  done: TickDone | null;
 }) {
+  const ticked = tickLine(done, open);
+  const jobZone = zoneOf(open);
   if (open.locked) {
     return (
       <div className="open-job">
@@ -240,10 +306,15 @@ function OpenJob({
 
       <h4 className="desk-sub">Filled checklist: what we already know</h4>
       {open.checklist.map((card) => (
-        <DeskCardView key={card.id} card={card} />
+        <DeskCardView key={card.id} card={card} jobZone={jobZone} />
       ))}
 
       <h4 className="desk-sub">Likely causes, best bet first</h4>
+      {ticked ? (
+        <p className="tick-done" role="status">
+          {ticked}
+        </p>
+      ) : null}
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={open.inProgress} />
@@ -271,8 +342,9 @@ function OpenJob({
         </ul>
       </details>
 
-      <details className="desk-details" data-list="steps" open>
-        <summary>{`Checklist steps from the pill (${open.steps.length})`}</summary>
+      {/* Closed at first (D1 review): the full list is for engineers, and the leads above say what to check. */}
+      <details className="desk-details" data-list="steps">
+        <summary>{`All ${open.steps.length} checklist steps from the rule book (for engineers)`}</summary>
         <StepList steps={open.steps} />
       </details>
 
@@ -312,7 +384,7 @@ function JobBar({
       {refused ? (
         <div className="notice refused" role="status">
           <b>not done</b>
-          {refused}
+          <Plain text={refused} />
         </div>
       ) : null}
 

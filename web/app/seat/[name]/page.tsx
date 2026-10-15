@@ -33,6 +33,7 @@ export default async function SeatPage({
       initial={seatView(memory.read(), seat, aiMode)}
       opening={openingLineFor(seat)}
       jobId={seat === "aom-tower-a" ? undefined : "2318"}
+      aiMode={aiMode}
     />
   );
 }

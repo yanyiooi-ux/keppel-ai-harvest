@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChatCard } from "./ChatCard";
-import { DeskCardView, LeadCard, StepList, StatusLine } from "./TechnicianDesk";
+import { DeskCardView, LeadCard, StepList, StatusLine, tickLine, zoneOf, type TickDone } from "./TechnicianDesk";
 import { bringIntoView } from "./bring-into-view";
 import { CodeTag, Coded, Plain } from "../Plain";
-import { effectWord, factIdFromLabel, factWord, statusWord } from "../../../lib/plain-words";
+import { effectStepLead, effectWord, factIdFromLabel, factWord, statusWord } from "../../../lib/plain-words";
+import { DEMO_FIX_LINE, DEMO_WHY_LINE } from "../../../lib/demo-words";
+import type { AiMode } from "../../../lib/ai-mode";
 import type {
   ManagerDesk,
   ManagerOpenJob,
@@ -47,6 +49,12 @@ export interface SeniorManagerDeskProps {
   refused?: string | null;
   /** A refused Clear stop or Confirm cause, shown where it was pressed (see managerRowHolds). */
   rowRefused?: RefusedPress | null;
+  /** The last tick that worked, so the list says what changed (D1 review). */
+  done?: TickDone | null;
+  /** Jobs that came up to the senior manager and have since left the desk (D1 review). */
+  movedOn?: string[];
+  /** Where the AI switch stands, so the new fix can say why no AI draft shows (D1 review). */
+  aiMode?: AiMode;
 }
 
 /** A refused press: what was pressed, with what, and the server's reason. */
@@ -76,12 +84,29 @@ function RowRefusal({ message }: { message: string }) {
   return (
     <div className="notice refused" role="status">
       <b>not done</b>
-      {message}
+      <Plain text={message} />
     </div>
   );
 }
 
-export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = null, rowRefused = null }: SeniorManagerDeskProps) {
+/** The empty job list: nothing ever came up, or the jobs that came up have left the desk (D1 review). */
+function emptyJobsLine(movedOn: string[]): string {
+  if (movedOn.length === 0) return "No job has come up to you yet.";
+  const jobs = movedOn.length === 1 ? `Job ${movedOn[0]}` : `Jobs ${movedOn.join(", ")}`;
+  return `Nothing is waiting on you now. ${jobs} came up to you and has left your desk. Its notes below are marked done.`;
+}
+
+export function SeniorManagerDesk({
+  desk,
+  press,
+  onSafety,
+  onShow,
+  refused = null,
+  rowRefused = null,
+  done = null,
+  movedOn = [],
+  aiMode,
+}: SeniorManagerDeskProps) {
   // A refused row press shows in its row; with the row gone, under its list or where the list was.
   const stopRefused = rowRefused?.action === "clear-stop" ? rowRefused : null;
   const stopInRow = Boolean(stopRefused && desk.stops.some((s) => s.key === stopRefused.payload?.stop));
@@ -91,7 +116,7 @@ export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = nul
     <section className="desk" aria-label="Senior manager desk">
       <article className="card">
         <div className="card-from">{desk.title}</div>
-        {desk.jobs.length === 0 ? <p className="desk-status">No job has come up to you yet.</p> : null}
+        {desk.jobs.length === 0 ? <p className="desk-status">{emptyJobsLine(movedOn)}</p> : null}
         <ul className="job-rows">
           {desk.jobs.map((job) => (
             <li key={job.id} className={job.isOpen ? "job-row is-open" : "job-row"}>
@@ -141,6 +166,8 @@ export function SeniorManagerDesk({ desk, press, onSafety, onShow, refused = nul
           press={press}
           onSafety={onSafety}
           refused={refused}
+          done={done}
+          aiMode={aiMode}
         />
       ) : null}
     </section>
@@ -205,7 +232,7 @@ function StopRow({ stop, press, refused }: { stop: ManagerStopRow; press: Press;
 
 function CaseList({ cases, press, refused }: { cases: ManagerCaseRow[]; press: Press; refused: RefusedPress | null }) {
   return (
-    <ChatCard from="Fixes to double-check" fromCode="S8" title="A cause needs a second person before it counts as won.">
+    <ChatCard from="Fixes to double-check" title="A cause needs a second person before it counts as won.">
       <ul className="job-rows">
         {cases.map((c) => (
           <li key={c.id} className="job-row" data-testid={`case-${c.id}`}>
@@ -239,14 +266,20 @@ function ManagerJob({
   press,
   onSafety,
   refused,
+  done,
+  aiMode,
 }: {
   job: ManagerOpenJob;
   menu: ManagerMenu;
   press: Press;
   onSafety: () => void;
   refused: string | null;
+  done: TickDone | null;
+  aiMode?: AiMode;
 }) {
   const open = job.open;
+  const ticked = tickLine(done, open);
+  const jobZone = zoneOf(open);
   // A new solution lands at the top of the job, far from the bar on a phone:
   // bring it into view once, when it first appears. One already there on the
   // first paint moves nothing.
@@ -284,7 +317,7 @@ function ManagerJob({
 
       <div ref={solutionBox} className="solution-box" data-testid={job.solution ? "solution-card" : undefined}>
         {job.solution ? (
-          <SolutionCard jobId={open.jobId} solution={job.solution} menu={menu} press={press} />
+          <SolutionCard jobId={open.jobId} solution={job.solution} menu={menu} press={press} aiMode={aiMode} />
         ) : null}
       </div>
 
@@ -324,14 +357,19 @@ function ManagerJob({
           ))}
         </ul>
       </ChatCard>
-      {job.impact ? <ChatCard from="Time and money lost so far" fromCode="S3" body={job.impact} /> : null}
+      {job.impact ? <ChatCard from="Time and money lost so far" body={job.impact} /> : null}
 
       <h4 className="desk-sub">Filled checklist: what we already know</h4>
       {open.checklist.map((card) => (
-        <DeskCardView key={card.id} card={card} />
+        <DeskCardView key={card.id} card={card} jobZone={jobZone} />
       ))}
 
       <h4 className="desk-sub">Likely causes, best bet first (your list)</h4>
+      {ticked ? (
+        <p className="tick-done" role="status">
+          {ticked}
+        </p>
+      ) : null}
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={job.editable} />
@@ -360,7 +398,7 @@ function ManagerJob({
       </details>
 
       <details className="desk-details" data-list="steps">
-        <summary>{`Checklist steps from the pill (${open.steps.length})`}</summary>
+        <summary>{`All ${open.steps.length} checklist steps from the rule book (for engineers)`}</summary>
         <StepList steps={open.steps} />
       </details>
 
@@ -373,6 +411,7 @@ function ManagerJob({
           press={press}
           onSafety={onSafety}
           refused={refused}
+          aiMode={aiMode}
         />
       ) : null}
     </div>
@@ -386,14 +425,24 @@ function SolutionCard({
   solution,
   menu,
   press,
+  aiMode,
 }: {
   jobId: string;
   solution: ManagerSolutionView;
   menu: ManagerMenu;
   press: Press;
+  aiMode?: AiMode;
 }) {
   const sent = solution.status === "sent-to-hq";
   const run = solution.testRun;
+  // On Saved answers with no saved answer for these words, the AI part would
+  // just be missing: say why (D1 review).
+  const noSavedAnswer =
+    aiMode === "replay" &&
+    !solution.aiBanner &&
+    !solution.aiNotice &&
+    !solution.aiOff &&
+    solution.parts.filter((p) => p.id !== "rule-text").every((p) => p.suggested === null);
 
   // A new test run, or the send to HQ, shows here: bring it into view once, so
   // the result is on screen with the bar still under it. What was already
@@ -442,6 +491,17 @@ function SolutionCard({
           </p>
         ) : null}
 
+        {noSavedAnswer ? (
+          <p className="note-line" data-testid="no-saved-answer">
+            <span className="badge amber">No AI draft</span>
+            <span>
+              There is no saved AI answer for these words. Saved answers cover only the demo&apos;s own words, so pick
+              each part by hand from the menu.
+            </span>
+          </p>
+        ) : null}
+
+        <p className="parts-head">The rule&apos;s parts: when it applies (the fact), and what it changes (the effects).</p>
         <div className="parts">
           {solution.parts.map((part) => (
             <PartRow
@@ -466,7 +526,10 @@ function SolutionCard({
               <span className={`badge ${run.failed > 0 ? "red" : "green"}`}>{`${run.failed} failed`}</span>
               <span className="badge none">{`${run.notApplicable} not applicable`}</span>
             </p>
-            <p className="code-line">{`Run on draft ${run.hash7}${run.current ? ", the draft as it is now" : ", an earlier draft"}.`}</p>
+            <p className="code-line">
+              {run.current ? "Tested on this exact draft, as it is now. " : "Tested on an earlier draft, not this one. "}
+              <CodeTag code={run.hash7} />
+            </p>
             <details className="desk-details" data-list="test-lines">
               <summary>{`Each test (${run.lines.length})`}</summary>
               <ul className="card-lines">
@@ -535,12 +598,13 @@ function PartRow({
       />
     );
   } else if (part.id === "fact") {
+    // Plain words in the box, so they fit a phone; the code shows under it as a grey tag (D1 review).
     control = (
       <select id={controlId} value={value} disabled={!editable} onChange={(event) => setValue(event.target.value)}>
         <option value="">Pick a fact</option>
         {menu.facts.map((f) => (
           <option key={f.value} value={f.value}>
-            {`${factWord(f.value)} (${f.value})`}
+            {factWord(f.value)}
           </option>
         ))}
       </select>
@@ -551,12 +615,20 @@ function PartRow({
         {part.id === "effect-1" ? <option value="">Pick an effect</option> : <option value="none">No second effect</option>}
         {menu.effects.map((e) => (
           <option key={e.value} value={e.value}>
-            {`${effectWord(e.value)} (${e.label.toLowerCase()})`}
+            {effectWord(e.value)}
           </option>
         ))}
       </select>
     );
   }
+  // The picked value's code, kept on screen under the box.
+  const pickedCode =
+    part.id === "fact" && value
+      ? value
+      : (part.id === "effect-1" || part.id === "effect-2") && value && value !== "none"
+        ? menu.effects.find((e) => e.value === value)?.label.toLowerCase()
+        : undefined;
+  const stepLead = stepText ? effectStepLead(value) : null;
 
   return (
     <div className="part-row" data-part={part.id}>
@@ -568,7 +640,17 @@ function PartRow({
         <span className="part-label">{part.label}</span>
       </div>
       {control}
-      {stepText ? <p className="part-step">{stepText}</p> : null}
+      {pickedCode ? (
+        <p className="part-code">
+          <CodeTag code={pickedCode} />
+        </p>
+      ) : null}
+      {stepText ? (
+        <p className="part-step">
+          {stepLead ? <span className="part-step-lead">{stepLead}</span> : null}
+          {stepText}
+        </p>
+      ) : null}
       {editable ? (
         <button
           className="confirm-btn"
@@ -594,6 +676,7 @@ function ManagerBar({
   press,
   onSafety,
   refused,
+  aiMode,
 }: {
   jobId: string;
   escalated: boolean;
@@ -602,6 +685,7 @@ function ManagerBar({
   press: Press;
   onSafety: () => void;
   refused: string | null;
+  aiMode?: AiMode;
 }) {
   const [form, setForm] = useState<Form>("none");
   const [why, setWhy] = useState("");
@@ -617,7 +701,7 @@ function ManagerBar({
       {refused ? (
         <div className="notice refused" role="status">
           <b>not done</b>
-          {refused}
+          <Plain text={refused} />
         </div>
       ) : null}
 
@@ -650,6 +734,24 @@ function ManagerBar({
           <p className="desk-status">
             {foundLabel ? `Cause: ${foundLabel} (found).` : "Tick Found it on the cause first."}
           </p>
+          {aiMode === "replay" ? (
+            <p className="demo-words">
+              <span>
+                With Saved answers on, Pip&apos;s AI draft shows only for the demo&apos;s own words. Other words work
+                too, but you pick each part by hand.
+              </span>
+              <button
+                type="button"
+                className="demo-words-btn"
+                onClick={() => {
+                  setFixLine(DEMO_FIX_LINE);
+                  setWhyLine(DEMO_WHY_LINE);
+                }}
+              >
+                Use the demo words
+              </button>
+            </p>
+          ) : null}
           <label>
             Fix line (3 to 30 words)
             <textarea rows={3} value={fixLine} onChange={(event) => setFixLine(event.target.value)} />

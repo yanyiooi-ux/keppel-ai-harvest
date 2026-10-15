@@ -2718,11 +2718,190 @@ button:disabled {
   }
 }
 
+/* "Pip is checking" shows quickly, so even a short wait is easy to see (D1 review). */
+.pip-checking {
+  animation-duration: 90ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .is-new,
   .pip-checking,
   .typing-dots i,
   .is-pending::after {
     animation: none;
+  }
+}
+
+/* ---------- D1 review: plain words that explain ---------- */
+
+/* Labels a judge must read are body-sized, not tiny capitals. */
+.ai-tag,
+.lead-k,
+.notice b {
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+}
+
+.card-from {
+  font-size: 13px;
+}
+
+/* The AI switch's line on what its position does now. */
+.ai-switch-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ai-switch-hint {
+  margin: 0;
+  max-width: 340px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+/* A line that explains a word or a card, before or under it. */
+.card-intro,
+.parts-head,
+.why-window,
+.how-pill {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  margin: 4px 2px 8px;
+}
+
+.notice-gloss,
+.notice-done {
+  display: block;
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: normal;
+}
+
+.notice-done .badge {
+  margin-right: 6px;
+}
+
+.notice.is-done {
+  opacity: 0.85;
+}
+
+/* A red stop's short forms, explained under the stop's own words. */
+.gloss {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--red-muted);
+}
+
+/* What a tick just did, next to the list it changed. */
+.tick-done {
+  margin: 2px 2px 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-btn);
+  background: var(--accent-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* The new fix: the picked code under its box, and what the effect does to the step. */
+.part-code {
+  margin: 4px 2px 0;
+}
+
+.part-step-lead {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.demo-words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.demo-words-btn {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--accent);
+}
+
+.demo-words-line {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* HQ, once approved: Building B's new first cause, the payoff of the story. */
+.payoff-line {
+  margin: 6px 2px;
+  padding: 8px 11px;
+  border: 1px solid var(--green);
+  border-radius: var(--r-btn);
+  background: var(--g-bg);
+  color: var(--g-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.payoff-line a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* The send button says Send in words, so it is as wide as its word. */
+.send {
+  width: auto;
+  min-width: 44px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Home: what Pill Desk does, and the way in for a judge, first. */
+.home-what {
+  font-size: 17px;
+  color: var(--text);
+}
+
+.how-link-top {
+  margin: 4px 0 14px;
+  font-size: 15px;
+}
+
+/* On a phone every seat in the switcher shows: the row wraps instead of
+   scrolling sideways out of sight (D1 review). */
+@media (max-width: 560px) {
+  .topbar nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .ai-switch-wrap {
+    order: 4;
+    flex: 1 0 100%;
+  }
+  .ai-switch-wrap .ai-switch {
+    order: 0;
+    width: 100%;
+  }
+  .ai-switch-hint {
+    max-width: none;
   }
 }

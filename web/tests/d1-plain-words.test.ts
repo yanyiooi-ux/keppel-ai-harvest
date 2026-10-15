@@ -26,6 +26,7 @@ import * as memory from "../lib/memory";
 import { actionTurn } from "../lib/action-turn";
 import { chatTurn } from "../lib/chat-turn";
 import { seatView } from "../lib/seat-view";
+import { CHIPS_BY_SEAT } from "../lib/chat";
 import type { AiDeps, ModelClient } from "../lib/ai";
 import {
   RULE_WORDS,
@@ -58,6 +59,7 @@ import {
 } from "../lib/plain-words";
 import { GATE_LABELS } from "../lib/hq-flow";
 import { openingLineFor } from "../lib/seat-opening";
+import { nextRuleId } from "../lib/draft";
 
 const v10 = loadPill("ts-cc", "1.0");
 const v11 = YAML.parse(readFileSync(join(process.cwd(), "tests", "fixtures", "ts-cc-v1.1.yaml"), "utf-8")) as {
@@ -76,17 +78,30 @@ function unionFrom(file: string, start: RegExp): string[] {
 }
 
 describe("D1: every rule, stop and step has a plain word from the pill's own text", () => {
-  it("every rule in the v1.0 pill and TS-CC-27 in the v1.1 fixture, each word grounded in its rule text", () => {
-    const rules = [...v10.rules, ...v11.rules.filter((r) => !v10.rules.some((x) => x.id === r.id))];
-    expect(rules.map((r) => r.id)).toContain("TS-CC-27");
-    for (const rule of rules) {
+  it("every rule in the v1.0 pill, each word grounded in its rule text", () => {
+    expect(v10.rules).toHaveLength(26);
+    for (const rule of v10.rules) {
       const entry = RULE_WORDS[rule.id];
       expect(entry, rule.id).toBeDefined();
       expect(has(String(rule.rule), entry.key), `${rule.id}'s key "${entry.key}"`).toBe(true);
       expect(ruleWord(rule.id)).toBe(entry.word);
+      expect(ruleWord(rule.id)).not.toBe(NEW_RULE_WORD);
     }
-    // A rule added after the demo's own still reads as words, never as a bare code.
-    expect(ruleWord("TS-CC-28")).toBe(NEW_RULE_WORD);
+  });
+
+  it("TS-CC-27 and later get no fixed meaning: the id goes to whatever rule the senior manager writes first (D1 review)", () => {
+    // draft.ts gives TS-CC-27 to the first new rule, whatever its fix line, fact and effects.
+    expect(nextRuleId(v10)).toBe("TS-CC-27");
+    expect(v11.rules.map((r) => r.id)).toContain("TS-CC-27");
+    for (const id of ["TS-CC-27", "TS-CC-28", "TS-CC-40"]) {
+      expect(RULE_WORDS[id], id).toBeUndefined();
+      expect(ruleWord(id)).toBe(NEW_RULE_WORD);
+      expect(codeWord(id)).toBe(NEW_RULE_WORD);
+    }
+    // So a sentence about a new rule that is not the demo's (blinds on hot afternoons) never reads as the thermostat.
+    const said = plainSentence("v1.1 adds the rule TS-CC-27 (blinds first on hot afternoons).");
+    expect(said).toBe(`v1.1 adds the rule “${NEW_RULE_WORD}” TS-CC-27 (blinds first on hot afternoons).`);
+    expect(said.toLowerCase()).not.toContain("thermostat");
   });
 
   it("every red stop, its short name grounded in the stop's trigger", () => {
@@ -112,7 +127,7 @@ describe("D1: every rule, stop and step has a plain word from the pill's own tex
     }
     // The demo's own picks, as the plan names them.
     expect(effectWord("block:25")).toBe("Don't just turn the dial");
-    expect(effectWord("put-first:21")).toBe("Check where the thermostat sensor sits first");
+    expect(effectWord("put-first:21")).toBe("Check where the thermostat sits first");
     expect(effectWord("none")).toBe("No second effect");
   });
 
@@ -264,6 +279,31 @@ describe("D1: the tokenizer finds the codes in the engine's own sentences", () =
     expect(plainSentence(sentences[4])).toBe("Open now in Tower A: Water near the electrics RS-04 on Level 23");
   });
 
+  it("a job status after \"Status: \" gets its plain words, as Show job says it (D1 review)", () => {
+    const said = "Tower A, Level 23, Northwind Advisory. too cold, mornings, around 9am. Status: in-progress.";
+    expect(splitCodes(said).flatMap((p) => (p.kind === "code" ? [p.code] : []))).toEqual(["in-progress"]);
+    expect(plainSentence(said)).toBe(
+      "Tower A, Level 23, Northwind Advisory. too cold, mornings, around 9am. Status: Technician is on it in-progress."
+    );
+    for (const status of Object.keys(STATUS_WORDS)) {
+      const line = `Job 2318. Status: ${status}.`;
+      expect(plainSentence(line), status).toBe(`Job 2318. Status: ${STATUS_WORDS[status as keyof typeof STATUS_WORDS]} ${status}.`);
+      expect(splitCodes(line).map((p) => (p.kind === "text" ? p.text : p.code)).join("")).toBe(line);
+    }
+    // A status word anywhere else is left alone ("self-check" is also a card's name).
+    expect(plainSentence("Self-check · pill v1.0 · AI calls: 0")).toBe("Self-check · pill v1.0 · AI calls: 0");
+  });
+
+  it("a safety alert's receipt line keeps its stop code bare, even inside a longer answer (D1 review)", () => {
+    const alert = "Red stop on Tower A, Level 23\nWater dripping.\nCall: FM control room\nRed stop RS-04 · AI calls: 0 · raised by Tenant (role-played)";
+    const needs = `Who pays? This is work on the tenant's fit-out (TS-CC-11).\n\n${alert}`;
+    expect(plainSentence(needs)).toBe(
+      `Who pays? This is work on the tenant's fit-out (“${RULE_WORDS["TS-CC-11"].word}” TS-CC-11).\n\n${alert}`
+    );
+    // A stop code in a sentence of its own still gets its name.
+    expect(plainSentence("Open now in Tower A: RS-04 on Level 23")).toContain("Water near the electrics RS-04");
+  });
+
   it("the pill's stop words, steps and tips carry no code, so the plain layer never touches them", () => {
     const pillText = [
       ...v10.red_stops.flatMap((s) => [s.trigger, s.action, s.who_to_call]),
@@ -296,6 +336,9 @@ describe("D1: every code that lands on a seat's screen during the demo has a pla
       ["tier", new Set()],
       ["status", new Set()],
       ["notice", new Set()],
+      // A job status inside a card's own sentence ("Status: in-progress." from Show job), D1 review.
+      ["card-status", new Set()],
+      ["chip", new Set()],
     ]);
 
     const look = () => {
@@ -304,6 +347,9 @@ describe("D1: every code that lands on a seat's screen during the demo has a pla
         const view = seatView(state, seat, "off", REAL_NOW);
         const text = JSON.stringify(view);
         for (const m of text.matchAll(/TS-CC-\d{2}|RS-\d{2}|\bA[1-4]\b(?!-)/g)) seen.get("code")!.add(m[0]);
+        // A bare status code ("Status: in-progress."). A status already in words ("Status: new solution
+        // drafted.", the desk's own line) is StatusLine's, which puts the code into words itself.
+        for (const m of text.matchAll(/Status: ([a-z0-9-]+)\./g)) seen.get("card-status")!.add(m[1]);
         for (const n of view.notices) seen.get("notice")!.add(n.kind);
         for (const j of [...(view.desk?.jobs ?? []), ...(view.manager?.jobs ?? [])]) seen.get("status")!.add(j.status);
         const leads = [
@@ -324,6 +370,19 @@ describe("D1: every code that lands on a seat's screen during the demo has a pla
       return r;
     };
 
+    // Every chip on every seat (Show job, Why?, Dial?, What needs me, Versions, Impact), D1 review:
+    // their answers are cards on screen too.
+    const allChips = async () => {
+      for (const seat of SEAT_IDS) {
+        for (const chip of CHIPS_BY_SEAT[seat].filter((c) => c !== "Safety")) {
+          const typed = await chatTurn({ seat, text: chip, job: seat === "aom-tower-a" ? undefined : "2318" }, "off", deps, REAL_NOW);
+          expect(typed.status, `${seat} ${chip}`).toBe(200);
+          seen.get("chip")!.add(chip);
+        }
+      }
+      look();
+    };
+
     await press("hq", "reset");
     const report = await press("tenant", "report", undefined, { complaint: "too cold" });
     for (const [q, a] of [
@@ -336,6 +395,7 @@ describe("D1: every code that lands on a seat's screen during the demo has a pla
       await press("tenant", "answer", report.jobId, { questionId: q, answer: a });
     }
     await press("technician", "open-job", "2318");
+    await allChips();
     await press("technician", "tick", "2318", { causeId: "precool", type: "not-this" });
     await press("technician", "tick", "2318", { causeId: "min-airflow", type: "not-this" });
     await press("technician", "not-solved", "2318", { hoursLost: 3, extraVisits: 2, contractorOrPartsNeeded: false });
@@ -365,13 +425,31 @@ describe("D1: every code that lands on a seat's screen during the demo has a pla
       look();
     }
     await press("tenant", "safety-pick", "2318", { stopId: "RS-04" });
+    await allChips();
 
     // The demo really put these on screen, so the check is not empty.
     expect(seen.get("code")).toEqual(expect.any(Set));
     for (const code of ["TS-CC-09", "TS-CC-18", "TS-CC-27", "RS-04", "RS-08", "A2", "A4"]) {
       expect(seen.get("code")!.has(code), code).toBe(true);
     }
-    for (const code of seen.get("code")!) expect(codeWord(code), code).not.toBeNull();
+    // Each code's words are its own: a signed rule never falls back to the new-rule words,
+    // a new rule always does, and an approval is never left as its bare id.
+    for (const code of seen.get("code")!) {
+      const word = codeWord(code);
+      expect(word, code).not.toBeNull();
+      expect(word, code).not.toBe(code);
+      if (/^TS-CC-\d{2}$/.test(code)) {
+        const signed = v10.rules.some((r) => r.id === code);
+        expect(word === NEW_RULE_WORD, `${code}: ${word}`).toBe(!signed);
+      }
+    }
+    // A job status inside a card's sentence (Show job's "Status: in-progress.") reads in plain words.
+    expect(seen.get("chip")!.has("Show job")).toBe(true);
+    expect(seen.get("card-status")!.size).toBeGreaterThanOrEqual(2);
+    for (const s of seen.get("card-status")!) {
+      expect(STATUS_WORDS[s as keyof typeof STATUS_WORDS], s).toBeDefined();
+      expect(plainSentence(`Status: ${s}.`), s).toBe(`Status: ${STATUS_WORDS[s as keyof typeof STATUS_WORDS]} ${s}.`);
+    }
     for (const tier of seen.get("tier")!) expect(TIER_WORDS[tier as keyof typeof TIER_WORDS], tier).toBeDefined();
     for (const s of seen.get("status")!) expect(STATUS_WORDS[s as keyof typeof STATUS_WORDS], s).toBeDefined();
     for (const k of seen.get("notice")!) expect(NOTICE_WORDS[k as keyof typeof NOTICE_WORDS], k).toBeDefined();

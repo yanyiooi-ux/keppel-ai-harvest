@@ -133,7 +133,7 @@ describe("T-C5a: colour is never the only signal", () => {
     const { fn } = fakeFetch(() => seatState());
     render(<SeatChat seat="technician" fetcher={fn} pollMs={0} />);
 
-    expect(await screen.findByRole("button", { name: "Dial?" })).toBeDefined();
+    expect(await screen.findByRole("button", { name: "Can I turn the dial?" })).toBeDefined();
     expect(screen.getByLabelText("Message Pip")).toBeDefined();
   });
 });

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { CodeTag, Plain } from "../Plain";
-import { noticeWord } from "../../../lib/plain-words";
+import { SPEAK_FIRST_MEANS, noticeWord } from "../../../lib/plain-words";
 import type { RefusedPress } from "./SeniorManagerDesk";
 import type { AomDesk as AomDeskView, AomChargeView } from "../../../lib/aom-desk";
 import type { ImpactMeter, ImpactSide } from "../../../lib/impact";
@@ -45,7 +45,7 @@ function Refusal({ message }: { message: string }) {
   return (
     <div className="notice refused" role="status">
       <b>not done</b>
-      {message}
+      <Plain text={message} />
     </div>
   );
 }
@@ -143,6 +143,7 @@ function MeterCard({ meter, flags }: { meter: ImpactMeter; flags: AomDeskView["s
             <span>
               <Plain text={f.text} />
             </span>
+            <span className="notice-gloss">{SPEAK_FIRST_MEANS}</span>
           </div>
         ))}
 

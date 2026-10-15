@@ -31,6 +31,7 @@ import { seatView } from "../lib/seat-view";
 import { buildingBView } from "../lib/hq-desk";
 import { loadCauses } from "../lib/causes";
 import { SEAT_LABELS } from "../lib/permissions";
+import { seatLabelWords } from "../lib/plain-words";
 import { AI_OFF_LABEL } from "../lib/ai-mode";
 import { howView, liveSeats, LIVE_ORDER, CLOSE_LINE } from "../lib/how";
 import { HowLive } from "../app/components/how/HowLive";
@@ -208,7 +209,7 @@ describe("C10a review: the real /how page, read at request time", () => {
       const seat = t.getAttribute("data-seat") as keyof typeof SEAT_LABELS;
       expect(t.querySelector(".chat.column")).toBeTruthy();
       expect(t.querySelector(".seat-tag")!.textContent).toBe(seat);
-      expect(t.querySelector(".chat-sub")!.textContent).toBe(SEAT_LABELS[seat]);
+      expect(t.querySelector(".chat-sub")!.textContent).toBe(seatLabelWords(SEAT_LABELS[seat]));
     }
     const b = within(screen.getByTestId("how-building-b"));
     expect(b.getAllByTestId("lead-card").map((l) => l.getAttribute("data-cause"))).toEqual([
