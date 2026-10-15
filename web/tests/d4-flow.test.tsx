@@ -18,6 +18,7 @@ import { VideoPlayer } from "../app/components/VideoPlayer";
 import { FLOW_SECTIONS, flowButtons, flowView, safetyWords } from "../lib/flow";
 import { FLOW_LINK_WORDS } from "../lib/flow-words";
 import { CHARGE_CHOICES } from "../lib/charge-flow";
+import { CHIPS_BY_SEAT } from "../lib/chat";
 import { PART_TITLES } from "../lib/senior-manager-flow";
 import { SELF_CHECK_QUESTIONS } from "../lib/self-check";
 import { loadCauses } from "../lib/causes";
@@ -74,6 +75,8 @@ function realButtonLabels(skip: string[]): Set<string> {
   }
   for (const c of CHARGE_CHOICES) add(c.label);
   for (const q of SELF_CHECK_QUESTIONS) q.answers.forEach(add);
+  // The chips each seat draws as buttons with their own name (SeatChat); "Dial?" is drawn under a longer label.
+  for (const chips of Object.values(CHIPS_BY_SEAT)) chips.filter((c) => c !== "Dial?").forEach(add);
   return labels;
 }
 

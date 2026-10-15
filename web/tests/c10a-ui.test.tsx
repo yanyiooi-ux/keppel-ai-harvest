@@ -171,7 +171,10 @@ describe("T-C10a: the story on screen comes from the data", () => {
     render(<HowStory view={howView(memory.read())} />);
     const ring = within(screen.getByTestId("brain-ring"));
     expect(ring.getByRole("img", { name: /Pip/ })).toBeTruthy();
-    for (const seat of Object.values(SEAT_LABELS)) expect(ring.getByText(seat)).toBeTruthy();
+    for (const seat of Object.values(SEAT_LABELS)) {
+      const shown = seat === SEAT_LABELS["aom-tower-a"] ? "Asset Operations Manager, Tower A: Keppel (role-played)" : seat;
+      expect(ring.getByText(shown)).toBeTruthy();
+    }
     expect(ring.getByText("Building B, Level 12 (made up)")).toBeTruthy();
     const approvals = within(screen.getByTestId("how-approvals"));
     for (const id of ["A1", "A2", "A3", "A4"]) expect(approvals.getByText(id)).toBeTruthy();

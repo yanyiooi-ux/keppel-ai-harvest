@@ -13,7 +13,7 @@ import { CodeTag, Plain } from "../Plain";
 import {
   RAISED_BELOW,
   SPEAK_FIRST_MEANS,
-  noticeWord,
+  noticeHead,
   pipNeverLine,
   plainOpening,
   raisedWords,
@@ -549,7 +549,7 @@ export function SeatChat({
               return (
                 <div className={finished ? "notice is-done" : "notice"} key={`notice-${i}`}>
                   <b>
-                    {noticeWord(notice.kind)} <CodeTag code={notice.kind} />
+                    {noticeHead(notice.kind, notice.text)} <CodeTag code={notice.kind} />
                   </b>
                   {finished ? (
                     <span className="notice-done">

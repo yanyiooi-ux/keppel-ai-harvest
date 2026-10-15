@@ -33,6 +33,15 @@ export interface AomDeskProps {
   refused?: RefusedPress | null;
 }
 
+/**
+ * Over the alerts when none of their stops is raised now (D4 review). Typed
+ * words alert this seat before anyone presses Raise this stop, and the alert's
+ * own title ("Red stop on Tower A, Level 23") stays word for word, so the line
+ * says plainly that the floor is not stopped.
+ */
+export const NO_STOP_RAISED =
+  "No red stop is raised in Tower A right now, so no floor is stopped. The alerts below say what someone saw. A floor stops only when someone presses Raise this stop.";
+
 /** The notice kinds this desk shows itself, so the seat's plain notice list leaves them out. */
 export const AOM_DESK_NOTICE_KINDS = ["alert", "charge-request"];
 
@@ -81,6 +90,8 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
         <p className="desk-status">
           {desk.openStops.length > 0 ? (
             <Plain text={`Open now in Tower A: ${desk.openStops.join(", ")}`} />
+          ) : desk.alerts.length > 0 ? (
+            NO_STOP_RAISED
           ) : (
             "No red stop open in Tower A."
           )}
@@ -312,12 +323,17 @@ function ChargeCard({
                 <b>{`${c.decision.choiceLabel} · ${c.decision.costLine}`}</b>
               </li>
               <li>{`Reason: ${c.decision.reason}`}</li>
-              <li className="job-status">{c.decision.byLine}</li>
+              <li className="job-status">
+                <Plain text={c.decision.byLine} />
+              </li>
             </ul>
             {c.tenantCard ? (
               <>
                 <span className="lead-k sent-k">Sent to the tenant, word for word</span>
-                <p className="send-line">{c.tenantCard}</p>
+                {/* Through the same plain layer as the tenant's own card, so the two read the same (D4 review). */}
+                <p className="send-line">
+                  <Plain text={c.tenantCard} />
+                </p>
               </>
             ) : null}
           </div>

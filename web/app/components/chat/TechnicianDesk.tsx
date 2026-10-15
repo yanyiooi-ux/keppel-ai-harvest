@@ -318,8 +318,9 @@ export function StepList({ steps }: { steps: DeskStep[] }) {
         <li key={step.step}>
           <span className={`badge ${step.colour}`}>{aomWords(step.colourWord)}</span>
           <b className="step-no">{`Step ${step.step}`}</b>
-          <span className="step-who">{step.who}</span>
-          <p>{step.text}</p>
+          {/* The seat's full name in a step's words (D4 review); a red step keeps the pill's words exactly. */}
+          <span className="step-who">{step.colour === "red" ? step.who : aomWords(step.who)}</span>
+          <p>{step.colour === "red" ? step.text : aomWords(step.text)}</p>
           {step.filled ? (
             <p className="step-filled">
               <Plain text={`Filled: ${step.filled}`} />

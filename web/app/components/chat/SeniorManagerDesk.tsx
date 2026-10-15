@@ -15,7 +15,14 @@ import {
 } from "./TechnicianDesk";
 import { bringIntoView } from "./bring-into-view";
 import { CodeTag, Coded, Plain } from "../Plain";
-import { effectStepLead, effectWord, factIdFromLabel, factWord, statusWord } from "../../../lib/plain-words";
+import {
+  effectStepLead,
+  effectWord,
+  factIdFromLabel,
+  factWord,
+  outsideHelpStatus,
+  statusWord,
+} from "../../../lib/plain-words";
 import { DEMO_FIX_LINE, DEMO_WHY_LINE } from "../../../lib/demo-words";
 import type { AiMode } from "../../../lib/ai-mode";
 import type {
@@ -341,8 +348,8 @@ function ManagerJob({
         <ChatCard
           from="Outside help: head office decides"
           fromCode="A3"
-          colour="amber"
-          colourWord="Waiting on HQ"
+          colour={outsideHelpStatus(job.outsideHelp).colour}
+          colourWord={outsideHelpStatus(job.outsideHelp).word}
           receipt="Outside help · AI calls: 0"
         >
           <ul className="card-lines">

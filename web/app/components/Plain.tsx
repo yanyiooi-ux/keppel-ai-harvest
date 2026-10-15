@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { ruleBookWords, splitCodes } from "../../lib/plain-words";
+import { aomWords, ruleBookWords, splitCodes } from "../../lib/plain-words";
 
 /**
  * Plain words first, the code after (D1). A render-time layer only: the text
@@ -23,12 +23,14 @@ export function Coded({ word, code }: { word: string; code: string }) {
 
 /**
  * A sentence with each code in it shown as its plain words, then the code as a
- * grey tag. The pill's other names read as the rule book (D2 review). A
- * sentence with neither comes back as the very same text.
+ * grey tag. The pill's other names read as the rule book (D2 review), and the
+ * seat's short name "AOM" reads "Asset Operations Manager" (YY, D4). A sentence
+ * with none of these comes back as the very same text. A red stop's own words
+ * never come through here (ChatCard).
  */
 export function Plain({ text: said }: { text?: string | null }) {
   if (!said) return null;
-  const text = ruleBookWords(said);
+  const text = aomWords(ruleBookWords(said));
   const parts = splitCodes(text);
   if (parts.every((p) => p.kind === "text")) return <>{text}</>;
   return (

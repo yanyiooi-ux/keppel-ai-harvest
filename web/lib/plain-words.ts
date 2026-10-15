@@ -202,10 +202,16 @@ export const SEAT_WORDS: Record<SeatId, string> = {
 /**
  * A line from the engine or a view with the AOM's short name read as the full
  * name: "AOM Tower A: Decide charge" reads "Asset Operations Manager, Tower A:
- * Decide charge". Render-time only; the line itself is left as it is.
+ * Decide charge", and the seat's label inside a line ("Decided by AOM, Tower
+ * A: Keppel Asset Operations Manager (role-played)") names it once. Render-time
+ * only; the line itself is left as it is. Plain (components/Plain.tsx) runs it
+ * on every line it shows; a red stop's own words never go through it.
  */
 export function aomWords(text: string): string {
-  return text.replace(/\bAOM,? Tower A\b/g, `${AOM_NAME}, Tower A`).replace(/\bAOM\b/g, AOM_NAME);
+  return text
+    .replace(/\bAOM,? Tower A: Keppel Asset Operations Manager\b/g, `${AOM_NAME}, Tower A: Keppel`)
+    .replace(/\bAOM,? Tower A\b/g, `${AOM_NAME}, Tower A`)
+    .replace(/\bAOM\b/g, AOM_NAME);
 }
 
 // ---- Facts (S5) ----
@@ -246,6 +252,32 @@ export function statusWord(status: string): string {
 
 export function noticeWord(kind: string): string {
   return NOTICE_WORDS[kind as Notice["kind"]] ?? kind.replace(/-/g, " ");
+}
+
+/**
+ * The senior manager's outside-help card (A3) reads its status from its last
+ * line (senior-manager-desk.ts: "Waiting for HQ's decision.", or hq-flow.ts's
+ * outsideHelpResult), so it never says "Waiting on HQ" after head office has
+ * decided (D4 review). Each colour carries its word.
+ */
+export function outsideHelpStatus(lines: string[]): { colour: "amber" | "green"; word: string } {
+  const last = lines[lines.length - 1] ?? "";
+  if (last.startsWith("outside help approved")) return { colour: "green", word: "Head office said yes" };
+  if (last.startsWith("declined:")) return { colour: "amber", word: "Head office said no" };
+  return { colour: "amber", word: "Waiting on HQ" };
+}
+
+/** The start of head office's note on a decided outside-help request (hq-flow.ts, applyDecideOutsideHelp). */
+const OUTSIDE_HELP_DECIDED = "HQ decided on outside help";
+
+/**
+ * A notice's heading. Asking for outside help and head office's answer share
+ * one notice kind, so the answer gets its own heading (D4 review): it never
+ * reads "Outside help asked" over a decision.
+ */
+export function noticeHead(kind: string, text: string): string {
+  if (kind === "outside-help" && text.startsWith(OUTSIDE_HELP_DECIDED)) return "Head office decided on outside help";
+  return noticeWord(kind);
 }
 
 export function approvalWord(id: string): string {

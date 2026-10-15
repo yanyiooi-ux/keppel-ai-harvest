@@ -47,7 +47,7 @@ function Node({ node }: { node: FlowNode }) {
         <Bits bits={[node.title]} />
       </b>
       {node.approval ? <Approval id={node.approval} /> : null}
-      <span>{node.line}</span>
+      <span>{typeof node.line === "string" ? node.line : <Bits bits={node.line} />}</span>
     </div>
   );
 }
@@ -73,7 +73,9 @@ function Tree({ tree, label }: { tree: FlowTree; label: string }) {
           </div>
         ))}
       </div>
-      <p className="flow-tree-note">{tree.note}</p>
+      <p className="flow-tree-note">
+        <Bits bits={tree.note} />
+      </p>
     </div>
   );
 }
@@ -102,7 +104,9 @@ export function FlowView({ flow, video }: { flow: FlowData; video: ReactNode }) 
           Five people, one shared job, and only four moments that need a yes. This page shows who presses what, in what
           order, and who gets told next.
         </p>
-        <p className="flow-note">Every button name here is read from the app&apos;s own code. Everything in the demo is made up.</p>
+        <p className="flow-note">
+          Every button name here is checked against the app&apos;s own buttons. Everything in the demo is made up.
+        </p>
         <p className="flow-links">
           <Link href="/demo">{STORY_LINK_WORDS}</Link>
           <Link href="/how">How it works, for judges</Link>
@@ -176,7 +180,7 @@ export function FlowView({ flow, video }: { flow: FlowData; video: ReactNode }) 
         <ul className="flow-know">
           {flow.know.map((k) => (
             <li key={k.head}>
-              <b>{k.head}</b> {k.line}
+              <b>{k.head}</b> <Bits bits={k.line} />
             </li>
           ))}
         </ul>
@@ -193,10 +197,13 @@ export function FlowView({ flow, video }: { flow: FlowData; video: ReactNode }) 
         </div>
       </Section>
 
-      <Section id="rule30" lead="A job marked Solved is not a win yet.">
+      <Section
+        id="rule30"
+        lead="The 30-day watch starts when a job is marked solved, or when head office approves a new fix for the job. Neither one is a win yet."
+      >
         <div className="flow-rule30">
-          {flow.thirtyDay.map((n) => (
-            <Node key={n.line} node={n} />
+          {flow.thirtyDay.map((n, i) => (
+            <Node key={i} node={n} />
           ))}
         </div>
       </Section>

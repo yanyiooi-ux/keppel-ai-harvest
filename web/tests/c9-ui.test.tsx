@@ -25,7 +25,7 @@ const DEMO_WHY =
 
 const LABEL = "Worked out on made-up demo data. It assumes the cause is found on the visit where the repeat is caught.";
 const TENANT_CARD_350 =
-  "What we will do: Our contractor will move the wall thermostat back to the spot on your approved fit-out drawing, with your OK. Cost: S$350, made-up demo amount. Approved by the AOM (role-played).";
+  "What we will do: Our contractor will move the wall thermostat back to the spot on your approved fit-out drawing, with your OK. Cost: S$350, made-up demo amount. Approved by the Asset Operations Manager (role-played).";
 const REASON = "Fit-out work is the tenant's own";
 
 beforeEach(() => {

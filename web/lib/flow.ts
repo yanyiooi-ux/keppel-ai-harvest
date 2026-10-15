@@ -10,9 +10,10 @@
 
 import { loadCauses } from "./causes";
 import { CHARGE_CHOICES } from "./charge-flow";
+import { CHIPS_BY_SEAT } from "./chat";
 import { PART_IDS, PART_TITLES } from "./senior-manager-flow";
 import { SELF_CHECK_QUESTIONS } from "./self-check";
-import { AOM_NAME, APPROVAL_WORDS, SEAT_WORDS, STATUS_WORDS, type ApprovalId } from "./plain-words";
+import { AOM_NAME, APPROVAL_WORDS, SEAT_WORDS, STATUS_WORDS, effectWord, type ApprovalId } from "./plain-words";
 import { STORY } from "./story";
 import type { SeatId } from "./permissions";
 
@@ -38,7 +39,8 @@ export interface FlowStep {
 
 export interface FlowNode {
   title: FlowBit;
-  line: string;
+  /** Plain words, or words with button names in them (each one checked like any other button name). */
+  line: string | FlowBit[];
   tone: "seat" | "ok" | "approval" | "plain";
   approval?: ApprovalId;
 }
@@ -52,7 +54,7 @@ export interface FlowBranch {
 export interface FlowTree {
   root: FlowNode;
   branches: FlowBranch[];
-  note: string;
+  note: FlowBit[];
 }
 
 export interface FlowView {
@@ -61,7 +63,7 @@ export interface FlowView {
   technician: FlowTree;
   senior: FlowTree;
   approvals: { id: ApprovalId; title: string; line: string }[];
-  know: { head: string; line: string }[];
+  know: { head: string; line: FlowBit[] }[];
   safety: FlowBit[][];
   thirtyDay: FlowNode[];
 }
@@ -102,8 +104,26 @@ export function safetyWords(): string {
   return "";
 }
 
+/**
+ * The value Story mode confirms for one part of the new rule, in plain words
+ * (D4 review): /flow says which effects Story mode picks, read from Story
+ * mode's own presses, so the two cannot differ.
+ */
+export function storyPartWord(partId: string): string {
+  for (const step of STORY) {
+    for (const press of step.presses) {
+      if (press.kind === "action" && press.action === "confirm-part" && press.payload?.part === partId) {
+        return effectWord(String(press.payload.value));
+      }
+    }
+  }
+  return "";
+}
+
 const SENIOR = SEAT_WORDS["senior-manager"];
 const HQ = SEAT_WORDS.hq;
+/** The chip every seat has for its own list (lib/chat.ts). */
+const WHAT_NEEDS_ME = CHIPS_BY_SEAT.technician[0];
 
 export function flowView(): FlowView {
   const precool = causeLabel("precool");
@@ -168,17 +188,24 @@ export function flowView(): FlowView {
         kind: "seat",
         who: `4 · ${SENIOR}`,
         sub: "writes the new rule",
+        // With Saved answers on, the AI drafts only for the demo's own words, so the
+        // page names the button that fills them in (D4 review). No test count is
+        // promised: it depends on the effects picked.
         does: [
           b("Found it"),
           t(` on "${thermostat}". `),
           b("Log new solution"),
-          t(": type the fix line and the why line, then "),
+          t(", then "),
+          b("Use the demo words"),
+          t(" and "),
           b("Log it"),
-          t(". The AI drafts the rule. "),
+          t(". The AI drafts the rule. With Saved answers on, it drafts only for the demo's own words; other words work, but you pick each part by hand. "),
           b("Confirm"),
-          t(` each of the 4 parts (${parts}). `),
+          t(
+            ` each of the 4 parts (${parts}): the rule's words, when it applies, and what it changes on the checklist. Story mode sets Effect 1 to "${storyPartWord("effect-1")}" and Effect 2 to "${storyPartWord("effect-2")}". `
+          ),
           b("Run tests"),
-          t(" (all 23 that apply pass), then "),
+          t(": every test that applies must pass. Then "),
           b("Send to HQ"),
           t("."),
         ],
@@ -230,7 +257,7 @@ export function flowView(): FlowView {
       branches: [
         {
           when: "Fixed it, and the fix is theirs to do",
-          first: { title: b("Solved"), line: "Writes one line of why", tone: "ok" },
+          first: { title: b("Solved"), line: [t("Types one line of why, then "), b("Mark solved")], tone: "ok" },
           then: watch,
         },
         {
@@ -244,15 +271,19 @@ export function flowView(): FlowView {
           then: { title: t(SENIOR), line: "Gets everything attached", tone: "seat" },
         },
       ],
-      note: "Solved needs no approval. The app only allows it when the found cause is a fix the technician may do. If not, the button to use is Send with the cause.",
+      note: [
+        t("Solved needs no approval. The app allows it only when the found cause is a fix the technician may do. If not, use "),
+        b("Send with the cause"),
+        t("."),
+      ],
     },
 
     senior: {
       root: { title: t(SENIOR), line: "The job came up to them", tone: "seat" },
       branches: [
         {
-          when: "Fixed it",
-          first: { title: b("Solved"), line: "Writes one line of why", tone: "ok" },
+          when: "Fixed it, and the fix is theirs to do",
+          first: { title: b("Solved"), line: [t("Types one line of why, then "), b("Mark solved")], tone: "ok" },
           then: watch,
         },
         {
@@ -270,13 +301,32 @@ export function flowView(): FlowView {
           first: { title: b("Ask HQ for outside help"), line: "Says what, why, and if it needs money", tone: "plain" },
           then: {
             title: t(`${HQ}: approve or decline`),
-            line: "Either way, the job comes back to the senior manager.",
+            line: [
+              t("Types a reason of 3 words or more, then "),
+              b("Approve"),
+              t(" or "),
+              b("Decline"),
+              t(". Either way, the job comes back to the senior manager."),
+            ],
             tone: "approval",
             approval: "A3",
           },
         },
       ],
-      note: 'Once a job is with the senior manager, it stays with them until it closes. No button sends it back to the technician. When it comes back from head office, the note says "The job is back with you". After the contractor fixes it, the senior manager presses Solved, and the 30-day watch starts. No dollar amount ever goes into the text: head office decides money.',
+      // Solved checks only whose fix the cause is (technician-flow.ts solvedRefusal),
+      // never an A3 answer, so a fix that needed outside help closes through a new
+      // solution (D4 review).
+      note: [
+        t(
+          'Once a job is with the senior manager, it stays with them until it closes. No button sends it back to the technician. When head office decides on outside help, the note says "The job is back with you". '
+        ),
+        b("Solved"),
+        t(
+          " works only for a cause the senior manager may fix on their own. A fix that needed outside help, or work on the tenant's renovation, is closed with "
+        ),
+        b("Log new solution"),
+        t(": head office approves it once, and the 30-day watch starts. No dollar amount ever goes into the text: head office decides money."),
+      ],
     },
 
     approvals: [
@@ -293,16 +343,25 @@ export function flowView(): FlowView {
     know: [
       {
         head: "A status word on every job.",
-        line: `"${STATUS_WORDS["visit-booked"]}", "${STATUS_WORDS.escalated}", "Waits on you", "${STATUS_WORDS["pending-30-day"]}". Every seat sees the same job and its status.`,
+        line: [
+          t(
+            `"${STATUS_WORDS["visit-booked"]}", "${STATUS_WORDS.escalated}", "Waits on you", "${STATUS_WORDS["pending-30-day"]}". Every seat sees the same job and its status.`
+          ),
+        ],
       },
-      { head: '"Jobs with you".', line: 'Anything waiting for a person lands in their own list. The "What needs me" button shows it too.' },
       {
-        head: "Notes sent by code.",
-        line: "A spot that keeps calling, a cause Pip is not sure about, and every safety alert go straight to the right person.",
+        head: '"Jobs with you".',
+        line: [t("Anything waiting for a person lands in their own list. The "), b(WHAT_NEEDS_ME), t(" button shows it too.")],
+      },
+      {
+        head: "Notes the app sends by itself.",
+        line: [
+          t("A spot that keeps calling, a cause Pip is not sure about, and every safety alert go straight to the right person. No AI writes them."),
+        ],
       },
       {
         head: "The live version.",
-        line: "Head office's card shows which rule book each building runs: version 1.0 before the approval, 1.1 after.",
+        line: [t("Head office's card shows which rule book each building runs: version 1.0 before the approval, 1.1 after.")],
       },
     ],
 
@@ -332,11 +391,18 @@ export function flowView(): FlowView {
 export function flowButtons(view: FlowView = flowView()): string[] {
   const out: string[] = [];
   const take = (bits: FlowBit[]) => bits.forEach((bit) => ("button" in bit ? out.push(bit.button) : null));
+  const node = (n: FlowNode) => take([n.title, ...(typeof n.line === "string" ? [] : n.line)]);
   view.steps.forEach((s) => take(s.does));
   for (const tree of [view.technician, view.senior]) {
-    take([tree.root.title]);
-    tree.branches.forEach((br) => take([br.first.title, br.then.title]));
+    node(tree.root);
+    tree.branches.forEach((br) => {
+      node(br.first);
+      node(br.then);
+    });
+    take(tree.note);
   }
+  view.know.forEach((k) => take(k.line));
   view.safety.forEach(take);
+  view.thirtyDay.forEach(node);
   return out;
 }

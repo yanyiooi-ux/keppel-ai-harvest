@@ -243,7 +243,7 @@ function WhatSection({ view }: { view: HowView }) {
         </div>
         {view.seats.map((seat) => (
           <a key={seat.id} className={`ring-seat ring-${seat.id}`} href={seat.href}>
-            <span className="seat-name">{seat.label}</span>
+            <span className="seat-name">{aomWords(seat.label)}</span>
             <span className="seat-line">{seat.does}</span>
             <span className={seat.approves.length > 0 ? "ring-approves has" : "ring-approves"}>
               <Approves ids={seat.approves} />
@@ -330,7 +330,7 @@ function HowSection({ view }: { view: HowView }) {
             {view.rankSteps.map((s) => (
               <li key={s.name}>
                 <b>{s.name}</b>
-                <span>{rankStepWords(s.text)}</span>
+                <span>{aomWords(rankStepWords(s.text))}</span>
               </li>
             ))}
           </ol>
