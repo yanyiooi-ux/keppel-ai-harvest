@@ -7,8 +7,10 @@ Our entry for the **Tencent Cloud "AI CAN DO IT" Hackathon Singapore 2026**, Rea
 
 Pill Desk helps a building team fix a repeat comfort complaint faster, so the same spot stops calling again.
 Code ranks the likely causes from a signed checklist (the "pill") and past cases, people move the job on with buttons,
-and the AI (Tencent Hunyuan) only words things. When the senior manager finds a new cause, it becomes a new pill
-version that HQ approves after its tests pass, and every building gets it at once, with rollback.
+and the AI (Tencent Hunyuan) only words things: for a new solution it also drafts the rule text and suggests the fact
+and effects from a fixed code menu, and the senior manager confirms each part. When the senior manager finds a new
+cause, it becomes a new pill version that HQ approves after its tests pass, and every building gets it at once, with
+rollback.
 
 ## The 5 seats and /how
 
@@ -54,8 +56,10 @@ empty. Then open <http://localhost:3000/how>.
 
 On Replay the AI switch in the top bar starts on Replay: a worded line comes from a saved real Hunyuan answer in
 `web/data/replay/`, with the banner "replay: saved real AI answer", and no AI call is made. Off shows the
-same cards with the code's own words and the label "AI off". Live needs your own Tencent Cloud TokenHub key in
-`web/.env.local`; with an empty key, Live falls back to Replay by itself.
+same cards with the code's own words and the label "AI off". Live needs three lines of your own in `web/.env.local`,
+all from your Tencent Cloud TokenHub console: `LLM_BASE_URL` (the TokenHub base URL), `LLM_API_KEY` (your key) and
+`LLM_MODEL` (a Hunyuan model id). With an empty key or an empty base URL, Live falls back to Replay by itself and
+makes no AI call.
 
 To run the tests: `npm test` in `web/`. `web/tests/demo-flow.test.ts` runs the whole demo through the same action
 functions the buttons call, on Replay with the network blocked, and prints "demo flow: all steps passed".
@@ -78,14 +82,16 @@ Who built what, row by row from [`proof/BUILD-LOG.md`](proof/BUILD-LOG.md):
 - **Tencent CodeBuddy** wrote the parts whose rows say CodeBuddy in the tool column: the first build on 6 Oct 2026,
   and C1 to C3a (10 and 11 Oct).
 - **Anthropic's Claude Code:** after CodeBuddy's credit ran out on 14 Oct 2026, Claude Code wrote the parts whose
-  rows say "Claude Code (not CodeBuddy)": it finished C3b, which CodeBuddy's run had left uncommitted with one failing
-  test, then built C4 to C10b and the fixes after each review.
+  rows say "Claude Code (not CodeBuddy)", C3b onward. It finished C3b, which CodeBuddy's run had left uncommitted with
+  one failing test: it wired in one word list that CodeBuddy's code declared but never used, and left the rest of C3b
+  as CodeBuddy wrote it. Then it built C3c, C4 to C10b, the fixes after each review, and the removal of the old 3D
+  tour.
 - Claude also helped with the plan, the spec and the prompt wording, and made the design prototype in `docs/design/`.
 - **The product's own AI** is a Tencent Hunyuan model (hy3) through Tencent Cloud TokenHub. Its 3 prompts are in
   `web/prompts/`.
 
-The plan for each part is in `.codebuddy/plans/` (the folder keeps CodeBuddy's name; the plans from C3b on were
-written by Claude Code).
+The plans are in `.codebuddy/plans/` (the folder keeps CodeBuddy's name). CodeBuddy wrote the plans for C1a to C3b.
+Claude Code wrote the plans for C3c and C6a to C10b, and the selfcheck files. C4, C5a and C5b have no plan file.
 
 ## Repo map
 

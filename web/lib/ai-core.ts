@@ -90,6 +90,15 @@ export function hasKey(): boolean {
   return (process.env.LLM_API_KEY ?? "").length > 0;
 }
 
+/**
+ * True when LLM_BASE_URL is set (non-blank). With it empty, the OpenAI SDK
+ * falls back to its own default host, so a Live call would send the key there
+ * instead of to TokenHub. Live then counts as having no key (runAiJob).
+ */
+export function hasBaseUrl(): boolean {
+  return (process.env.LLM_BASE_URL ?? "").trim().length > 0;
+}
+
 /** Clear the cached client (for tests). */
 export function _resetClient(): void {
   cachedClient = null;
@@ -285,7 +294,7 @@ export interface AiOutcome<T> {
 export interface AiDeps {
   /** The model. Default: the TokenHub client, built only for a real live call. */
   client?: ModelClient | null;
-  /** Whether the key is set. Default: read from process.env. */
+  /** Whether Live may call: the key and LLM_BASE_URL are both set. Default: read from process.env. */
   keyPresent?: boolean;
   replayDir?: string;
   /** Where the one-line error goes. Default: console.log. */
@@ -297,8 +306,10 @@ export interface AiDeps {
  * Hunyuan, then a replay with the banner, then the fallback (S15).
  *
  * Off: no AI at all, the fallback and the "AI off" label. An empty key turns
- * Live into Replay by itself. A live call that errors or times out logs only its
- * status and "AI unavailable, using replay", then tries the replay. A live
+ * Live into Replay by itself, and so does an empty LLM_BASE_URL, so the key
+ * only ever goes to the configured TokenHub host. A live call that errors or
+ * times out logs only its status and "AI unavailable, using replay", then
+ * tries the replay. A live
  * answer that fails its checks, or has no content, shows the fallback. Every
  * answer, live or saved, runs its checks before it shows; a saved answer whose
  * pass flag is false never shows.
@@ -309,7 +320,7 @@ export async function runAiJob<T>(spec: AiJobSpec<T>, mode: AiMode, deps: AiDeps
     return { ...base, value: spec.fallback(), source: "off", aiOff: AI_OFF_LABEL };
   }
 
-  const keyPresent = deps.keyPresent ?? hasKey();
+  const keyPresent = deps.keyPresent ?? (hasKey() && hasBaseUrl());
   const log = deps.log ?? ((line: string) => console.log(line));
   let notice: string | null = null;
   let aiCalls = 0;
