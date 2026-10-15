@@ -26,22 +26,24 @@ may press. The server checks every press against one table (`web/lib/permissions
   outside help.
 - **HQ pill owner, Keppel Technical Services lead** (`/seat/hq`): approves a new solution only after its tests pass on
   that exact draft (A2), and every building goes live on it at once. Rolls back. Decides outside help (A3).
-- **AOM, Tower A, Keppel Asset Operations Manager** (`/seat/aom-tower-a`): decides each charge to the tenant (A4), and
+- **Asset Operations Manager, Tower A, Keppel** (`/seat/aom-tower-a`): decides each charge to the tenant (A4), and
   watches the impact meter, the speak-first flag and the safety alerts.
 
 Building B is not a seat: it is a card that shows its live version and how its own open ticket is ranked, so you can
 see a new version reach a second building.
 
-- `/` is "Pick your seat".
+- Live demo: <http://43.160.222.54> (a Tencent Cloud Lighthouse server in Singapore, on Saved answers).
+- `/` is "Pick your seat", with the 6-minute film near the top.
 - `/how` is the page for judges: why, what and how in one scroll, then the 5 real chats side by side on the one
   memory, with the Reset button and the demo steps as text. It also answers Keppel's 8 questions, one line each.
 - `/demo` is Story mode: the real app plays the whole demo by itself in 8 steps, one seat at a time, with a short
   plain caption for each step and the app's own reply to each press. Play or Pause, Back, Next and Restart; space
   and the arrow keys work too. It presses through the same routes as the seats, nothing is recorded, and it runs on
   Saved answers. It shares the one demo memory, so its Restart and Back reset what anyone else is looking at.
+- `/flow` is "How a job flows": every button in order, who is told next, the four approvals and the 30-day rule.
 - The film: <https://eternal-wreath-5ceq.here.now/>, a 6 min 13 s one-take film of the real app with captions. The
-  same film plays on home, `/how` and `/flow` ("Watch the 6-minute video") when the file is on that copy; it is not
-  in git (`web/public/media/README.md`).
+  same film plays near the top of the home page ("Watch the 6-minute video") when the file is on that copy; it is
+  not in git (`web/public/media/README.md`).
 
 **No login.** The seats are role-played: anyone who opens a seat acts as that person. **All data is made up:** every
 building, tenant, ticket, reading, case, rate and amount (each data file in `web/data/` says so), and every signature and
