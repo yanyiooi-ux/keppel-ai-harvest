@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
-import { Chakra_Petch, Inter } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import "./globals.css";
 import { TopBar } from "./components/TopBar";
 import { currentAiMode } from "../lib/ai-mode-cookie";
 
+// Dark glass (S23, D3): Geist for every word on screen.
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+// Inter is only the fallback after Geist, so it is not preloaded.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const chakraPetch = Chakra_Petch({
-  variable: "--font-hud-family",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -26,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const aiMode = await currentAiMode();
 
   return (
-    <html lang="en" className={`${inter.variable} ${chakraPetch.variable}`}>
+    <html lang="en" className={`${geist.variable} ${inter.variable}`}>
       <body>
         <TopBar aiMode={aiMode} />
         {children}

@@ -1,6 +1,10 @@
 /**
- * Pip (S21): a small flat block character with a cube head, a hard hat and a
- * friendly face. Flat SVG, no 3D, every fill from a --pip-* token.
+ * Pip (S21, D3): Bolt Pip, a small glass robot head with glowing cyan eyes, a
+ * small yellow hard hat and a bolt on each side, drawn from the pip-bolt
+ * sample YY picked on 15 Oct. Flat SVG: every fill and stroke is a --pip-*
+ * token from globals.css. The sample's two gradients are flat token fills and
+ * its eye glow is a soft halo, so no SVG ids are needed when several Pips
+ * share a page.
  */
 
 export function PipAvatar({ size = 38 }: { size?: number }) {
@@ -8,28 +12,38 @@ export function PipAvatar({ size = 38 }: { size?: number }) {
     <svg
       width={size}
       height={size}
-      viewBox="3.5 3.5 40 40"
+      viewBox="0 0 100 100"
       role="img"
-      aria-label="Pip, a small block robot in a hard hat"
+      aria-label="Pip, a small glass robot in a hard hat"
     >
-      <polygon fill="var(--pip-ps)" points="32,20 37,16 37,38 32,42" />
-      <rect fill="var(--pip-pb)" x="10" y="20" width="22" height="22" />
-      <polygon fill="var(--pip-ht)" points="7,17 12,13 40,13 35,17" />
-      <polygon fill="var(--pip-hs)" points="35,17 40,13 40,17 35,21" />
-      <rect fill="var(--pip-hf)" x="7" y="17" width="28" height="4" />
-      <polygon fill="var(--pip-hs)" points="31,8 35,5 35,13 31,16" />
-      <polygon fill="var(--pip-ht)" points="13,8 17,5 35,5 31,8" />
-      <rect fill="var(--pip-hf)" x="13" y="8" width="18" height="8" />
-      <rect fill="var(--pip-hr)" x="20" y="8" width="4" height="8" />
-      <rect fill="var(--pip-w)" x="14" y="25" width="5" height="5" />
-      <rect fill="var(--pip-w)" x="23" y="25" width="5" height="5" />
-      <rect fill="var(--pip-ey)" x="16" y="26.5" width="2.5" height="2.5" />
-      <rect fill="var(--pip-ey)" x="25" y="26.5" width="2.5" height="2.5" />
-      <rect fill="var(--pip-ck)" x="11.5" y="32" width="3" height="2" />
-      <rect fill="var(--pip-ck)" x="27.5" y="32" width="3" height="2" />
-      <rect fill="var(--pip-ey)" x="16" y="33.5" width="2" height="2" />
-      <rect fill="var(--pip-ey)" x="18" y="35.5" width="6" height="2" />
-      <rect fill="var(--pip-ey)" x="24" y="33.5" width="2" height="2" />
+      <ellipse fill="var(--pip-shadow)" cx="50" cy="92" rx="24" ry="3.5" />
+      <circle fill="var(--pip-bolt)" cx="14" cy="56" r="5" />
+      <circle fill="var(--pip-bolt)" cx="86" cy="56" r="5" />
+      <rect
+        fill="var(--pip-head)"
+        stroke="var(--pip-edge)"
+        strokeWidth="1.5"
+        x="16"
+        y="28"
+        width="68"
+        height="58"
+        rx="24"
+      />
+      <ellipse fill="var(--pip-shine)" cx="34" cy="37" rx="11" ry="4" transform="rotate(-12 34 37)" />
+      <rect fill="var(--pip-visor)" x="25" y="42" width="50" height="34" rx="15" />
+      <rect fill="var(--pip-glow)" x="32" y="46" width="16" height="20" rx="8" />
+      <rect fill="var(--pip-glow)" x="52" y="46" width="16" height="20" rx="8" />
+      <rect fill="var(--pip-eye)" x="35" y="49" width="10" height="14" rx="5" />
+      <rect fill="var(--pip-eye)" x="55" y="49" width="10" height="14" rx="5" />
+      <path fill="var(--pip-glow)" d="M42 66.4 Q50 77 58 66.4 Q50 68.6 42 66.4 Z" />
+      <path fill="var(--pip-eye)" d="M43.8 67.4 Q50 74.6 56.2 67.4 Q50 70.2 43.8 67.4 Z" />
+      <ellipse fill="var(--pip-cheek)" cx="30" cy="69" rx="4" ry="2.4" />
+      <ellipse fill="var(--pip-cheek)" cx="70" cy="69" rx="4" ry="2.4" />
+      <g transform="rotate(-6 50 26)">
+        <path fill="var(--pip-hat)" d="M28 33 Q29 12 50 10 Q71 12 72 33 Z" />
+        <rect fill="var(--pip-brim)" x="23" y="30" width="54" height="7" rx="3.5" />
+        <rect fill="var(--pip-stripe)" x="47" y="10.5" width="6" height="20" rx="3" />
+      </g>
     </svg>
   );
 }

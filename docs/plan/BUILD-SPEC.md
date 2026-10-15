@@ -1003,9 +1003,9 @@ steps show their pill text only.
 2401's first 3 live leads with reasons (technician seat, demo clock). Not a seat: no buttons except Safety for its own
 stops.
 
-**Pip** (`web/app/components/PipAvatar.tsx`): a small flat block character with a cube head, a hard hat and a friendly
-face, drawn like the Pip in `docs/design/chat-look-samples.html`. Flat SVG, no 3D, coloured with `--pip-*` tokens. Pip
-fronts every chat.
+**Pip** (`web/app/components/PipAvatar.tsx`): Bolt Pip since D3 (15 Oct), a small glass robot head with glowing cyan
+eyes, a small yellow hard hat and a bolt on each side, drawn like the `pip-bolt` symbol YY picked (S23). Flat SVG, no
+3D, coloured with `--pip-*` tokens. Pip fronts every chat.
 
 ---
 
@@ -1035,103 +1035,185 @@ the data and the engine.
 
 ---
 
-## S23. Look: Neon Quest (C5a)
+## S23. Look: dark glass (D3)
 
-Neon Quest only, picked by YY on 14 Oct 2026 (it replaces Ember, which this section named before). The look switcher
-stays in the prototype page and is not built. The tokens are taken from the `.n` block of
-`docs/design/chat-look-samples.html`, which is the picture YY picked from, and they live in `web/app/globals.css` as
-`:root`:
+Dark glass only, picked by YY on 15 Oct 2026 after seeing samples. It replaces Neon Quest (14 Oct, C5a), which this
+section named before, and Ember before that. It is matched to YY's reference, a near-black trading dashboard with
+frosted panels. The picked sample is `Reports\tencent-ai-hackathon\finish-sprint\look-samples\dark-glass-ref.html`
+(kept with the sprint reports, outside this repo); its `:root` tokens, panel, pill, button and type rules are the
+spec. Pip is Bolt Pip, the `pip-bolt` symbol in `look-samples\cute-pip.html` beside it. The tokens live in
+`web/app/globals.css` as `:root`. The first group is the sample's own; the second keeps every name the components
+already used, mapped onto dark glass, so each component re-skins through the tokens:
 
 ```css
-  --bg: #0b0b1a;
-  --grid: rgba(130, 120, 255, 0.05);
-  --surface: #101026;
-  --card: #14142c;
-  --card-2: #1c1c3c;
+:root {
+  color-scheme: dark;
+
+  /* Dark glass, from the sample YY picked on 15 Oct (dark-glass-ref.html). */
+  --bg: #08090c;
+  --light-violet: rgba(110, 112, 210, 0.38);
+  --light-blue: rgba(80, 90, 160, 0.14);
+  --bg-light: radial-gradient(1100px 600px at 12% -60px, var(--light-violet), transparent 60%);
+  --bg-light-2: radial-gradient(700px 500px at 100% 0, var(--light-blue), transparent 60%);
+  --panel: rgba(22, 23, 29, 0.62);
+  --panel-2: rgba(255, 255, 255, 0.035);
+  --panel-shine: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shell: rgba(10, 11, 14, 0.55);
+  --bar: rgba(17, 18, 23, 0.88);
+  --bar-solid: rgba(17, 18, 23, 0.97);
+  --blur: blur(20px);
+  --white: #ffffff;
+  --body: #c9cad1;
+  --faint: #5f616b;
+  --dot: #9a9ca8;
+  --violet: #8b8cf6;
+  --violet-soft: rgba(139, 140, 246, 0.16);
+  --violet-line: rgba(139, 140, 246, 0.42);
+  --violet-ink: #c7c8ff;
+  --violet-glow: rgba(124, 125, 240, 0.3);
+  --glow-violet: radial-gradient(280px 220px at 0% 0%, var(--violet-glow), transparent 72%);
+  --green-bg: rgba(34, 197, 94, 0.13);
+  --green-line: rgba(74, 222, 128, 0.38);
+  --amber-bg: rgba(245, 158, 11, 0.13);
+  --amber-line: rgba(251, 191, 36, 0.38);
+  --red-bg: rgba(239, 68, 68, 0.13);
+  --red-edge: rgba(248, 113, 113, 0.4);
+  --red-glow: rgba(239, 68, 68, 0.24);
+  --glow-red: radial-gradient(260px 200px at 0% 0%, var(--red-glow), transparent 75%);
+  --head-fade: linear-gradient(90deg, #ffffff 0%, #ffffff 45%, #8d8f9a 100%);
+  --main: #f4f4f6;
+  --main-ink: #0a0a0c;
+  --btn-bg: rgba(255, 255, 255, 0.05);
+  --btn-on: linear-gradient(90deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03));
+  --r-pill: 999px;
+
+  /* The names every component already uses, mapped onto dark glass. */
+  --grid: transparent;
+  --surface: #0e0f13;
+  --card: #111217;
+  --card-2: #1a1b20;
   --head-bg: transparent;
-  --line: #2a2a55;
-  --line-2: #3a3a70;
-  --text: #eeedff;
-  --muted: #a9a8d6;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --text: #ececef;
+  --muted: #8e909b;
 
-  --accent: #45e6ff;
-  --accent-ink: #06121a;
-  --accent-soft: rgba(69, 230, 255, 0.13);
-  --link: #b3a8ff;
-  --lit: #b3a8ff;
-  --lit-ink: #0b0b1a;
+  --accent: var(--violet);
+  --accent-ink: #0a0a0c;
+  --accent-soft: var(--violet-soft);
+  --link: var(--violet-ink);
+  --lit: #c7c8ff;
+  --lit-ink: #0a0a0c;
 
-  --map-edge: #45e6ff;
-  --map-now: #b3a8ff;
-  --map-lock: #8f7330;
-  --map-dim: #5a5a95;
+  --map-edge: var(--violet);
+  --map-now: #f4f4f6;
+  --map-lock: #5f616b;
+  --map-dim: #3a3c45;
   --map-rx: 6px;
 
-  --green: #52f2a2;
-  --amber: #ffcc55;
-  --red: #ff7a92;
-  --red-card: #2a0f1e;
-  --red-line: #6a2340;
-  --red-text: #ffe3ea;
-  --red-muted: #e6afc0;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --red-card: #1b1216;
+  --red-line: rgba(248, 113, 113, 0.32);
+  --red-text: #f6e9ea;
+  --red-muted: #d9b3b7;
 
-  --sent: #10304a;
-  --sent-line: #1f5c80;
-  --sent-text: #eeedff;
-  --ai-bg: #1c1c3c;
-  --ai-line: #34346a;
-  --needs: #221c22;
-  --needs-line: #5a4a2a;
+  --sent: rgba(139, 140, 246, 0.16);
+  --sent-line: rgba(139, 140, 246, 0.32);
+  --sent-text: #ececef;
+  --ai-bg: rgba(255, 255, 255, 0.04);
+  --ai-line: rgba(255, 255, 255, 0.1);
+  --needs: rgba(245, 158, 11, 0.07);
+  --needs-line: rgba(251, 191, 36, 0.28);
 
-  --font: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-head: var(--font-hud-family), "Chakra Petch", var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-hud: var(--font-head);
-  --head-weight: 600;
+  --font: var(--font-geist), "Geist", var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: var(--font);
+  --font-hud: var(--font);
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --head-weight: 500;
   --body-weight: 400;
-  --name-weight: 600;
-  --hud-case: uppercase;
-  --hud-track: 0.12em;
+  --name-weight: 500;
+  --label-weight: 500;
+  --hud-case: none;
+  --hud-track: 0;
+  --head-track: -0.02em;
+  --title-track: -0.03em;
 
-  --r-card: 8px;
-  --r-panel: 10px;
-  --r-btn: 6px;
-  --r-chip: 6px;
+  --r-card: 22px;
+  --r-panel: 22px;
+  --r-btn: 14px;
+  --r-chip: 999px;
 
-  --glow: 0 0 20px rgba(69, 230, 255, 0.4);
-  --av-bg: #14142c;
-  --av-line: #6b5ee8;
-  --av-r: 12px;
-  --av-glow: 0 0 18px rgba(139, 124, 255, 0.45);
-  --map-now-glow: drop-shadow(0 0 6px rgba(160, 145, 255, 0.9));
+  --glow: 0 8px 28px rgba(139, 140, 246, 0.16);
+  --av-bg: rgba(255, 255, 255, 0.06);
+  --av-line: rgba(255, 255, 255, 0.12);
+  --av-r: 14px;
+  --av-glow: 0 0 22px rgba(139, 140, 246, 0.22);
+  --map-now-glow: drop-shadow(0 0 6px rgba(139, 140, 246, 0.7));
 
-  --pip-pb: #8b7cff;
-  --pip-ps: #5f4fdb;
-  --pip-hf: #ffcc55;
-  --pip-ht: #ffe08f;
-  --pip-hs: #c9971f;
-  --pip-hr: #ffebb0;
-  --pip-ey: #0b0b1a;
-  --pip-ck: #ff8fd6;
-  --pip-w: #ffffff;
+  /* Bolt Pip: a small glass robot head with glowing eyes and a hard hat. */
+  --pip-shadow: rgba(0, 0, 0, 0.35);
+  --pip-bolt: #8b8cf6;
+  --pip-head: #2b2d4b;
+  --pip-edge: rgba(255, 255, 255, 0.28);
+  --pip-shine: rgba(255, 255, 255, 0.18);
+  --pip-visor: #0b0c18;
+  --pip-eye: #9af2ff;
+  --pip-glow: rgba(154, 242, 255, 0.28);
+  --pip-cheek: rgba(255, 143, 182, 0.55);
+  --pip-hat: #fbc24c;
+  --pip-brim: #f39b12;
+  --pip-stripe: rgba(255, 241, 184, 0.75);
+  /* The old Pip names (--pip-pb, -ps, -hf, -ht, -hs, -hr, -ey, -ck, -w) map onto these. */
 
   /* Status tokens map onto the look's three colours. A status always carries
      its word too, so colour is never the only signal (S21). */
   --g: var(--green);
   --g-ink: var(--green);
-  --g-bg: var(--card);
+  --g-bg: var(--green-bg);
   --a: var(--amber);
   --a-ink: var(--amber);
-  --a-bg: var(--card);
+  --a-bg: var(--amber-bg);
   --r: var(--red);
   --r-ink: var(--red);
   --r-bg: var(--red-card);
-}```
 
-- Dark near-black blue with a faint violet grid, one cyan glow (only on the main action of a screen), HUD type in
-  Chakra Petch for labels and Inter for body text.
+  /* D1: the grey code tag and the pending state. */
+  --code-ink: var(--muted);
+  --code-bg: var(--card-2);
+  --code-line: var(--line-2);
+  --pending: var(--dot);
+  --pending-dim: 0.55;
+  --card-in-ms: 220ms;
+}
+```
+
+- Near-black `#08090c` with a soft violet light in the top-left corner and a faint second light top-right (gradient
+  tokens). No grid.
+- Frosted panels: cards, the seat list, the /how tiles and lists, the live columns and the quest rail use `--panel`,
+  a 1px `--line` border, a 22px radius and a thin top shine. Rows inside a panel use `--panel-2` and a 14px radius.
+  The top bar and the sticky bars (the job bar, the /how live bar) are glass with a 20px blur, solid enough to read
+  over what scrolls under them. `--card`, `--card-2`, `--surface` and `--red-card` are solid hex on purpose: each is
+  the glass as it looks over the near-black, so the contrast tests read the real colour.
+- Type: Geist from `next/font` for every word, Inter as the fallback (loaded, not preloaded); Chakra Petch is gone.
+  Headings weight 500 with tight letter spacing; the big page headings (home, /how) and the /how stat numbers fade
+  from white to grey as in the sample. Labels are sentence case in muted `#8e909b`; body text on panels is `#c9cad1`
+  or brighter.
+- Pills: a status badge is a round pill, its word on a tint of its own colour (green, amber, red); a plain badge is
+  neutral glass. The main action of a screen (a card's action, a form's submit, Send, Report a problem, Open) is a
+  white button with near-black text. Other buttons are quiet glass pills; status buttons (Found it, Solved, Approve,
+  Not this, Not solved, Decline) are tinted pills with their word; Safety is a red-tinted pill.
+- A safety card is the panel with a soft red glow in its top-left corner; its words keep their own colours.
+- Pip is Bolt Pip (`PipAvatar.tsx`): a glass robot head with glowing cyan eyes, a small yellow hard hat and a bolt on
+  each side. Every fill and stroke is a `--pip-*` token; the sample's gradients are flat token fills and its eye glow
+  a soft halo, so several Pips on one page need no SVG ids.
 - Keep the status tokens in `globals.css` (`--g`, `--a`, `--r`) and map them to `--green`, `--amber`, `--red`. Status
-  text needs a contrast of 4.5:1 or more on its card; all five pairs are checked in `tests/c5a.test.tsx`.
-- No hard-coded colours outside the token block, hex or rgba. Chakra Petch and Inter from `next/font`.
+  text needs a contrast of 4.5:1 or more on its card; the five pairs are checked in `tests/c5a.test.tsx`. Each status
+  word also clears 4.5:1 on its own tinted pill and under the violet light, and a safety card's words inside its red
+  glow (`tests/d3-look.test.tsx`).
+- No hard-coded colours outside the token block, hex or rgba. Geist and Inter from `next/font`.
+- Every press is at least 44 px tall, the seat switcher included, and nothing scrolls sideways at 390 px.
 - The quest rail (`QuestRail.tsx`) is the look's own shape for how far a job has come. It draws only what the engine
   hands it.
 

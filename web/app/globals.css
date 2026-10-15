@@ -1,88 +1,149 @@
-/* Pill Desk globals: Neon Quest (S23).
+/* Pill Desk globals: dark glass (S23, D3).
    Every colour lives in the token block below. Nothing outside it carries a
    hex value, so the look can be swapped in one place and the contrast numbers
-   in tests/c5a.test.tsx stay true. */
+   in tests/c5a.test.tsx and tests/d3-look.test.tsx stay true. */
 
 :root {
-  --bg: #0b0b1a;
-  --grid: rgba(130, 120, 255, 0.05);
-  --surface: #101026;
-  --card: #14142c;
-  --card-2: #1c1c3c;
+  color-scheme: dark;
+
+  /* Dark glass, from the sample YY picked on 15 Oct (dark-glass-ref.html). */
+  --bg: #08090c;
+  --light-violet: rgba(110, 112, 210, 0.38);
+  --light-blue: rgba(80, 90, 160, 0.14);
+  --bg-light: radial-gradient(1100px 600px at 12% -60px, var(--light-violet), transparent 60%);
+  --bg-light-2: radial-gradient(700px 500px at 100% 0, var(--light-blue), transparent 60%);
+  --panel: rgba(22, 23, 29, 0.62);
+  --panel-2: rgba(255, 255, 255, 0.035);
+  --panel-shine: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shell: rgba(10, 11, 14, 0.55);
+  --bar: rgba(17, 18, 23, 0.88);
+  --bar-solid: rgba(17, 18, 23, 0.97);
+  --blur: blur(20px);
+  --white: #ffffff;
+  --body: #c9cad1;
+  --faint: #5f616b;
+  --dot: #9a9ca8;
+  --violet: #8b8cf6;
+  --violet-soft: rgba(139, 140, 246, 0.16);
+  --violet-line: rgba(139, 140, 246, 0.42);
+  --violet-ink: #c7c8ff;
+  --violet-glow: rgba(124, 125, 240, 0.3);
+  --glow-violet: radial-gradient(280px 220px at 0% 0%, var(--violet-glow), transparent 72%);
+  --green-bg: rgba(34, 197, 94, 0.13);
+  --green-line: rgba(74, 222, 128, 0.38);
+  --amber-bg: rgba(245, 158, 11, 0.13);
+  --amber-line: rgba(251, 191, 36, 0.38);
+  --red-bg: rgba(239, 68, 68, 0.13);
+  --red-edge: rgba(248, 113, 113, 0.4);
+  --red-glow: rgba(239, 68, 68, 0.24);
+  --glow-red: radial-gradient(260px 200px at 0% 0%, var(--red-glow), transparent 75%);
+  --head-fade: linear-gradient(90deg, #ffffff 0%, #ffffff 45%, #8d8f9a 100%);
+  --main: #f4f4f6;
+  --main-ink: #0a0a0c;
+  --btn-bg: rgba(255, 255, 255, 0.05);
+  --btn-on: linear-gradient(90deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03));
+  --r-pill: 999px;
+
+  /* The names every component already uses, mapped onto dark glass. The card,
+     card-2, surface and red-card tokens stay solid: each is the glass as it
+     looks over the near-black, so the contrast tests read the real colour. */
+  --grid: transparent;
+  --surface: #0e0f13;
+  --card: #111217;
+  --card-2: #1a1b20;
   --head-bg: transparent;
-  --line: #2a2a55;
-  --line-2: #3a3a70;
-  --text: #eeedff;
-  --muted: #a9a8d6;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --text: #ececef;
+  --muted: #8e909b;
 
-  --accent: #45e6ff;
-  --accent-ink: #06121a;
-  --accent-soft: rgba(69, 230, 255, 0.13);
-  --link: #b3a8ff;
-  --lit: #b3a8ff;
-  --lit-ink: #0b0b1a;
+  --accent: var(--violet);
+  --accent-ink: #0a0a0c;
+  --accent-soft: var(--violet-soft);
+  --link: var(--violet-ink);
+  --lit: #c7c8ff;
+  --lit-ink: #0a0a0c;
 
-  --map-edge: #45e6ff;
-  --map-now: #b3a8ff;
-  --map-lock: #8f7330;
-  --map-dim: #5a5a95;
+  --map-edge: var(--violet);
+  --map-now: #f4f4f6;
+  --map-lock: #5f616b;
+  --map-dim: #3a3c45;
   --map-rx: 6px;
 
-  --green: #52f2a2;
-  --amber: #ffcc55;
-  --red: #ff7a92;
-  --red-card: #2a0f1e;
-  --red-line: #6a2340;
-  --red-text: #ffe3ea;
-  --red-muted: #e6afc0;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --red-card: #1b1216;
+  --red-line: rgba(248, 113, 113, 0.32);
+  --red-text: #f6e9ea;
+  --red-muted: #d9b3b7;
 
-  --sent: #10304a;
-  --sent-line: #1f5c80;
-  --sent-text: #eeedff;
-  --ai-bg: #1c1c3c;
-  --ai-line: #34346a;
-  --needs: #221c22;
-  --needs-line: #5a4a2a;
+  --sent: rgba(139, 140, 246, 0.16);
+  --sent-line: rgba(139, 140, 246, 0.32);
+  --sent-text: #ececef;
+  --ai-bg: rgba(255, 255, 255, 0.04);
+  --ai-line: rgba(255, 255, 255, 0.1);
+  --needs: rgba(245, 158, 11, 0.07);
+  --needs-line: rgba(251, 191, 36, 0.28);
 
-  --font: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-head: var(--font-hud-family), "Chakra Petch", var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-hud: var(--font-head);
-  --head-weight: 600;
+  --font: var(--font-geist), "Geist", var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: var(--font);
+  --font-hud: var(--font);
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --head-weight: 500;
   --body-weight: 400;
-  --name-weight: 600;
-  --hud-case: uppercase;
-  --hud-track: 0.12em;
+  --name-weight: 500;
+  --label-weight: 500;
+  --hud-case: none;
+  --hud-track: 0;
+  --head-track: -0.02em;
+  --title-track: -0.03em;
 
-  --r-card: 8px;
-  --r-panel: 10px;
-  --r-btn: 6px;
-  --r-chip: 6px;
+  --r-card: 22px;
+  --r-panel: 22px;
+  --r-btn: 14px;
+  --r-chip: 999px;
 
-  --glow: 0 0 20px rgba(69, 230, 255, 0.4);
-  --av-bg: #14142c;
-  --av-line: #6b5ee8;
-  --av-r: 12px;
-  --av-glow: 0 0 18px rgba(139, 124, 255, 0.45);
-  --map-now-glow: drop-shadow(0 0 6px rgba(160, 145, 255, 0.9));
+  --glow: 0 8px 28px rgba(139, 140, 246, 0.16);
+  --av-bg: rgba(255, 255, 255, 0.06);
+  --av-line: rgba(255, 255, 255, 0.12);
+  --av-r: 14px;
+  --av-glow: 0 0 22px rgba(139, 140, 246, 0.22);
+  --map-now-glow: drop-shadow(0 0 6px rgba(139, 140, 246, 0.7));
 
-  --pip-pb: #8b7cff;
-  --pip-ps: #5f4fdb;
-  --pip-hf: #ffcc55;
-  --pip-ht: #ffe08f;
-  --pip-hs: #c9971f;
-  --pip-hr: #ffebb0;
-  --pip-ey: #0b0b1a;
-  --pip-ck: #ff8fd6;
-  --pip-w: #ffffff;
+  /* Bolt Pip: a small glass robot head with glowing eyes and a hard hat. */
+  --pip-shadow: rgba(0, 0, 0, 0.35);
+  --pip-bolt: #8b8cf6;
+  --pip-head: #2b2d4b;
+  --pip-edge: rgba(255, 255, 255, 0.28);
+  --pip-shine: rgba(255, 255, 255, 0.18);
+  --pip-visor: #0b0c18;
+  --pip-eye: #9af2ff;
+  --pip-glow: rgba(154, 242, 255, 0.28);
+  --pip-cheek: rgba(255, 143, 182, 0.55);
+  --pip-hat: #fbc24c;
+  --pip-brim: #f39b12;
+  --pip-stripe: rgba(255, 241, 184, 0.75);
+  /* The old Pip names, mapped onto Bolt Pip. */
+  --pip-pb: var(--pip-head);
+  --pip-ps: var(--pip-bolt);
+  --pip-hf: var(--pip-hat);
+  --pip-ht: var(--pip-stripe);
+  --pip-hs: var(--pip-brim);
+  --pip-hr: var(--pip-stripe);
+  --pip-ey: var(--pip-visor);
+  --pip-ck: var(--pip-cheek);
+  --pip-w: var(--pip-eye);
 
   /* Status tokens map onto the look's three colours. A status always carries
-     its word too, so colour is never the only signal (S21). */
+     its word too, so colour is never the only signal (S21). The pill tints
+     sit behind the word. */
   --g: var(--green);
   --g-ink: var(--green);
-  --g-bg: var(--card);
+  --g-bg: var(--green-bg);
   --a: var(--amber);
   --a-ink: var(--amber);
-  --a-bg: var(--card);
+  --a-bg: var(--amber-bg);
   --r: var(--red);
   --r-ink: var(--red);
   --r-bg: var(--red-card);
@@ -93,7 +154,7 @@
   --code-ink: var(--muted);
   --code-bg: var(--card-2);
   --code-line: var(--line-2);
-  --pending: var(--accent);
+  --pending: var(--dot);
   --pending-dim: 0.55;
   --card-in-ms: 220ms;
 }
@@ -110,11 +171,12 @@ body {
   padding: 0;
 }
 
+/* Near-black with a soft violet light in the top-left corner. */
 body {
+  min-height: 100vh;
   background-color: var(--bg);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-image: var(--bg-light), var(--bg-light-2);
+  background-repeat: no-repeat;
   color: var(--text);
   font-family: var(--font);
   font-weight: var(--body-weight);
@@ -128,7 +190,7 @@ h2,
 h3 {
   font-family: var(--font-head);
   font-weight: var(--head-weight);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--head-track);
   margin: 0;
 }
 
@@ -140,13 +202,14 @@ button {
 
 a {
   color: var(--link);
+  text-underline-offset: 3px;
 }
 
 .hud {
   font-family: var(--font-hud);
   text-transform: var(--hud-case);
   letter-spacing: var(--hud-track);
-  font-weight: 600;
+  font-weight: var(--label-weight);
 }
 
 /* ---------- Top bar ---------- */
@@ -156,17 +219,19 @@ a {
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  padding: 10px 16px;
-  background: var(--surface);
+  padding: 12px 16px;
+  background: var(--shell);
   border-bottom: 1px solid var(--line);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .topbar .brand {
   font-family: var(--font-head);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-size: 16px;
+  color: var(--white);
 }
 
 .topbar .brand small {
@@ -174,14 +239,13 @@ a {
   font-family: var(--font);
   font-weight: 400;
   letter-spacing: 0;
-  text-transform: none;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .topbar nav {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
   flex: 1;
 }
@@ -189,29 +253,36 @@ a {
 .topbar nav a {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 0 11px;
-  border-radius: var(--r-btn);
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text);
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--body);
   text-decoration: none;
-  font-size: 13.5px;
+  font-size: 14px;
+}
+
+.topbar nav a:hover {
+  background: var(--panel-2);
 }
 
 .topbar nav a.on {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--btn-on);
+  border-color: var(--line-2);
+  color: var(--white);
+  font-weight: 500;
 }
 
 .reset-btn {
   min-height: 44px;
-  padding: 0 14px;
-  border-radius: var(--r-btn);
+  padding: 0 16px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--line-2);
-  background: var(--card);
+  background: var(--btn-bg);
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* The AI switch (S15): Live, Replay, Off. Where it stands is printed and
@@ -220,36 +291,36 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 2px;
+  padding: 3px;
   border: 1px solid var(--line);
-  border-radius: var(--r-btn);
-  background: var(--card);
+  border-radius: var(--r-pill);
+  background: var(--panel-2);
 }
 
 .ai-switch-name {
   font-family: var(--font-hud);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: var(--hud-track);
   color: var(--muted);
-  padding: 0 7px 0 6px;
+  padding: 0 8px 0 10px;
 }
 
 .ai-switch button {
   /* 44 px: every press on a phone is thumb-sized (C7b render check). */
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 13px;
   border: 1px solid transparent;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-pill);
   background: transparent;
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--body);
+  font-size: 13.5px;
 }
 
 .ai-switch button.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--text);
-  font-weight: 600;
+  border-color: var(--line-2);
+  background: var(--btn-on);
+  color: var(--white);
+  font-weight: 500;
 }
 
 /* ---------- Chat ---------- */
@@ -268,7 +339,7 @@ a {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 14px 16px;
+  padding: 16px;
   background: var(--head-bg);
 }
 
@@ -278,7 +349,7 @@ a {
   flex: none;
   display: grid;
   place-items: center;
-  padding: 5px;
+  padding: 4px;
   border-radius: var(--av-r);
   background: var(--av-bg);
   border: 1px solid var(--av-line);
@@ -289,7 +360,8 @@ a {
   font-family: var(--font-head);
   font-weight: var(--name-weight);
   font-size: 19px;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--head-track);
+  color: var(--white);
   display: flex;
   align-items: center;
   gap: 9px;
@@ -299,19 +371,18 @@ a {
 
 .seat-tag {
   font-family: var(--font-hud);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
-  border: 1px solid var(--line-2);
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--bg);
+  color: var(--violet-ink);
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--violet-soft);
 }
 
 .chat-sub {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 3px;
 }
@@ -341,8 +412,8 @@ a {
   max-width: 80%;
   background: var(--sent);
   border: 1px solid var(--sent-line);
-  border-radius: 10px 10px 2px 10px;
-  padding: 9px 13px;
+  border-radius: 18px 18px 6px 18px;
+  padding: 10px 14px;
   font-size: 15px;
   color: var(--sent-text);
 }
@@ -352,10 +423,10 @@ a {
   max-width: 92%;
   background: var(--ai-bg);
   border: 1px solid var(--ai-line);
-  border-radius: 10px 10px 10px 2px;
-  padding: 10px 13px;
+  border-radius: 18px 18px 18px 6px;
+  padding: 12px 15px;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--body);
   /* A safety alert is one part per line: title, trigger, action, who to call, receipt (S11). */
   white-space: pre-line;
 }
@@ -363,43 +434,37 @@ a {
 .notice b {
   display: block;
   font-family: var(--font-hud);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--lit);
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
 /* ---------- Cards ---------- */
 
+/* A frosted panel: the glass fill, a hairline border, a 22 px radius and a
+   thin shine along the top edge. Text inside reads at body strength. */
 .card {
-  background: var(--card);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  padding: 12px 14px;
+  padding: 16px 18px;
   position: relative;
+  color: var(--body);
+  box-shadow: var(--panel-shine);
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: -1px;
-  width: 16px;
-  height: 16px;
-  border-left: 2px solid var(--edge, var(--accent));
-  border-top: 2px solid var(--edge, var(--accent));
-  border-top-left-radius: var(--r-card);
-}
-
+/* A card's label: sentence case, muted, like the sample's labels. */
 .card-from {
   font-family: var(--font-hud);
-  font-size: 11px;
+  font-size: 13.5px;
+  line-height: 1.5;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
-  font-weight: 600;
+  color: var(--muted);
+  font-weight: 400;
   margin-bottom: 8px;
 }
 
@@ -410,66 +475,82 @@ a {
   gap: 8px;
 }
 
+/* A status pill: its word on a tint of its own colour. */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-hud);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 2px 7px;
+  border: 0;
+  border-radius: var(--r-pill);
+  padding: 3px 11px;
+  background: var(--panel-2);
+  color: var(--text);
 }
 
-.badge.green,
+.badge.green {
+  color: var(--g-ink);
+  background: var(--g-bg);
+}
+.badge.amber {
+  color: var(--a-ink);
+  background: var(--a-bg);
+}
+.badge.red {
+  color: var(--r-ink);
+  background: var(--red-bg);
+}
+
 .word.green {
   color: var(--g-ink);
 }
-.badge.amber,
 .word.amber {
   color: var(--a-ink);
 }
-.badge.red,
 .word.red {
   color: var(--r-ink);
 }
 
 .card-mean {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--muted);
 }
 
-.card-title {
+.card .card-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   line-height: 1.35;
-  margin: 9px 0 6px;
+  color: var(--white);
+  margin: 10px 0 6px;
 }
 
 .card p {
   font-size: 14.5px;
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0 0 6px;
 }
 
 .receipt {
   font-family: var(--font-hud);
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--muted);
-  margin-top: 11px;
-  padding-top: 9px;
-  border-top: 1px dashed var(--line);
-  letter-spacing: 0.02em;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  letter-spacing: 0;
   text-transform: none;
 }
 
+/* A safety card: the panel with a soft red glow in its top-left corner. */
 .card.is-red {
-  background: var(--r-bg);
+  background: var(--glow-red), var(--r-bg);
   border-color: var(--red-line);
-  --edge: var(--red);
 }
 
 .card.is-red p,
@@ -477,26 +558,23 @@ a {
   color: var(--red-text);
 }
 
-.card.is-red .card-from,
+.card.is-red .card-from {
+  color: var(--red);
+  border-color: var(--red-line);
+}
+
 .card.is-red .receipt,
 .card.is-red .card-mean {
   color: var(--red-muted);
   border-color: var(--red-line);
 }
 
-.card.is-green {
-  --edge: var(--green);
-}
-.card.is-amber {
-  --edge: var(--amber);
-}
-
 .needs {
   background: var(--needs);
   border: 1px solid var(--needs-line);
   border-radius: var(--r-btn);
-  padding: 9px 11px;
-  margin-top: 11px;
+  padding: 10px 12px;
+  margin-top: 12px;
   font-size: 14px;
   color: var(--text);
 }
@@ -505,19 +583,19 @@ a {
   color: var(--amber);
 }
 
-/* The one glowing action on a screen (S23). */
+/* The main action on a screen: a white button with near-black text (S23). */
 .main-action {
   width: 100%;
   min-height: 48px;
-  margin-top: 10px;
-  border-radius: var(--r-btn);
-  background: var(--accent);
-  color: var(--accent-ink);
+  margin-top: 12px;
+  border-radius: var(--r-pill);
+  background: var(--main);
+  color: var(--main-ink);
   font-family: var(--font-hud);
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  font-size: 14px;
+  font-size: 15px;
   box-shadow: var(--glow);
 }
 
@@ -525,26 +603,29 @@ a {
 
 .rail {
   margin: 0 12px;
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
-  padding: 10px 4px 11px;
+  padding: 12px 6px 13px;
+  box-shadow: var(--panel-shine);
 }
 
 .rail-top {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 10px 9px;
+  padding: 0 12px 10px;
   font-family: var(--font-hud);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--white);
 }
 
 .rail-top .xp {
   color: var(--muted);
+  font-weight: 400;
 }
 
 .rail ol {
@@ -602,7 +683,7 @@ a {
   width: 22px;
   height: 22px;
   clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
-  background: var(--surface);
+  background: var(--card);
 }
 
 .rail li.done .hex {
@@ -617,7 +698,7 @@ a {
 }
 
 .rail .nm {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text);
   margin-top: 5px;
   font-weight: 500;
@@ -626,16 +707,16 @@ a {
 
 .rail .st {
   font-family: var(--font-hud);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
+  font-size: 11.5px;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.2;
   margin-top: 2px;
 }
 
 .rail li.done .st {
-  color: var(--map-edge);
+  color: var(--violet-ink);
 }
 .rail li.now .st {
   color: var(--map-now);
@@ -655,9 +736,9 @@ a {
 
 .chips button {
   min-height: 44px;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: var(--r-chip);
-  background: var(--card);
+  background: var(--btn-bg);
   border: 1px solid var(--line-2);
   color: var(--text);
   font-size: 14.5px;
@@ -668,15 +749,15 @@ a {
    safety button is never quietly restyled into an ordinary chip. */
 .chips .safety-btn {
   min-height: 44px;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: var(--r-chip);
-  background: var(--red-card);
-  border: 1px solid var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-edge);
   color: var(--red);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
@@ -687,14 +768,17 @@ a {
   padding-bottom: 0;
 }
 
+/* Report a problem is the tenant's main action: the white button. */
 .chips .report-btn {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--main);
+  border-color: transparent;
+  color: var(--main-ink);
   font-family: var(--font-hud);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  font-size: 13px;
+  font-size: 14.5px;
+  box-shadow: var(--glow);
 }
 
 /* Every answer is a button (S10), big enough for a thumb. */
@@ -702,15 +786,15 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .answers button {
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: var(--r-chip);
-  background: var(--card-2);
-  border: 1px solid var(--accent);
+  background: var(--btn-bg);
+  border: 1px solid var(--line-2);
   color: var(--text);
   font-size: 14.5px;
   font-weight: 500;
@@ -744,15 +828,15 @@ a {
   flex: none;
   min-height: 44px;
   min-width: 64px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: var(--r-chip);
-  background: var(--red-card);
-  border: 1px solid var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-edge);
   color: var(--red);
   font-family: var(--font-hud);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
@@ -764,15 +848,15 @@ a {
   display: block;
   width: 100%;
   min-height: 48px;
-  margin-top: 10px;
-  border-radius: var(--r-btn);
-  background: var(--red-card);
-  border: 1px solid var(--red);
+  margin-top: 12px;
+  border-radius: var(--r-pill);
+  background: var(--red-bg);
+  border: 1px solid var(--red-edge);
   color: var(--red);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
@@ -803,15 +887,15 @@ a {
 }
 
 .compose {
-  margin: 2px 12px 0;
+  margin: 4px 12px 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
   padding: 6px 6px 6px 16px;
-  min-height: 54px;
+  min-height: 56px;
 }
 
 .compose input {
@@ -829,20 +913,24 @@ a {
 }
 
 .compose input:focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--violet);
   outline-offset: 4px;
 }
 
+/* The send button says Send in words, so it is as wide as its word (D1). */
 .send {
-  width: 44px;
+  width: auto;
+  min-width: 44px;
   height: 44px;
   flex: none;
-  border-radius: var(--r-btn);
-  background: var(--accent);
-  color: var(--accent-ink);
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--main);
+  color: var(--main-ink);
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 /* ---------- Plain pages ---------- */
@@ -850,64 +938,86 @@ a {
 .page {
   max-width: 760px;
   margin: 0 auto;
-  padding: 28px 16px 48px;
+  padding: 36px 16px 56px;
 }
 
 .page p {
-  color: var(--muted);
+  color: var(--body);
+}
+
+/* A big page heading: white fading to grey, as in the sample. */
+.page h1,
+.how-hero h1 {
+  width: fit-content;
+  max-width: 100%;
+  background: var(--head-fade);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: var(--title-track);
+}
+
+.page h1 {
+  font-size: 44px;
+  line-height: 1.05;
+  margin: 0 0 18px;
 }
 
 .seat-list {
   list-style: none;
-  margin: 18px 0 0;
+  margin: 20px 0 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .seat-list a {
   display: block;
-  padding: 14px 16px;
-  background: var(--card);
+  padding: 16px 18px;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
   text-decoration: none;
   color: var(--text);
 }
 
+.seat-list a:hover {
+  border-color: var(--line-2);
+}
+
 .page h2 {
-  font-size: 15px;
-  letter-spacing: var(--hud-track);
-  text-transform: var(--hud-case);
-  color: var(--accent);
+  font-size: 20px;
+  color: var(--white);
   margin: 28px 0 10px;
 }
 
 .lede {
-  font-size: 15.5px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .seat-name {
   display: block;
   font-family: var(--font-head);
   font-weight: var(--name-weight);
-  font-size: 15.5px;
-  letter-spacing: 0.03em;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--white);
 }
 
 .seat-line,
 .never {
   display: block;
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--body);
   margin-top: 5px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .never {
   color: var(--amber);
-  font-size: 12.5px;
+  font-size: 13.5px;
 }
 
 .plain-list {
@@ -916,14 +1026,14 @@ a {
   padding: 0;
   display: grid;
   gap: 8px;
-  color: var(--muted);
+  color: var(--body);
   font-size: 14.5px;
 }
 
 .plain-list b {
-  color: var(--accent);
+  color: var(--lit);
   font-family: var(--font-hud);
-  letter-spacing: 0.06em;
+  font-weight: 500;
   margin-right: 6px;
 }
 
@@ -932,8 +1042,8 @@ a {
   max-width: 92%;
   background: var(--ai-bg);
   border: 1px solid var(--ai-line);
-  border-radius: 10px 10px 10px 2px;
-  padding: 11px 14px;
+  border-radius: 18px 18px 18px 6px;
+  padding: 13px 16px;
 }
 
 .opening p {
@@ -949,7 +1059,7 @@ a {
 /* ---------- Building B card ---------- */
 
 .building-b {
-  margin-top: 22px;
+  margin-top: 24px;
 }
 
 .lead-list {
@@ -962,43 +1072,45 @@ a {
 }
 
 .lead-list li {
-  background: var(--surface);
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
-  padding: 10px 12px;
+  padding: 12px 14px;
   position: relative;
 }
 
 .lead-list li::before {
   counter-increment: lead;
-  content: counter(lead);
+  content: "#" counter(lead);
   font-family: var(--font-hud);
-  font-size: 11px;
-  color: var(--accent);
+  font-size: 12.5px;
+  color: var(--muted);
   position: absolute;
-  right: 10px;
-  top: 9px;
+  right: 12px;
+  top: 11px;
 }
 
 .lead-name {
   display: block;
-  font-weight: 600;
-  font-size: 14.5px;
-  padding-right: 18px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--white);
+  padding-right: 22px;
 }
 
 .lead-tier {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: 12.5px;
   color: var(--lit);
   margin: 4px 0 3px;
 }
 
 .lead-reason {
   display: block;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.45;
+  font-size: 13.5px;
+  color: var(--body);
+  line-height: 1.5;
 }
 
 .safety-details {
@@ -1009,15 +1121,15 @@ a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: var(--r-chip);
-  background: var(--red-card);
-  border: 1px solid var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-edge);
   color: var(--red);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   cursor: pointer;
   list-style: none;
@@ -1029,13 +1141,14 @@ a {
   padding: 0;
   display: grid;
   gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 13.5px;
+  color: var(--body);
 }
 
 .stop-list b {
   color: var(--red);
   font-family: var(--font-hud);
+  font-weight: 500;
   margin-right: 6px;
 }
 
@@ -1055,20 +1168,21 @@ a {
 .ai-line {
   display: block;
   margin: 8px 0 0;
-  padding: 7px 10px;
+  padding: 9px 12px;
   border: 1px solid var(--ai-line);
   border-radius: var(--r-btn);
   background: var(--ai-bg);
   color: var(--text);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
 .ai-tag {
   display: inline-block;
   margin-right: 8px;
   font-family: var(--font-hud);
-  font-size: 10.5px;
+  font-size: 12.5px;
+  font-weight: 500;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--lit);
@@ -1077,20 +1191,20 @@ a {
 .ai-banner,
 .ai-notice {
   display: block;
-  margin: 5px 0 0;
+  margin: 6px 0 0;
   font-family: var(--font-hud);
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--muted);
 }
 
 .ai-off {
   display: inline-block;
   margin-top: 8px;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border: 1px solid var(--line-2);
   border-radius: var(--r-chip);
   font-family: var(--font-hud);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--muted);
@@ -1110,26 +1224,27 @@ a {
 
 .desk-head {
   font-family: var(--font-head);
-  font-size: 16px;
-  letter-spacing: 0.04em;
-  color: var(--text);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--white);
   margin: 8px 2px 0;
 }
 
 .desk-sub {
   font-family: var(--font-hud);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 400;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
-  margin: 6px 2px 0;
+  color: var(--muted);
+  margin: 8px 2px 0;
 }
 
 .desk-status {
   margin: 0 2px;
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--body);
 }
 
 .job-rows {
@@ -1145,42 +1260,45 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 10px;
-  background: var(--surface);
+  padding: 10px 10px 10px 14px;
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.45;
+  color: var(--body);
 }
 
 .job-row.is-open {
-  border-color: var(--accent);
+  border-color: var(--violet-line);
 }
 
 .job-row b {
   font-family: var(--font-hud);
-  color: var(--accent);
+  font-weight: 500;
+  color: var(--white);
   margin-right: 6px;
 }
 
 .job-status {
   display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 
+/* Open is the main action on the job list: the white button. */
 .open-btn {
   flex: none;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 18px;
   border-radius: var(--r-chip);
-  background: var(--card-2);
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  background: var(--main);
+  border: 1px solid transparent;
+  color: var(--main-ink);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
@@ -1189,9 +1307,9 @@ a {
   margin: 8px 0 0;
   padding: 0;
   display: grid;
-  gap: 7px;
-  font-size: 13.5px;
-  line-height: 1.45;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
@@ -1204,20 +1322,20 @@ a {
 }
 
 .code-line {
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .lead-check,
 .lead-fix {
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .lead-k {
   display: block;
   font-family: var(--font-hud);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--lit);
 }
@@ -1226,27 +1344,29 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .tick-row button {
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 18px;
   border-radius: var(--r-chip);
-  background: var(--card-2);
+  background: var(--btn-bg);
   border: 1px solid var(--line-2);
   color: var(--text);
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .tick-row .found-btn {
-  border-color: var(--green);
+  background: var(--green-bg);
+  border-color: var(--green-line);
   color: var(--green);
 }
 
 .tick-row .not-btn {
-  border-color: var(--amber);
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
   color: var(--amber);
 }
 
@@ -1254,15 +1374,15 @@ a {
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
-  background: var(--surface);
-  color: var(--muted);
+  background: var(--btn-bg);
+  color: var(--body);
   font-family: var(--font-hud);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   cursor: pointer;
 }
@@ -1282,10 +1402,10 @@ a {
 }
 
 .step-list li {
-  padding: 9px 2px;
-  border-top: 1px dashed var(--line);
-  font-size: 13.5px;
-  line-height: 1.45;
+  padding: 10px 2px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .step-list p {
@@ -1294,16 +1414,17 @@ a {
 
 .step-no {
   font-family: var(--font-hud);
+  color: var(--muted);
   margin: 0 8px;
 }
 
 .step-who {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 .step-filled {
-  color: var(--accent);
+  color: var(--violet-ink);
 }
 
 .lock-line {
@@ -1311,13 +1432,14 @@ a {
   padding: 10px 12px;
   border: 1px solid var(--red-line);
   border-radius: var(--r-btn);
-  background: var(--r-bg);
+  background: var(--red-bg);
   color: var(--red-text);
   font-size: 14px;
 }
 
 /* The job's presses stay at the bottom of the screen while the job is in
-   progress, so Solved, Not solved and Safety are on screen on a phone. */
+   progress, so Solved, Not solved and Safety are on screen on a phone. Glass
+   that is solid enough to read over what scrolls under it. */
 .job-bar {
   position: sticky;
   bottom: 0;
@@ -1326,9 +1448,11 @@ a {
   flex-direction: column;
   gap: 10px;
   padding: 10px;
-  background: var(--surface);
+  background: var(--bar);
   border: 1px solid var(--line-2);
   border-radius: var(--r-panel);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .job-bar-buttons {
@@ -1340,31 +1464,33 @@ a {
 .job-bar-buttons button {
   min-height: 48px;
   padding: 0 10px;
-  border-radius: var(--r-btn);
-  background: var(--card-2);
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
   border: 1px solid var(--line-2);
   color: var(--text);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
 .job-bar-buttons .solved-btn {
-  border-color: var(--green);
+  background: var(--green-bg);
+  border-color: var(--green-line);
   color: var(--green);
 }
 
 .job-bar-buttons .not-solved-btn {
-  border-color: var(--amber);
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
   color: var(--amber);
 }
 
 /* Two classes, like the chip row's, so the bar's Safety stays red. */
 .job-bar-buttons .safety-btn {
-  background: var(--red-card);
-  border-color: var(--red);
+  background: var(--red-bg);
+  border-color: var(--red-edge);
   color: var(--red);
 }
 
@@ -1384,8 +1510,8 @@ a {
 .job-form input[type="number"] {
   min-height: 44px;
   min-width: 0;
-  padding: 0 10px;
-  background: var(--card);
+  padding: 0 12px;
+  background: var(--card-2);
   border: 1px solid var(--line-2);
   border-radius: var(--r-btn);
   color: var(--text);
@@ -1416,28 +1542,31 @@ a {
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 1px solid var(--line-2);
   border-radius: var(--r-chip);
+  background: var(--btn-bg);
   color: var(--text);
 }
 
 .job-form .submit {
   min-height: 48px;
-  border-radius: var(--r-btn);
-  background: var(--accent);
-  color: var(--accent-ink);
+  border-radius: var(--r-pill);
+  background: var(--main);
+  color: var(--main-ink);
   font-family: var(--font-hud);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
+  box-shadow: var(--glow);
 }
 
 /* ---------- Senior manager desk (C8a, S21) ---------- */
 
 /* The same phone-first rules as the technician's desk: one column, every
-   press at least 44 px tall, every picker as wide as its card and no wider. */
+   press at least 44 px tall, every picker as wide as its card and no wider.
+   Pickers are solid, so their open lists read on a dark screen. */
 .job-form textarea,
 .part-row textarea,
 .part-row select {
@@ -1445,8 +1574,8 @@ a {
   min-width: 0;
   max-width: 100%;
   min-height: 44px;
-  padding: 8px 10px;
-  background: var(--card);
+  padding: 9px 12px;
+  background: var(--card-2);
   border: 1px solid var(--line-2);
   border-radius: var(--r-btn);
   color: var(--text);
@@ -1487,12 +1616,12 @@ a {
   width: 22px;
   height: 22px;
   flex: none;
-  accent-color: var(--accent);
+  accent-color: var(--violet);
 }
 
 .card .safety-note,
 .card.is-red .safety-note {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--amber);
   margin: 0;
 }
@@ -1507,10 +1636,11 @@ a {
 }
 
 .fact-list li {
-  padding: 3px 9px;
+  padding: 3px 11px;
   border: 1px solid var(--line-2);
   border-radius: var(--r-chip);
-  background: var(--surface);
+  background: var(--panel-2);
+  color: var(--text);
   font-size: 13px;
 }
 
@@ -1529,14 +1659,14 @@ a {
 
 .flag {
   font-family: var(--font-hud);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--red);
-  border: 1px dashed var(--red);
-  border-radius: 4px;
-  padding: 1px 6px;
+  border: 1px dashed var(--red-edge);
+  border-radius: 6px;
+  padding: 1px 7px;
 }
 
 .parts {
@@ -1548,8 +1678,8 @@ a {
 .part-row {
   display: grid;
   gap: 8px;
-  padding: 10px;
-  background: var(--surface);
+  padding: 12px;
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--r-btn);
   min-width: 0;
@@ -1564,21 +1694,21 @@ a {
 
 .part-title {
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--text);
+  color: var(--white);
 }
 
 .part-label {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--lit);
 }
 
 .card .part-step {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 13.5px;
+  color: var(--body);
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -1586,22 +1716,22 @@ a {
 .confirm-btn {
   justify-self: start;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: var(--r-chip);
-  background: var(--card-2);
-  border: 1px solid var(--green);
+  background: var(--green-bg);
+  border: 1px solid var(--green-line);
   color: var(--green);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
 .card .saved-line,
 .card .send-line {
-  font-size: 13.5px;
-  color: var(--accent);
+  font-size: 14px;
+  color: var(--violet-ink);
   overflow-wrap: anywhere;
 }
 
@@ -1620,17 +1750,20 @@ a {
 
 .job-bar-buttons .log-btn,
 .job-bar-buttons .run-btn {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--violet-soft);
+  border-color: var(--violet-line);
+  color: var(--violet-ink);
 }
 
 .job-bar-buttons .help-btn {
-  border-color: var(--amber);
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
   color: var(--amber);
 }
 
 .job-bar-buttons .send-hq-btn {
-  border-color: var(--green);
+  background: var(--green-bg);
+  border-color: var(--green-line);
   color: var(--green);
 }
 
@@ -1641,7 +1774,7 @@ a {
 .decide {
   display: grid;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .decide-row {
@@ -1654,31 +1787,34 @@ a {
 .decline-btn,
 .rollback-btn {
   min-height: 48px;
-  padding: 0 12px;
-  border-radius: var(--r-btn);
-  background: var(--card-2);
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
   border: 1px solid var(--line-2);
   color: var(--text);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
 .approve-btn {
-  border-color: var(--green);
+  background: var(--green-bg);
+  border-color: var(--green-line);
   color: var(--green);
 }
 
 .decline-btn {
-  border-color: var(--amber);
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
   color: var(--amber);
 }
 
 .rollback-btn {
   justify-self: start;
-  border-color: var(--amber);
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
   color: var(--amber);
 }
 
@@ -1694,7 +1830,7 @@ a {
    a status colour always carries its word. The meter's tabs are only a view. */
 .card .version-line {
   font-family: var(--font-hud);
-  font-size: 13.5px;
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 
@@ -1702,12 +1838,12 @@ a {
   display: grid;
   gap: 6px;
   margin: 4px 0 10px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   border: 1px solid var(--needs-line);
   border-radius: var(--r-btn);
   background: var(--needs);
-  font-size: 13.5px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text);
 }
 
@@ -1732,23 +1868,23 @@ a {
 
 .meter-tab {
   min-height: 44px;
-  padding: 0 10px;
-  border-radius: var(--r-btn);
-  background: var(--card-2);
-  border: 1px solid var(--line-2);
-  color: var(--muted);
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  border: 1px solid var(--line);
+  color: var(--body);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   cursor: pointer;
 }
 
 .meter-tab[aria-selected="true"] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--btn-on);
+  border-color: var(--line-2);
+  color: var(--white);
 }
 
 .card .meter-kind {
@@ -1760,7 +1896,7 @@ a {
 }
 
 .meter-caught {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text);
 }
 
@@ -1770,14 +1906,14 @@ a {
   gap: 0;
   margin: 0;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .meter-rows dt,
 .meter-rows dd {
   margin: 0;
-  padding: 8px 0;
-  border-top: 1px dashed var(--line);
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
 }
 
 .meter-rows dt {
@@ -1788,12 +1924,12 @@ a {
 .meter-rows dd {
   text-align: right;
   font-family: var(--font-hud);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
 }
 
 .meter-rows .meter-cost {
-  color: var(--accent);
+  color: var(--violet-ink);
 }
 
 .card .meter-label {
@@ -1813,10 +1949,10 @@ a {
 @media (max-width: 560px) {
   .topbar {
     gap: 10px;
-    padding: 8px 12px;
+    padding: 10px 12px;
   }
   .topbar .brand {
-    font-size: 13px;
+    font-size: 15px;
   }
   .topbar nav {
     order: 3;
@@ -1831,13 +1967,14 @@ a {
   }
   .topbar nav a {
     flex: none;
-    min-height: 36px;
-    font-size: 13px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 13.5px;
   }
   .reset-btn {
     margin-left: auto;
     min-height: 44px;
-    font-size: 12.5px;
+    font-size: 13px;
   }
   /* The AI switch gets its own row under the seats, so the brand and Reset
      demo keep the first row. */
@@ -1855,16 +1992,19 @@ a {
   .chat-name {
     font-size: 17px;
   }
+  .page h1 {
+    font-size: 34px;
+  }
 }
 
 /* ---------- The judges' page /how (S22, C10a) ---------- */
 
 /* Why, what and how read as one column; the live wall below uses the full
-   width. Every colour is a token from :root. */
+   width. Every colour is a token from the token block. */
 .how {
   max-width: 1680px;
   margin: 0 auto;
-  padding: 28px 16px 56px;
+  padding: 36px 16px 56px;
 }
 
 .how-hero,
@@ -1879,95 +2019,100 @@ a {
 .how-hero > p,
 .how-section > p,
 .how-live-head > p {
-  color: var(--muted);
-  line-height: 1.55;
+  color: var(--body);
+  line-height: 1.6;
 }
 
-.how-kicker {
+/* A kicker is a label: muted, like the sample's. Two classes, so it outranks
+   the hero's and the sections' own paragraph colour (render check, 1280 px). */
+.how .how-kicker {
   font-family: var(--font-hud);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
+  color: var(--muted);
   margin: 0;
 }
 
 .how-hero h1 {
-  font-size: 34px;
-  line-height: 1.15;
-  margin: 8px 0 12px;
+  font-size: 44px;
+  line-height: 1.08;
+  margin: 10px 0 14px;
 }
 
 .how-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0;
+  margin: 18px 0;
 }
 
 .how-nav a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 1px solid var(--line-2);
   border-radius: var(--r-chip);
-  background: var(--card);
+  background: var(--btn-bg);
   color: var(--text);
   text-decoration: none;
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
 }
 
 .how-nav a:hover,
 .ring-seat:hover {
-  border-color: var(--accent);
+  border-color: var(--violet-line);
 }
 
 .how .how-roleplayed {
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--body);
   border-left: 2px solid var(--amber);
-  padding-left: 10px;
+  padding-left: 12px;
 }
 
 .how-section {
-  padding-top: 44px;
+  padding-top: 48px;
 }
 
 .how-section h2,
 .how-live-head h2 {
-  font-size: 26px;
-  line-height: 1.2;
-  margin: 6px 0 10px;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: var(--title-track);
+  color: var(--white);
+  margin: 6px 0 12px;
 }
 
 .how-sub {
-  font-family: var(--font-hud);
-  font-size: 14px;
-  letter-spacing: var(--hud-track);
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   text-transform: var(--hud-case);
-  color: var(--accent);
-  margin: 28px 0 10px;
+  color: var(--white);
+  margin: 30px 0 10px;
 }
 
 /* -- 1. Why -- */
 
 .why-headline {
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.3;
   margin: 14px 0 8px;
-  color: var(--text);
+  color: var(--white);
 }
 
 .why-patterns {
   margin: 0 0 14px;
   padding-left: 20px;
-  color: var(--muted);
+  color: var(--body);
   font-size: 15px;
   display: grid;
   gap: 4px;
@@ -1980,31 +2125,40 @@ a {
 .why-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 16px 0;
+  gap: 12px;
+  margin: 18px 0;
 }
 
 .why-stat {
-  background: var(--card);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  padding: 12px 14px;
+  box-shadow: var(--panel-shine);
+  padding: 16px 18px;
 }
 
+/* A big number, white fading to grey like the sample's stat. */
 .why-stat b {
   display: block;
-  font-family: var(--font-hud);
-  font-size: 30px;
-  line-height: 1.1;
-  color: var(--accent);
+  width: fit-content;
+  max-width: 100%;
+  font-family: var(--font-head);
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: var(--title-track);
+  line-height: 1.05;
+  background: var(--head-fade);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .why-stat span {
   display: block;
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--muted);
-  margin-top: 4px;
-  line-height: 1.4;
+  margin-top: 6px;
+  line-height: 1.45;
 }
 
 .why-calls {
@@ -2013,7 +2167,8 @@ a {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  background: var(--card);
+  background: var(--panel);
+  box-shadow: var(--panel-shine);
 }
 
 .why-call {
@@ -2021,18 +2176,18 @@ a {
   grid-template-columns: 62px 48px minmax(0, 1.3fr) minmax(0, 1.2fr) 150px;
   gap: 12px;
   align-items: baseline;
-  padding: 11px 14px;
+  padding: 13px 18px;
   font-size: 14px;
 }
 
 .why-call + .why-call {
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .why-date,
 .why-id {
   font-family: var(--font-hud);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .why-date {
@@ -2048,7 +2203,7 @@ a {
 }
 
 .why-fix {
-  color: var(--muted);
+  color: var(--body);
 }
 
 .why-status {
@@ -2059,7 +2214,7 @@ a {
 }
 
 .why-next {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -2088,8 +2243,8 @@ a {
 
 .meter-table th,
 .meter-table td {
-  padding: 8px 6px;
-  border-top: 1px dashed var(--line);
+  padding: 9px 6px;
+  border-top: 1px solid var(--line);
   text-align: right;
   vertical-align: top;
 }
@@ -2097,10 +2252,11 @@ a {
 .meter-table thead th {
   border-top: 0;
   font-family: var(--font-hud);
-  font-size: 11.5px;
+  font-size: 13px;
+  font-weight: 400;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
+  color: var(--muted);
 }
 
 .meter-table th[scope="row"],
@@ -2115,12 +2271,12 @@ a {
 
 .meter-table td {
   font-family: var(--font-hud);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
 }
 
 .meter-table .meter-cost-row td {
-  color: var(--accent);
+  color: var(--violet-ink);
 }
 
 /* -- 2. What -- */
@@ -2133,7 +2289,7 @@ a {
     "aom core hq"
     "b b b";
   gap: 12px;
-  margin: 16px 0 6px;
+  margin: 18px 0 6px;
 }
 
 .ring-tenant {
@@ -2156,15 +2312,17 @@ a {
 .ring-b,
 .brain-core {
   display: block;
-  padding: 14px 16px;
-  background: var(--card);
+  padding: 16px 18px;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
   color: var(--text);
   text-decoration: none;
   min-width: 0;
 }
 
+/* The one brain in the middle carries the sample's violet glow. */
 .brain-core {
   grid-area: core;
   display: flex;
@@ -2173,34 +2331,37 @@ a {
   justify-content: center;
   gap: 4px;
   text-align: center;
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--violet-line);
+  background: var(--glow-violet), var(--panel);
 }
 
 .brain-core b {
   font-family: var(--font-head);
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--white);
   margin-top: 6px;
 }
 
 .brain-core span {
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--body);
 }
 
 .ring-approves {
   display: inline-block;
   margin-top: 8px;
   font-family: var(--font-hud);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   color: var(--muted);
 }
 
 .ring-approves.has {
-  color: var(--accent);
+  color: var(--violet-ink);
 }
 
 .ring-b {
@@ -2220,25 +2381,26 @@ a {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  background: var(--card);
+  background: var(--panel);
+  box-shadow: var(--panel-shine);
 }
 
 .approval-list li {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 4px 12px;
-  padding: 11px 14px;
+  padding: 13px 18px;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--body);
 }
 
 .approval-list li + li {
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .approval-id {
   font-family: var(--font-hud);
-  color: var(--accent);
+  color: var(--lit);
 }
 
 .approval-what {
@@ -2254,7 +2416,7 @@ a {
 
 .approval-line {
   grid-column: 1 / -1;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .passes {
@@ -2263,7 +2425,7 @@ a {
   display: grid;
   gap: 6px;
   font-size: 14.5px;
-  color: var(--muted);
+  color: var(--body);
 }
 
 .passes b {
@@ -2307,16 +2469,16 @@ a {
 .how-steps b,
 .q-text {
   display: block;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--white);
 }
 
 .how-steps span,
 .q-answer {
   display: block;
-  color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.45;
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .how-questions {
@@ -2325,7 +2487,7 @@ a {
 }
 
 .how-safety .stop-list {
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 /* -- 4. The live chats -- */
@@ -2334,7 +2496,8 @@ a {
   margin-top: 56px;
 }
 
-/* The bar stays on screen while the wall scrolls past (S22), at every width. */
+/* The bar stays on screen while the wall scrolls past (S22), at every width:
+   glass solid enough to read over the chats under it. */
 .live-bar {
   position: sticky;
   top: 0;
@@ -2345,9 +2508,11 @@ a {
   gap: 10px;
   padding: 10px 12px;
   margin: 14px 0;
-  background: var(--surface);
+  background: var(--bar);
   border: 1px solid var(--line-2);
   border-radius: var(--r-panel);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .live-steps {
@@ -2359,15 +2524,15 @@ a {
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 1px solid var(--line-2);
-  border-radius: var(--r-btn);
-  background: var(--card);
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
   color: var(--text);
   font-family: var(--font-hud);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
   cursor: pointer;
 }
@@ -2380,25 +2545,28 @@ a {
   right: 0;
   top: calc(100% + 6px);
   margin: 0;
-  padding: 12px 14px 12px 36px;
+  padding: 14px 16px 14px 38px;
   max-height: 60vh;
   overflow-y: auto;
   display: grid;
-  gap: 9px;
+  gap: 10px;
   font-size: 14px;
   color: var(--text);
-  background: var(--surface);
+  background: var(--bar-solid);
   border: 1px solid var(--line-2);
-  border-radius: var(--r-panel);
+  border-radius: 18px;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
 
 .live-steps li b {
   display: block;
   font-family: var(--font-hud);
-  font-size: 11.5px;
+  font-size: 13px;
+  font-weight: 500;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
+  color: var(--lit);
 }
 
 .live-wall {
@@ -2416,9 +2584,10 @@ a {
   flex-direction: column;
   height: clamp(420px, calc(100vh - 84px), 780px);
   min-width: 0;
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
+  box-shadow: var(--panel-shine);
   overflow: hidden;
 }
 
@@ -2446,7 +2615,7 @@ a {
   flex: none;
   min-height: 44px;
   border-top: 1px solid var(--line);
-  font-size: 13px;
+  font-size: 14px;
   text-decoration: none;
 }
 
@@ -2469,19 +2638,20 @@ a {
 .close-line {
   font-family: var(--font-head);
   font-weight: var(--head-weight);
-  font-size: 22px;
+  font-size: 24px;
+  letter-spacing: var(--head-track);
   line-height: 1.35;
-  color: var(--text);
+  color: var(--white);
   margin: 0;
 }
 
 @media (max-width: 760px) {
   .how-hero h1 {
-    font-size: 26px;
+    font-size: 32px;
   }
   .how-section h2,
   .how-live-head h2 {
-    font-size: 22px;
+    font-size: 24px;
   }
   .why-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2536,18 +2706,18 @@ a {
     display: none;
   }
   .close-line {
-    font-size: 19px;
+    font-size: 20px;
   }
 }
 
 /* ---------- D1: plain words first, the code after as a grey tag ---------- */
 
 /* The code stays on screen, small and quiet, after its plain words. It never
-   takes the HUD capitals of the line it sits in, so it reads as the code. */
+   takes the label style of the line it sits in, so it reads as the code. */
 .code-tag {
   display: inline-block;
   vertical-align: 0.08em;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-family: var(--font-code);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.35;
@@ -2556,7 +2726,7 @@ a {
   color: var(--code-ink);
   background: var(--code-bg);
   border: 1px solid var(--code-line);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0 5px;
   white-space: nowrap;
 }
@@ -2565,35 +2735,24 @@ a {
   font-weight: 600;
 }
 
-/* The seat's plain name in the chat head, in the look the bare seat code had;
-   the seat code itself now sits after it as a grey tag (.seat-tag.code-tag). */
+/* The seat's plain name in the chat head, as a soft violet tag; the seat code
+   itself sits after it as a grey tag (.seat-tag.code-tag). */
 .seat-word {
   font-family: var(--font-hud);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 500;
   letter-spacing: var(--hud-track);
   text-transform: var(--hud-case);
-  color: var(--accent);
-  border: 1px solid var(--line-2);
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--bg);
-}
-
-/* A HUD label holding plain words reads a little bigger than a bare code did. */
-.card-from {
-  font-size: 12px;
-  line-height: 1.5;
+  color: var(--violet-ink);
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: var(--violet-soft);
 }
 
 .notice b .code-tag,
 .card-from .code-tag,
 .desk-sub .code-tag {
   margin-left: 2px;
-}
-
-.lead-tier {
-  font-size: 12px;
 }
 
 /* ---------- D1: loading you can see ---------- */
@@ -2651,10 +2810,10 @@ button:disabled {
   align-items: center;
   gap: 10px;
   margin: 0;
-  padding: 9px 14px;
+  padding: 10px 15px;
   background: var(--ai-bg);
   border: 1px solid var(--ai-line);
-  border-radius: 10px 10px 10px 2px;
+  border-radius: 18px 18px 18px 6px;
   font-size: 14px;
   color: var(--text);
 }
@@ -2734,23 +2893,17 @@ button:disabled {
 
 /* ---------- D1 review: plain words that explain ---------- */
 
-/* Labels a judge must read are body-sized, not tiny capitals. */
-.ai-tag,
-.lead-k,
-.notice b {
-  font-size: 12.5px;
-  letter-spacing: 0.03em;
-}
-
-.card-from {
-  font-size: 13px;
-}
-
 /* The AI switch's line on what its position does now. */
 .ai-switch-wrap {
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+/* The switch hugs its three positions instead of stretching to the hint's
+   width; on a phone it takes the whole row (below). */
+.ai-switch-wrap .ai-switch {
+  align-self: flex-start;
 }
 
 .ai-switch-hint {
@@ -2767,7 +2920,7 @@ button:disabled {
 .why-window,
 .how-pill {
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text);
   margin: 4px 2px 8px;
 }
@@ -2777,7 +2930,7 @@ button:disabled {
   display: block;
   margin-top: 6px;
   font-size: 13.5px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text);
   white-space: normal;
 }
@@ -2794,19 +2947,19 @@ button:disabled {
 .gloss {
   margin: 8px 0 0;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--red-muted);
 }
 
 /* What a tick just did, next to the list it changed. */
 .tick-done {
   margin: 2px 2px 8px;
-  padding: 8px 11px;
-  border: 1px solid var(--accent);
+  padding: 10px 12px;
+  border: 1px solid var(--violet-line);
   border-radius: var(--r-btn);
-  background: var(--accent-soft);
+  background: var(--violet-soft);
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text);
 }
 
@@ -2817,8 +2970,8 @@ button:disabled {
 
 .part-step-lead {
   display: block;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--white);
 }
 
 .demo-words {
@@ -2826,39 +2979,40 @@ button:disabled {
   flex-direction: column;
   gap: 6px;
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text);
 }
 
 .demo-words-btn {
   align-self: flex-start;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: var(--r-chip);
   border: 1px solid var(--line-2);
-  background: var(--card);
-  color: var(--accent);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-weight: 500;
 }
 
 .demo-words-line {
   display: block;
   margin-top: 6px;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--muted);
 }
 
 /* HQ, once approved: Building B's new first cause, the payoff of the story. */
 .payoff-line {
   margin: 6px 2px;
-  padding: 8px 11px;
-  border: 1px solid var(--green);
+  padding: 10px 12px;
+  border: 1px solid var(--green-line);
   border-radius: var(--r-btn);
   background: var(--g-bg);
   color: var(--g-ink);
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .payoff-line a {
@@ -2866,18 +3020,9 @@ button:disabled {
   font-weight: 600;
 }
 
-/* The send button says Send in words, so it is as wide as its word. */
-.send {
-  width: auto;
-  min-width: 44px;
-  padding: 0 14px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
 /* Home: what Pill Desk does, and the way in for a judge, first. */
-.home-what {
-  font-size: 17px;
+.page .home-what {
+  font-size: 18px;
   color: var(--text);
 }
 
