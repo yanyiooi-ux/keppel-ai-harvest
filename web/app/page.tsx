@@ -4,6 +4,10 @@ import { openingLineFor } from "../lib/seat-opening";
 import { PILL_MEANS, plainOpening, seatLabelWords } from "../lib/plain-words";
 import { BuildingBCard } from "./components/BuildingBCard";
 import { STORY_LINK_WORDS } from "../lib/story";
+import { FLOW_LINK_WORDS } from "../lib/flow-words";
+import { VIDEO_TITLE } from "../lib/video-words";
+import { videoOnDisk } from "../lib/video";
+import { VideoPlayer } from "./components/VideoPlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +33,10 @@ export default function Home() {
       <p className="how-link story-link">
         Short on time? <Link href="/demo">{STORY_LINK_WORDS}</Link>. The real app plays the whole demo by itself.
       </p>
+      <p className="how-link flow-link">
+        Want the whole map? <Link href="/flow">{FLOW_LINK_WORDS}</Link>. Or <a href="#video">{VIDEO_TITLE.toLowerCase()}</a>{" "}
+        further down.
+      </p>
       <p className="lede">
         Five people share one rule book, each in their own chat with Pip. Pick the seat you want to sit in. {PILL_MEANS}{" "}
         Every building, tenant, ticket and signature here is made up for the demo, and every seat is role-played.
@@ -49,6 +57,8 @@ export default function Home() {
       </ul>
 
       <BuildingBCard />
+
+      <VideoPlayer available={videoOnDisk()} />
 
       <p className="how-link">
         <Link href="/how">How this works, for judges</Link>

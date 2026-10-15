@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { CodeTag, Plain } from "../Plain";
-import { sourceWords, statusWord, tierWord } from "../../../lib/plain-words";
+import { aomWords, sourceWords, statusWord, tierWord } from "../../../lib/plain-words";
 import type {
   TechnicianDesk as Desk,
   DeskCard,
@@ -224,7 +224,7 @@ function DeskCardBody({ card }: { card: DeskCard }) {
     <ChatCard
       from={card.from}
       colour={card.colour ?? "none"}
-      colourWord={card.colourWord}
+      colourWord={card.colourWord ? aomWords(card.colourWord) : card.colourWord}
       title={card.title}
       body={card.body && card.colour !== "red" ? sourceWords(card.body) : card.body}
       call={card.call}
@@ -316,7 +316,7 @@ export function StepList({ steps }: { steps: DeskStep[] }) {
     <ol className="step-list">
       {steps.map((step) => (
         <li key={step.step}>
-          <span className={`badge ${step.colour}`}>{step.colourWord}</span>
+          <span className={`badge ${step.colour}`}>{aomWords(step.colourWord)}</span>
           <b className="step-no">{`Step ${step.step}`}</b>
           <span className="step-who">{step.who}</span>
           <p>{step.text}</p>

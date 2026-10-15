@@ -1,7 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
+import { FLOW_LINK_WORDS } from "../../../lib/flow-words";
 import { PipAvatar } from "../PipAvatar";
 import { CodeTag, Plain } from "../Plain";
-import { APPROVAL_WHAT, PILL_MEANS, approvalWord, pipNeverLine, rankStepWords, type ApprovalId } from "../../../lib/plain-words";
+import { APPROVAL_WHAT, PILL_MEANS, aomWords, approvalWord, pipNeverLine, rankStepWords, type ApprovalId } from "../../../lib/plain-words";
 import type { HowView, WhyStory, WhyCall } from "../../../lib/how";
 import type { ImpactMeter } from "../../../lib/impact";
 import { STORY_LINK_WORDS } from "../../../lib/story";
@@ -55,7 +56,7 @@ function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
-export function HowStory({ view }: { view: HowView }) {
+export function HowStory({ view, video }: { view: HowView; video?: ReactNode }) {
   return (
     <>
       <header className="how-hero">
@@ -63,6 +64,9 @@ export function HowStory({ view }: { view: HowView }) {
         <h1>Fix it faster, so the same spot stops calling</h1>
         <p className="how-story-link">
           <a href="/demo">{STORY_LINK_WORDS}</a>. The real app plays the whole demo by itself, one seat at a time.
+        </p>
+        <p className="how-story-link how-flow-link">
+          <a href="/flow">{FLOW_LINK_WORDS}</a>: who presses what, in what order, and who is told next.
         </p>
         <p className="lede">
           {`Pill Desk gives ${view.seats.length} people their own chat with Pip, all on one shared rule book: the signed rules, a list of likely causes and past cases. Code ranks and routes, the AI only puts things into plain words, and people approve only ${view.approvals.length} kinds of decision.`}
@@ -76,6 +80,8 @@ export function HowStory({ view }: { view: HowView }) {
         </nav>
         <p className="how-roleplayed">{view.rolePlayed}</p>
       </header>
+
+      {video ?? null}
 
       <WhySection story={view.why} meter={view.meter} />
       <WhatSection view={view} />
@@ -260,8 +266,8 @@ function WhatSection({ view }: { view: HowView }) {
               <b>{approvalWord(a.id)}</b> <CodeTag code={a.id} />
               <span className="approval-sub">{a.what}</span>
             </span>
-            <span className="approval-who">{a.who}</span>
-            <span className="approval-where">{a.where}</span>
+            <span className="approval-who">{aomWords(a.who)}</span>
+            <span className="approval-where">{aomWords(a.where)}</span>
             {a.line ? <span className="approval-line">{a.line}</span> : null}
           </li>
         ))}
@@ -275,7 +281,7 @@ function WhatSection({ view }: { view: HowView }) {
       <ol className="passes" data-testid="how-passes">
         {view.passes.map((p) => (
           <li key={`${p.from}-${p.to}`}>
-            <b>{`${p.from} to ${p.to}`}</b>
+            <b>{aomWords(`${p.from} to ${p.to}`)}</b>
             <span>{p.what}</span>
           </li>
         ))}
@@ -283,7 +289,7 @@ function WhatSection({ view }: { view: HowView }) {
       <p>
         Code also routes the notices: warnings about a spot that keeps calling (&quot;speak first&quot;) and notes when
         Pip is not sure (&quot;low confidence&quot;) go to the senior manager. Every red stop alert goes to the senior
-        manager and the building manager (AOM).
+        manager and the Asset Operations Manager.
       </p>
     </section>
   );
@@ -362,7 +368,7 @@ function HowSection({ view }: { view: HowView }) {
           <li key={q.n}>
             <span className="q-text">{q.question}</span>
             <span className="q-answer">
-              <Plain text={q.answer} />
+              <Plain text={aomWords(q.answer)} />
             </span>
           </li>
         ))}

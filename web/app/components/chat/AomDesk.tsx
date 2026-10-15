@@ -58,7 +58,7 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
     mine && desk.charges.find((c) => c.open && (c.id === asked || (!asked && c.jobId === mine.job)))?.id;
 
   return (
-    <section className="desk" aria-label="AOM desk">
+    <section className="desk" aria-label="Asset Operations Manager desk">
       {mine && !pressedCard ? <Refusal message={mine.message} /> : null}
 
       <h4 className="desk-sub">Impact meter</h4>

@@ -3619,3 +3619,524 @@ button:disabled {
     font-size: 14px;
   }
 }
+
+/* ---------- How a job flows at /flow, and the video player (D4) ---------- */
+
+.page .flow-link {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+
+.story-flow-link {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--body);
+}
+
+.flow-link a,
+.how-flow-link a,
+.story-flow-link a {
+  font-weight: 500;
+}
+
+/* The video: a frosted panel around the browser's own player. */
+.video-box {
+  margin: 22px 0;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
+  scroll-margin-top: 16px;
+}
+
+/* On /how the player sits in the same 980 px column as the hero (D4). */
+.how > .video-box {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.video-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: var(--white);
+}
+
+.video-line {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: var(--bg);
+}
+
+.video-missing {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-btn);
+  font-size: 15px;
+  color: var(--body);
+}
+
+.flow {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 16px 64px;
+}
+
+.flow-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.flow-kicker {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.flow-hero h1 {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 14px;
+  font-size: 44px;
+  line-height: 1.08;
+  background: var(--head-fade);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: var(--title-track);
+}
+
+.flow-hero .lede {
+  max-width: 760px;
+  margin: 0 0 8px;
+  color: var(--body);
+}
+
+.flow-note {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--body);
+}
+
+.flow-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.flow-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
+}
+
+.flow-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.flow-toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.flow-section {
+  margin-top: 44px;
+  scroll-margin-top: 16px;
+}
+
+.flow-section h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: var(--white);
+}
+
+.flow-lead {
+  max-width: 760px;
+  margin: 0 0 16px;
+  color: var(--body);
+}
+
+.flow-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-seats li {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--violet-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
+}
+
+.flow-seats b {
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.flow-seats span {
+  font-size: 14px;
+  color: var(--body);
+}
+
+.flow-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
+  overflow: hidden;
+}
+
+.flow-step {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.flow-step:first-child {
+  border-top: 0;
+}
+
+.flow-who {
+  align-self: start;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--violet-line);
+  border-radius: var(--r-btn);
+  background: var(--violet-soft);
+  color: var(--violet-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.flow-who small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--body);
+}
+
+.flow-step.is-bar .flow-who {
+  background: var(--panel-2);
+  border-color: var(--line-2);
+  color: var(--text);
+}
+
+/* The safety step: red, with its word ("safety") under the seat. */
+.flow-step.is-stop .flow-who {
+  background: var(--red-bg);
+  border-color: var(--red-line);
+  color: var(--red);
+}
+
+.flow-do p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--body);
+}
+
+.flow-do .flow-next {
+  position: relative;
+  margin: 8px 0 0;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.flow-do .flow-next::before {
+  content: "\2192";
+  position: absolute;
+  top: 0;
+  left: 2px;
+  font-weight: 700;
+  color: var(--violet);
+}
+
+/* A button's name, drawn like the app's quiet glass buttons. */
+.flow-press {
+  display: inline-block;
+  margin: 2px 3px;
+  padding: 1px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.flow-typed {
+  color: var(--white);
+}
+
+.flow-approval {
+  display: inline-block;
+  margin: 2px 6px;
+  padding: 1px 9px;
+  border: 1px solid var(--amber-line);
+  border-radius: var(--r-pill);
+  background: var(--amber-bg);
+  color: var(--amber);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.flow-tree {
+  padding: 20px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
+}
+
+.flow-root {
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.flow-node {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-btn);
+  background: var(--panel-2);
+  text-align: center;
+}
+
+.flow-node b {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.flow-node > span {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--body);
+}
+
+.flow-node .flow-approval {
+  margin: 2px 0;
+}
+
+.flow-node.is-seat {
+  background: var(--violet-soft);
+  border-color: var(--violet-line);
+}
+
+.flow-node.is-seat b {
+  color: var(--violet-ink);
+}
+
+.flow-node.is-ok {
+  background: var(--green-bg);
+  border-color: var(--green-line);
+}
+
+.flow-node.is-ok b {
+  color: var(--green);
+}
+
+.flow-node.is-approval {
+  background: var(--amber-bg);
+  border-color: var(--amber-line);
+}
+
+.flow-node.is-approval b {
+  color: var(--amber);
+}
+
+.flow-down {
+  padding: 6px 0;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.flow-branches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.flow-branch {
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-when {
+  min-height: 40px;
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.flow-tree-note {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+.flow-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-card {
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--panel-shine);
+}
+
+.flow-card .flow-approval {
+  margin: 0 0 8px;
+}
+
+.flow-card h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--white);
+}
+
+.flow-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.flow-know {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-know li {
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--body);
+}
+
+.flow-know b {
+  font-weight: 500;
+  color: var(--white);
+}
+
+/* Safety: the red card with its soft glow, as on the seats. */
+.flow-stop {
+  padding: 16px 18px;
+  background: var(--glow-red), var(--r-bg);
+  border: 1px solid var(--red-line);
+  border-radius: var(--r-card);
+  color: var(--red-text);
+}
+
+.flow-stop .badge.red {
+  background: linear-gradient(var(--red-bg), var(--red-bg)), var(--red-card);
+}
+
+.flow-stop p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.flow-rule30 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.flow-foot {
+  margin-top: 48px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .flow-hero h1 {
+    font-size: 32px;
+  }
+  .flow-step {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 14px;
+  }
+  .flow-who {
+    justify-self: start;
+  }
+  .flow-branches,
+  .flow-rule30 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flow-when {
+    min-height: 0;
+    text-align: left;
+  }
+  .flow-press {
+    white-space: normal;
+  }
+  .video-box {
+    padding: 14px;
+  }
+}

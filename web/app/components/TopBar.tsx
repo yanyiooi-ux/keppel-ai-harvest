@@ -40,9 +40,7 @@ export function TopBar({ aiMode }: { aiMode: AiMode }) {
 
   return (
     <header className="topbar">
-      <div className="brand">
-        Pill Desk <small>working name</small>
-      </div>
+      <div className="brand">Pill Desk</div>
       <nav aria-label="Seat switcher">
         {SEATS.map((seat) => (
           <Link

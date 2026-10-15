@@ -91,3 +91,5 @@ web/data/state.test-*.json
 web/data/state.json.*.tmp
 web/data/runtime/
 web/data/state.test-*.json.runtime/
+# The demo video the player plays (D4): put it there by hand, never commit it (see web/public/media/README.md).
+web/public/media/*.mp4

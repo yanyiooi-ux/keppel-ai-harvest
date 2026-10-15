@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { StoryPlayer } from "../components/story/StoryPlayer";
+import { FLOW_LINK_WORDS } from "../../lib/flow-words";
 import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { openingLineFor } from "../../lib/seat-opening";
 import { SEAT_IDS } from "../../lib/permissions";
@@ -30,6 +32,9 @@ export default async function Demo({
       <header className="story-head">
         <p className="how-kicker">Pill Desk · story mode</p>
         <h1>{`One too-cold call, fixed for good, in ${STORY.length} steps`}</h1>
+        <p className="story-flow-link">
+          <Link href="/flow">{FLOW_LINK_WORDS}</Link>: every button, in order, and who is told next.
+        </p>
       </header>
       <StoryPlayer
         aiMode={aiMode}

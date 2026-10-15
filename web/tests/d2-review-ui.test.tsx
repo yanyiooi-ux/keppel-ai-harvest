@@ -280,7 +280,7 @@ describe("D2 review: plain words for what a press did", () => {
       expect(locked, stop.id).toEqual(words.includes("Open jobs in this zone") ? ["same-zone"] : ["same-zone", "same-floor"]);
       expect(words, stop.id).toContain(locked.length === 1 ? "Open jobs in this zone" : "Open jobs on this floor");
       expect(alerted, stop.id).toEqual(["senior-manager", "aom"]);
-      expect(words, stop.id).toContain("Pip alerted the senior manager and the building manager.");
+      expect(words, stop.id).toContain("Pip alerted the senior manager and the Asset Operations Manager.");
     }
   });
 

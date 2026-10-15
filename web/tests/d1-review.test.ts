@@ -130,7 +130,7 @@ describe("D1 review: words that explain", () => {
   it("the seat labels and the opening lines read in plain words; the labels and lines themselves are left alone", () => {
     expect(seatLabelWords(SEAT_LABELS.hq)).toBe("Head office (HQ), owner of the rule book: Keppel Technical Services lead (role-played)");
     expect(seatLabelWords(SEAT_LABELS["aom-tower-a"])).toBe(
-      "Building manager (AOM), Tower A: Keppel Asset Operations Manager (role-played)"
+      "Asset Operations Manager, Tower A: Keppel (role-played)"
     );
     for (const seat of SEAT_IDS) expect(seatLabelWords(SEAT_LABELS[seat])).not.toMatch(/pill owner|^AOM,/);
     expect(SEAT_LABELS.hq).toContain("HQ pill owner");

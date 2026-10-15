@@ -45,7 +45,7 @@ export type StoryPress =
       payload?: Record<string, unknown>;
       /**
        * Filled in from what the app said, never made up: "open-charge" is the
-       * building manager's open charge request on the job; "red-stop" is the
+       * Asset Operations Manager's open charge request on the job; "red-stop" is the
        * stop the typed words brought up.
        */
       needs?: "open-charge" | "red-stop";
@@ -96,7 +96,7 @@ const PRECOOL = "Morning start-up runs too cold";
 const MIN_AIRFLOW = "Core box held at minimum airflow";
 const THERMOSTAT = "Thermostat in the wrong spot after a fit-out";
 
-/** The building manager's reason, word for word as demo-flow types it. */
+/** The Asset Operations Manager's reason, word for word as demo-flow types it. */
 const CHARGE_REASON = "Fit-out work is the tenant's own";
 
 /** How the list re-ranked, shown above it after each tick (TechnicianDesk's RerankList). */
@@ -289,7 +289,7 @@ export const STORY: StoryStep[] = [
     seat: "aom-tower-a",
     title: "Who pays?",
     caption:
-      "The building manager sees what the repeat calls have cost: S$600 so far. Moving the thermostat is work on the tenant's renovation, so the manager decides the tenant pays a made-up S$350.",
+      "The Asset Operations Manager sees what the repeat calls have cost: S$600 so far. Moving the thermostat is work on the tenant's renovation, so the manager decides the tenant pays a made-up S$350.",
     presses: [
       {
         kind: "action",
@@ -310,7 +310,7 @@ export const STORY: StoryStep[] = [
     seat: "tenant",
     title: "Safety comes first",
     caption:
-      'Safety always comes first. Typing "water dripping near the lights" brings up the stop in the building\'s own approved words. No AI is used. One press raises it. Open jobs on that floor are locked, and Pip alerts the senior manager and the building manager.',
+      'Safety always comes first. Typing "water dripping near the lights" brings up the stop in the building\'s own approved words. No AI is used. One press raises it. Open jobs on that floor are locked, and Pip alerts the senior manager and the Asset Operations Manager.',
     presses: [
       {
         kind: "chat",
@@ -438,7 +438,7 @@ export interface StoryMemo {
   raise?: { stopId: string; jobId?: string };
 }
 
-const NO_CHARGE = "There is no charge request waiting for the building manager, so this step cannot go on.";
+const NO_CHARGE = "There is no charge request waiting for the Asset Operations Manager, so this step cannot go on.";
 const NO_STOP = "Pip showed no safety stop to raise, so this step cannot go on.";
 const NO_REPORT = "The tenant's report did not make a job, so the answers have nowhere to go.";
 

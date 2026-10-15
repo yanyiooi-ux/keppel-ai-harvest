@@ -55,7 +55,7 @@ export const RULE_WORDS: Record<string, Grounded> = {
   "TS-CC-22": { word: "More dial turns need the chief engineer's yes", key: "setpoint change" },
   "TS-CC-23": { word: "Write everything on the ticket", key: "ticket" },
   "TS-CC-24": { word: "No simple fault, or the renovation: send it up", key: "escalate" },
-  "TS-CC-25": { word: "Money questions go to the building manager", key: "money" },
+  "TS-CC-25": { word: "Money questions go to the Asset Operations Manager", key: "money" },
   "TS-CC-26": { word: "Out of scope: stop and send it up", key: "out of scope" },
   // No fixed word for TS-CC-27 or later (D1 review): draft.ts gives that id to
   // whatever rule the senior manager writes first, so a fixed meaning could be
@@ -99,7 +99,7 @@ export const PUT_FIRST_WORDS: Record<number, Grounded> = {
   22: { word: "Check for drafts near the lift first", key: "drafts" },
   23: { word: "Check the sun, the glass and the blinds first", key: "blinds" },
   29: { word: "Ask for an air balancing check first", key: "air balancing" },
-  30: { word: "Let the building manager decide money first", key: "money" },
+  30: { word: "Let the Asset Operations Manager decide money first", key: "money" },
 };
 
 /** "Block step n" in plain words: the code menu allows block on the dial turn (step 25) only. */
@@ -157,7 +157,7 @@ export const APPROVAL_WORDS: Record<ApprovalId, string> = {
   A1: "Experts signed version 1",
   A2: "Head office approves a new fix",
   A3: "Head office approves outside help or money",
-  A4: "Building manager decides who pays",
+  A4: "Asset Operations Manager decides who pays",
 };
 
 /** What each approval is about, short, for "Approves ..." lines. */
@@ -185,13 +185,28 @@ export function gateWord(id: string): string {
 
 // ---- Seats ----
 
+/**
+ * YY, 16 Oct (D4): the AOM seat reads "Asset Operations Manager" wherever a
+ * person reads it. The seat id aom-tower-a and the engine's own lines stay.
+ */
+export const AOM_NAME = "Asset Operations Manager";
+
 export const SEAT_WORDS: Record<SeatId, string> = {
   tenant: "Tenant",
   technician: "Technician",
   "senior-manager": "Senior manager",
   hq: "Head office (HQ)",
-  "aom-tower-a": "Building manager (AOM)",
+  "aom-tower-a": AOM_NAME,
 };
+
+/**
+ * A line from the engine or a view with the AOM's short name read as the full
+ * name: "AOM Tower A: Decide charge" reads "Asset Operations Manager, Tower A:
+ * Decide charge". Render-time only; the line itself is left as it is.
+ */
+export function aomWords(text: string): string {
+  return text.replace(/\bAOM,? Tower A\b/g, `${AOM_NAME}, Tower A`).replace(/\bAOM\b/g, AOM_NAME);
+}
 
 // ---- Facts (S5) ----
 
@@ -333,12 +348,12 @@ export function buildingBLine(version: string, firstCause: string | null | undef
  * The same rules as locksForStop and alertsForStop (safety.ts), checked by a
  * test: RS-10 locks nothing and alerts no one; a button RS-08 locks its zone;
  * every other stop locks the open jobs on its floor and alerts the senior
- * manager and the building manager. The stop's own words never change.
+ * manager and the Asset Operations Manager. The stop's own words never change.
  */
 export function raisedWords(stopId: string): string {
   if (stopId === "RS-10") return "This stop locks no work and sends no alert.";
   const where = stopId === "RS-08" ? "in this zone" : "on this floor";
-  return `One press raised this stop. Open jobs ${where} are locked until someone clears it. Pip alerted the senior manager and the building manager.`;
+  return `One press raised this stop. Open jobs ${where} are locked until someone clears it. Pip alerted the senior manager and the ${AOM_NAME}.`;
 }
 
 /** On a typed-words card whose stop was raised after it, in place of its Raise this stop button. */
@@ -364,7 +379,8 @@ export function plainOpening(text: string): string {
 export function seatLabelWords(label: string): string {
   return label
     .replace(/^HQ pill owner:/, "Head office (HQ), owner of the rule book:")
-    .replace(/^AOM, Tower A:/, "Building manager (AOM), Tower A:");
+    .replace(/^AOM, Tower A: Keppel Asset Operations Manager/, `${AOM_NAME}, Tower A: Keppel`)
+    .replace(/^AOM, Tower A:/, `${AOM_NAME}, Tower A:`);
 }
 
 /** The AI switch's three positions in plain words (S15's Live, Replay, Off). */
@@ -400,7 +416,7 @@ export const GLOSSARY: Record<string, string> = {
   FCU: "fan coil unit",
   BMS: "building control system",
   FM: "facilities management",
-  AOM: "building manager",
+  AOM: "Asset Operations Manager",
   SCDF: "Singapore's fire and ambulance service",
   CERT: "the building's own emergency response team",
 };
