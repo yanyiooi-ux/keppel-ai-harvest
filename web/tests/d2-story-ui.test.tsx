@@ -134,7 +134,7 @@ function fakeServer(options: ServerOptions = {}) {
   };
 }
 
-const FAST = { paceMs: 0, minPendingMs: 0 };
+const FAST = { paceMs: 0, minPendingMs: 0, lookMs: 0 };
 
 function player(server: ReturnType<typeof fakeServer>, props: Partial<Parameters<typeof StoryPlayer>[0]> = {}) {
   return render(
@@ -338,7 +338,7 @@ describe("D2: Story mode plays the real app by itself", () => {
     const server = fakeServer();
     player(server, { autoplay: false });
     expect(screen.getByText(/real app playing itself, not a video/)).toBeTruthy();
-    expect(screen.getByText(/real Hunyuan answers saved earlier/)).toBeTruthy();
+    expect(screen.getByText(/real answers from Tencent's Hunyuan AI, saved earlier/)).toBeTruthy();
   });
 
   it("moves the AI switch to Saved answers once if it is elsewhere, and never loops", () => {

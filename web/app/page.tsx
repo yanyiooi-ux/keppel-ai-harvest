@@ -30,7 +30,7 @@ export default function Home() {
         Short on time? <Link href="/demo">{STORY_LINK_WORDS}</Link>. The real app plays the whole demo by itself.
       </p>
       <p className="lede">
-        Five people share one brain, each in their own chat with Pip. Pick the seat you want to sit in. {PILL_MEANS}{" "}
+        Five people share one rule book, each in their own chat with Pip. Pick the seat you want to sit in. {PILL_MEANS}{" "}
         Every building, tenant, ticket and signature here is made up for the demo, and every seat is role-played.
       </p>
 

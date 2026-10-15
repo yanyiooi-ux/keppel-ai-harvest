@@ -3,7 +3,7 @@ import { currentAiMode } from "../../lib/ai-mode-cookie";
 import { loadAndCheckPill } from "../../lib/pill";
 import { safetyList, safetyCardForStop } from "../../lib/safety";
 import { buildingBNotices } from "../../lib/hq-desk";
-import { BUILDING_B_INTRO, noticeWord, receiptWords, tierWord } from "../../lib/plain-words";
+import { BUILDING_B_INTRO, buildingBLine, noticeWord, receiptWords, tierWord } from "../../lib/plain-words";
 import { CodeTag, Plain } from "./Plain";
 import * as memory from "../../lib/memory";
 import type { MemoryState } from "../../lib/memory";
@@ -19,7 +19,7 @@ export function buildingBAlerts(state: MemoryState) {
 }
 
 /**
- * Building B (S21). Not a seat: it is the proof that the same brain is running
+ * Building B (S21). Not a seat: it is the proof that the same rule book is running
  * somewhere else. It shows its own live version and ticket 2401's first three
  * live leads, ranked by the same rank.ts the technician seat uses, so a judge
  * can see one pill serving two buildings.
@@ -46,11 +46,13 @@ export async function BuildingBCard() {
 
   // A saved AI answer under a reason counts as shown, not as a new call (D1 review).
   const savedShown = worded.items.filter(({ wording }) => Boolean(wording.banner)).length;
+  // Why the card is there, then what a new version changed here (D2 review).
+  const line = buildingBLine(version, worded.items[0]?.lead.label);
 
   return (
     <article className="card building-b">
-      <div className="card-from">Another building, same brain</div>
-      <p className="card-intro">{BUILDING_B_INTRO}</p>
+      <div className="card-from">Another building, same rule book</div>
+      <p className={line === BUILDING_B_INTRO ? "card-intro" : "card-intro payoff-line"}>{line}</p>
       <p className="card-title">Building B, Level 12 (made up)</p>
       <p>
         Live version v{version}. Ticket {job.id}, {job.tenant}: {job.complaint},{" "}

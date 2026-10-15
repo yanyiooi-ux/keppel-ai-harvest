@@ -107,7 +107,7 @@ function renderHq(view: SeatView, action: (body: Body | null) => unknown = () =>
 describe("C8b: the A1 card and the live versions", () => {
   it("the A1 card shows v1.0 signed by two senior experts (role-played), with each building's live version", async () => {
     renderHq(hqView());
-    const a1 = (await screen.findByText("Version 1 of the brain")).closest("article")!;
+    const a1 = (await screen.findByText("Version 1 of the rule book")).closest("article")!;
     expect(within(a1 as HTMLElement).getByText("v1.0 signed by two senior experts (role-played)")).toBeTruthy();
     expect(within(a1 as HTMLElement).getByText("Signed")).toBeTruthy();
     expect(screen.getByText("Tower A: v1.0")).toBeTruthy();
@@ -199,7 +199,7 @@ describe("C8b: after Approve", () => {
     const calls = renderHq(view);
     const list = await screen.findByTestId("hq-versions");
     const rows = within(list).getAllByRole("listitem").map((li) => li.textContent ?? "");
-    expect(rows[0]).toContain(`v1.1 · ${view.hq!.versions[0].hash7} · approved by HQ pill owner (role-played) · parent v1.0`);
+    expect(rows[0]).toContain(`v1.1 · ${view.hq!.versions[0].hash7} · approved by head office, owner of the rule book (role-played) · parent v1.0`);
     expect(rows[0]).toContain("Live");
     expect(rows[1]).toContain("v1.0 · ");
     expect(rows[1]).toContain("signed by two senior experts (role-played)");

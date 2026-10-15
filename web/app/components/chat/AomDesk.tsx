@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { CodeTag, Plain } from "../Plain";
-import { SPEAK_FIRST_MEANS, noticeWord } from "../../../lib/plain-words";
+import { SPEAK_FIRST_MEANS, noticeWord, ruleBookWords } from "../../../lib/plain-words";
 import type { RefusedPress } from "./SeniorManagerDesk";
 import type { AomDesk as AomDeskView, AomChargeView } from "../../../lib/aom-desk";
 import type { ImpactMeter, ImpactSide } from "../../../lib/impact";
@@ -100,7 +100,7 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
       <h4 className="desk-sub">Live in Tower A</h4>
       <div data-testid="aom-live">
         <ChatCard from="Live version, read only" receipt="Versions · AI calls: 0">
-          <p className="version-line">{desk.live.line}</p>
+          <p className="version-line">{ruleBookWords(desk.live.line)}</p>
         </ChatCard>
       </div>
 
@@ -129,12 +129,28 @@ export function AomDesk({ desk, press, refused = null }: AomDeskProps) {
 
 type Tab = "before" | "with";
 
+/** One side of the meter in a few words: "5 calls, 5 visits, S$600 and counting". */
+export function meterSideLine(side: ImpactSide): string {
+  return `${side.calls} ${side.calls === 1 ? "call" : "calls"}, ${side.visits} ${side.visits === 1 ? "visit" : "visits"}, ${side.costLine}`;
+}
+
 function MeterCard({ meter, flags }: { meter: ImpactMeter; flags: AomDeskView["speakFirst"] }) {
   const [tab, setTab] = useState<Tab>("before");
   const side: ImpactSide | null = tab === "before" ? meter.before : meter.withPillDesk;
   return (
     <div data-testid="aom-meter">
       <ChatCard from={`Impact meter · ${meter.place}`} receipt="Impact meter · made-up rates · AI calls: 0">
+        {/* Both sides at a glance (D2 review), so Before never reads as the state after the fix. The tabs below hold every row. */}
+        <div className="meter-compare" data-testid="aom-meter-compare">
+          <p>
+            <span className="badge amber">Before Pill Desk</span>
+            <span>{meterSideLine(meter.before)}</span>
+          </p>
+          <p>
+            <span className="badge green">With Pill Desk</span>
+            <span>{meter.withPillDesk ? meterSideLine(meter.withPillDesk) : "No repeat caught at this spot yet."}</span>
+          </p>
+        </div>
         {flags.map((f) => (
           <div className="flag-line" key={f.spotKey}>
             <span className="flag-head">
@@ -290,7 +306,7 @@ function ChargeCard({
         ) : null}
 
         {c.decision ? (
-          <>
+          <div className="charge-decision" data-testid="charge-decision">
             <ul className="card-lines">
               <li>
                 <b>{`${c.decision.choiceLabel} · ${c.decision.costLine}`}</b>
@@ -304,7 +320,7 @@ function ChargeCard({
                 <p className="send-line">{c.tenantCard}</p>
               </>
             ) : null}
-          </>
+          </div>
         ) : null}
 
         {refused ? <Refusal message={refused} /> : null}

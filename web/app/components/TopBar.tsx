@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AiSwitch } from "./AiSwitch";
 import { SEAT_WORDS } from "../../lib/plain-words";
+import { storyAiPickUrl } from "../../lib/story";
 import type { AiMode } from "../../lib/ai-mode";
 
 /**
@@ -24,6 +25,7 @@ const SEATS = [
 
 export function TopBar({ aiMode }: { aiMode: AiMode }) {
   const pathname = usePathname();
+  const pickUrl = storyAiPickUrl(pathname);
   const [resetting, setResetting] = useState(false);
 
   const resetDemo = async () => {
@@ -52,7 +54,8 @@ export function TopBar({ aiMode }: { aiMode: AiMode }) {
           </Link>
         ))}
       </nav>
-      <AiSwitch mode={aiMode} />
+      {/* On Story mode a pick reloads marked as picked, so the story keeps it (D2 review). */}
+      <AiSwitch mode={aiMode} onPicked={pickUrl ? () => window.location.replace(pickUrl) : undefined} />
       <button
         className={resetting ? "reset-btn is-pending" : "reset-btn"}
         onClick={resetDemo}

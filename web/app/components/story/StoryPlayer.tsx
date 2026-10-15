@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { SeatChat, MIN_PENDING_MS } from "../chat/SeatChat";
+import { SeatChat, MIN_PENDING_MS, type StoryTick } from "../chat/SeatChat";
+import type { LeadRef } from "../chat/TechnicianDesk";
 import { Plain } from "../Plain";
-import { AI_MODE_WORDS, seatWord } from "../../../lib/plain-words";
+import { AI_MODE_WORDS, PILL_MEANS, seatWord } from "../../../lib/plain-words";
 import { saveAiMode, type AiMode } from "../../../lib/ai-mode";
 import {
   STORY,
@@ -12,14 +13,21 @@ import {
   STORY_CLOSE,
   STORY_FOCUS_LINE,
   STORY_JOB,
+  STORY_LOOK_LINE,
+  STORY_LOOK_MS,
   STORY_NOT_THROUGH,
   STORY_PRESS_PACE_MS,
+  STORY_READ_FAILED,
   STORY_REAL_LINE,
   STORY_SHARED_LINE,
+  STORY_SOMEONE_ELSE,
   runPress,
   runStep,
   storyFocusIn,
+  storyFocusNow,
   storyHoldMs,
+  storyScrollTarget,
+  storyTickPress,
   type PressResult,
   type StoryMemo,
   type StoryPort,
@@ -74,12 +82,16 @@ export interface StoryPlayerProps {
   startStep?: number;
   /** The page already tried moving the AI switch once ("?ai=switched"), so it never loops. */
   aiSwitchTried?: boolean;
+  /** The viewer picked the AI switch's position on this page ("?ai=picked"): the story keeps it. */
+  aiPicked?: boolean;
   /** Tests pass their own. Nothing else is ever called. */
   fetcher?: Fetcher;
   /** Start playing on load. The live page does. */
   autoplay?: boolean;
-  /** The gap after each press's result lands. */
+  /** The gap after each press's result lands. 0 also drops each press's own longer gap. */
   paceMs?: number;
+  /** How long a step with something to look at first shows it before its first press. */
+  lookMs?: number;
   /** The shortest time "Pip is checking" shows for one press. */
   minPendingMs?: number;
   /** How long a step holds once its presses are done. */
@@ -147,6 +159,15 @@ function bringToFocus(el: Element, jump: boolean): void {
   el.scrollIntoView?.({ block: "start", behavior: still || jump ? "auto" : "smooth" });
 }
 
+/** The likely causes on a seat's desk as they stand, for the re-rank list after a tick (D2 review). */
+export function leadsOf(data: SeatView | null | undefined): LeadRef[] {
+  const leads = data?.desk?.open?.leads ?? data?.manager?.open?.open.leads ?? [];
+  return leads.map((l) => ({ causeId: l.causeId, label: l.label }));
+}
+
+/** The failure reasons that are about the network, not a refusal by the app. */
+const NETWORK_REASONS = [STORY_NOT_THROUGH, STORY_READ_FAILED];
+
 /**
  * What the panel says while a step runs: the press on its way; between two
  * presses, the one that just landed; before the first, that the seat's chat
@@ -175,9 +196,11 @@ export function StoryPlayer({
   openings,
   startStep,
   aiSwitchTried = false,
+  aiPicked = false,
   fetcher,
   autoplay = true,
   paceMs = STORY_PRESS_PACE_MS,
+  lookMs = STORY_LOOK_MS,
   minPendingMs = MIN_PENDING_MS,
   holdMs = storyHoldMs,
   switchAi,
@@ -185,8 +208,9 @@ export function StoryPlayer({
   const first = startStep ? startStep - 1 : 0;
   const call = fetcher ?? browserFetch;
   const port = useMemo(() => httpStoryPort(call), [call]);
-  // The switch is elsewhere and the page has not tried moving it yet: it moves it, then reloads.
-  const moving = aiMode !== "replay" && !aiSwitchTried;
+  // The switch is elsewhere, the viewer did not pick that, and the page has
+  // not tried moving it yet: it moves it, then reloads.
+  const moving = aiMode !== "replay" && !aiSwitchTried && !aiPicked;
   const [index, setIndex] = useState(first);
   const [phase, setPhase] = useState<Phase>("idle");
   // Autoplay starts on load, unless the page jumps to a step or must move the AI switch first.
@@ -198,9 +222,23 @@ export function StoryPlayer({
   // The app's own reply to the step's last press, word for word: proof the step really ran.
   const [said, setSaid] = useState<string | null>(null);
   const [sheet, setSheet] = useState(0);
+  // A first look at the screen before the step's first press (D2 review).
+  const [looking, setLooking] = useState(false);
+  // The step's last tick, and the list before the step's ticks: the desk shows how it re-ranked (D2 review).
+  const [tick, setTick] = useState<StoryTick | null>(null);
   // What the running story needs between renders: one run at a time, the seat
-  // on screen, what earlier presses said, and when the step finished.
-  const live = useRef({ busy: false, seat: null as string | null, memo: {} as StoryMemo, shownAt: 0, jumped: false });
+  // and view on screen, what earlier presses said, when the step finished, and
+  // the seat the page last scrolled to.
+  const live = useRef({
+    busy: false,
+    seat: null as string | null,
+    data: null as SeatView | null,
+    memo: {} as StoryMemo,
+    shownAt: 0,
+    jumped: false,
+    // The page opens on its title and notes, so the first seat does not scroll.
+    scrolledSeat: STORY[first].seat as string | null,
+  });
   const hold = useRef(holdMs);
   useEffect(() => {
     hold.current = holdMs;
@@ -217,16 +255,21 @@ export function StoryPlayer({
     setPhase("failed");
   }, []);
 
+  /** Puts a seat's view on the stage, and keeps it for the next step's list before its ticks. */
+  const show = useCallback((seat: string, data: SeatView | null) => {
+    live.current.seat = data ? seat : null;
+    live.current.data = data;
+    setView(data ? { seat, data } : null);
+  }, []);
+
   const read = useCallback(
     async (seat: string) => {
-      const data = await port.view(seat);
-      live.current.seat = seat;
-      setView({ seat, data });
+      show(seat, await port.view(seat));
     },
-    [port]
+    [port, show]
   );
 
-  /** One step at normal speed: each real press, "Pip is checking" while it runs, then the new view. */
+  /** One step at normal speed: a first look if it has one, each real press, "Pip is checking" while it runs, then the new view. */
   const playStep = useCallback(
     async (i: number) => {
       if (live.current.busy) return;
@@ -235,6 +278,7 @@ export function StoryPlayer({
       setIndex(i);
       setFailure(null);
       setSaid(null);
+      setTick(null);
       setPhase("running");
       setMarks(step.presses.map(() => "todo"));
       if (i === 0) live.current.memo = {};
@@ -247,40 +291,57 @@ export function StoryPlayer({
             return;
           }
         }
+        // What is about to change, for a moment, before the first press (D2 review).
+        if (step.look && lookMs > 0) {
+          setLooking(true);
+          await wait(lookMs);
+          setLooking(false);
+        }
+        // The list before this step's ticks, so the desk can show how it re-ranked.
+        const before = storyTickPress(step) ? leadsOf(live.current.data) : [];
         for (let j = 0; j < step.presses.length; j++) {
+          const press = step.presses[j];
           setMarks((old) => old.map((m, k) => (k === j ? "doing" : m)));
           setPending(true);
           const pressedAt = Date.now();
-          const result = await runPress(step.presses[j], port, live.current.memo);
-          let data: SeatView | null = null;
-          if (result.ok) {
-            try {
-              data = await port.view(step.seat);
-            } catch {
-              data = null;
-            }
-          }
-          if (!result.ok || !data) {
+          const result = await runPress(press, port, live.current.memo);
+          if (!result.ok) {
             // A refusal or a failure frees everything at once, with its reason (D1).
             setMarks((old) => old.map((m, k) => (k === j ? "failed" : m)));
-            fail(i, result.ok ? STORY_NOT_THROUGH : result.message);
+            fail(i, result.message);
+            return;
+          }
+          let data: SeatView | null = null;
+          try {
+            data = await port.view(step.seat);
+          } catch {
+            data = null;
+          }
+          if (!data) {
+            // The press went through: it is done. Only the screen after it did not load (D2 review).
+            setMarks((old) => old.map((m, k) => (k === j ? "done" : m)));
+            fail(i, STORY_READ_FAILED);
             return;
           }
           await wait(minPendingMs - (Date.now() - pressedAt));
-          live.current.seat = step.seat;
-          setView({ seat: step.seat, data });
+          show(step.seat, data);
+          if (press.kind === "action" && press.action === "tick" && before.length > 0) {
+            setTick({ done: { action: press.action, job: press.job, payload: press.payload }, before });
+          }
           setPending(false);
           setMarks((old) => old.map((m, k) => (k === j ? "done" : m)));
-          if (result.message) setSaid(result.message);
-          await wait(paceMs);
+          // The app's own reply, word for word; Reset's housekeeping line is left out (D2 review).
+          if (result.message && press.kind !== "reset") setSaid(result.message);
+          await wait(paceMs > 0 ? (press.paceMs ?? paceMs) : 0);
         }
         live.current.shownAt = Date.now();
         setPhase("shown");
       } finally {
         live.current.busy = false;
+        setLooking(false);
       }
     },
-    [fail, read, port, minPendingMs, paceMs]
+    [fail, read, show, port, minPendingMs, paceMs, lookMs]
   );
 
   /** Back and "?step=": Reset, then every real press up to step t quickly, then show step t. */
@@ -291,6 +352,7 @@ export function StoryPlayer({
       setIndex(t);
       setFailure(null);
       setSaid(null);
+      setTick(null);
       setPhase("rewinding");
       setPending(true);
       setMarks(STORY[t].presses.map(() => "todo"));
@@ -298,24 +360,48 @@ export function StoryPlayer({
       live.current.memo = memo;
       try {
         let lastSaid = "";
+        let shownTick: StoryTick | null = null;
         for (let i = 0; i <= t; i++) {
-          const run = await runStep(STORY[i], port, memo);
+          const step = STORY[i];
+          // The step to show re-ranks a list: read the list before its ticks first.
+          const tickPress = i === t ? storyTickPress(step) : undefined;
+          let before: LeadRef[] = [];
+          if (tickPress) {
+            try {
+              before = leadsOf(await port.view(step.seat));
+            } catch {
+              before = [];
+            }
+          }
+          const run = await runStep(step, port, memo);
           if (!run.ok) {
             const at = run.failedAt ?? 0;
-            setMarks(STORY[i].presses.map((_, k) => (k < at ? "done" : k === at ? "failed" : "todo")));
+            setMarks(step.presses.map((_, k) => (k < at ? "done" : k === at ? "failed" : "todo")));
+            // The reset wiped what the stage showed: show this step's seat as it is now, or nothing (D2 review).
+            try {
+              await read(step.seat);
+            } catch {
+              show(step.seat, null);
+            }
             fail(i, run.message);
             return;
           }
           lastSaid = run.message;
+          if (tickPress && before.length > 0) {
+            shownTick = { done: { action: tickPress.action, job: tickPress.job, payload: tickPress.payload }, before };
+          }
         }
         if (lastSaid) setSaid(lastSaid);
+        setTick(shownTick);
+        // Every press went through, so each is done, even if the screen after them does not load.
+        setMarks(STORY[t].presses.map(() => "done"));
         try {
           await read(STORY[t].seat);
         } catch {
-          fail(t, STORY_NOT_THROUGH);
+          show(STORY[t].seat, null);
+          fail(t, STORY_READ_FAILED);
           return;
         }
-        setMarks(STORY[t].presses.map(() => "done"));
         setPending(false);
         live.current.shownAt = Date.now();
         // A jump lands at once on what changed, rather than scrolling past every step on the way.
@@ -325,7 +411,7 @@ export function StoryPlayer({
         live.current.busy = false;
       }
     },
-    [fail, read, port]
+    [fail, read, show, port]
   );
 
   const busy = phase === "running" || phase === "rewinding";
@@ -418,7 +504,10 @@ export function StoryPlayer({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // What changed in this step: outlined, and brought into view.
+  // What is about to change, then what each press changed, then what the step
+  // changed: outlined, and brought into view (D2 review). A new seat with
+  // nothing outlined yet scrolls its chat's top into view.
+  const landed = marks.lastIndexOf("done");
   useEffect(() => {
     const root = stage.current;
     if (!root) return;
@@ -426,11 +515,15 @@ export function StoryPlayer({
     if (!view || (phase !== "running" && phase !== "shown" && phase !== "done")) return;
     const step = STORY[index];
     if (view.seat !== step.seat) return;
-    const marked = storyFocusIn(root, step.focus);
+    const focus = storyFocusNow(step, landed, phase === "running");
+    const marked = storyFocusIn(root, focus);
     for (const el of marked) el.classList.add("story-focus");
-    if (marked[0]) bringToFocus(marked[0], live.current.jumped);
+    const target = storyScrollTarget(root, focus);
+    if (target) bringToFocus(target, live.current.jumped);
+    else if (live.current.scrolledSeat !== view.seat) bringToFocus(root, live.current.jumped);
+    live.current.scrolledSeat = view.seat;
     live.current.jumped = false;
-  }, [view, phase, index]);
+  }, [view, phase, index, landed, looking]);
 
   // On a phone the panel is fixed at the bottom: the page leaves room for it.
   useEffect(() => {
@@ -446,7 +539,9 @@ export function StoryPlayer({
   const n = phase === "done" ? STORY.length : index + 1;
 
   let now: React.ReactNode;
-  if (phase === "running") {
+  if (phase === "running" && looking) {
+    now = <span>{STORY_LOOK_LINE}</span>;
+  } else if (phase === "running") {
     now = (
       <>
         <Dots />
@@ -468,6 +563,7 @@ export function StoryPlayer({
           <Plain text={failure} />
         </span>
         <span className="story-failed-what">The story stopped here, and nothing was faked. Press Restart to try again.</span>
+        {failure && !NETWORK_REASONS.includes(failure) ? <span className="story-failed-what">{STORY_SOMEONE_ELSE}</span> : null}
       </span>
     );
   } else if (phase === "done") {
@@ -485,15 +581,18 @@ export function StoryPlayer({
   const aiLine =
     aiMode === "replay"
       ? STORY_AI_LINE
-      : aiSwitchTried
-        ? `Story mode could not move the AI switch to Saved answers, so the AI lines follow the switch: ${AI_MODE_WORDS[aiMode]}.`
-        : "Story mode moves the AI switch to Saved answers, so the saved real AI answers show.";
+      : aiPicked
+        ? `The AI switch is on ${AI_MODE_WORDS[aiMode]}, as it was picked here, so the AI lines follow it.`
+        : aiSwitchTried
+          ? `Story mode could not move the AI switch to Saved answers, so the AI lines follow the switch: ${AI_MODE_WORDS[aiMode]}.`
+          : "Story mode moves the AI switch to Saved answers, so the saved real AI answers show.";
 
   return (
     <div className="story-player" style={{ ["--story-sheet" as string]: `${sheet}px` }}>
       <div className="story-notes">
         <p className="story-real">{STORY_REAL_LINE}</p>
         <p>{aiLine}</p>
+        <p>{PILL_MEANS}</p>
         <p>{STORY_SHARED_LINE}</p>
       </div>
 
@@ -605,9 +704,12 @@ export function StoryPlayer({
               locked
               pending={pending}
               aiMode={aiMode}
+              storyTick={tick}
             />
           ) : (
-            <p className="desk-status story-wait">Getting the chat ready.</p>
+            <p className="desk-status story-wait">
+              {phase === "failed" ? "The screen could not be shown." : "Getting the chat ready."}
+            </p>
           )}
         </section>
       </div>

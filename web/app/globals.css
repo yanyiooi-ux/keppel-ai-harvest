@@ -3228,29 +3228,33 @@ button:disabled {
   cursor: default;
 }
 
-/* What changed in this step. */
+/* What changed in this step. No animation of its own (D2 review): taking the
+   outline off never restarts a card's move-in, so nothing ever fades back. */
 .story-focus {
   outline: 2px solid var(--story-focus);
   outline-offset: 4px;
   border-radius: var(--r-card);
   box-shadow: var(--story-focus-glow);
   scroll-margin-top: 16px;
-  animation: story-focus-in 700ms ease-out both;
 }
 
-@keyframes story-focus-in {
+/* New cards in Story mode slide in at full strength, so a new card never
+   reads as greyed out or still loading (D2 review). */
+.story-stage .is-new {
+  animation-name: story-card-in;
+}
+
+@keyframes story-card-in {
   from {
-    outline-color: transparent;
-    box-shadow: none;
+    transform: translateY(6px);
   }
   to {
-    outline-color: var(--story-focus);
-    box-shadow: var(--story-focus-glow);
+    transform: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .story-focus {
+  .story-stage .is-new {
     animation: none;
   }
   .story-progress span {
@@ -3258,11 +3262,110 @@ button:disabled {
   }
 }
 
+/* How the list of likely causes changed after a tick (D2 review). */
+.rerank {
+  margin: 2px 2px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-btn);
+  background: var(--card);
+}
+
+.rerank-head {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rerank-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+
+.rerank-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  color: var(--text);
+}
+
+.rerank-list li.is-out .rerank-name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.rerank-list .badge {
+  flex: none;
+}
+
+/* A red stop that a press raised: what the press did, under the stop's own words (D2 review). */
+.raised-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--red-line);
+  border-radius: var(--r-btn);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--red-text);
+}
+
+.raised-line .badge {
+  flex: none;
+}
+
+/* The impact meter's two sides at a glance, above its tabs (D2 review). */
+.meter-compare {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 10px;
+}
+
+.meter-compare p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.meter-compare .badge {
+  flex: none;
+  min-width: 140px;
+  justify-content: center;
+}
+
 /* A phone: one column, the caption and the controls fixed at the bottom,
    and the page leaves room for them (the player measures the panel). */
 @media (max-width: 760px) {
+  /* The chat comes first on a phone; the notes follow it (D2 review). */
   .story-player {
+    display: flex;
+    flex-direction: column;
     padding-bottom: calc(var(--story-sheet, 300px) + 20px);
+  }
+  .story-notes {
+    order: 2;
+    margin: 16px 0 0;
+  }
+  /* A long plain pick still fits its box on a phone (D2 review). */
+  .part-row select {
+    padding-left: 8px;
+    font-size: 13.5px;
   }
   .story-head h1 {
     font-size: 24px;

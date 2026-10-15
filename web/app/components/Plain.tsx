@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { splitCodes } from "../../lib/plain-words";
+import { ruleBookWords, splitCodes } from "../../lib/plain-words";
 
 /**
  * Plain words first, the code after (D1). A render-time layer only: the text
@@ -23,10 +23,12 @@ export function Coded({ word, code }: { word: string; code: string }) {
 
 /**
  * A sentence with each code in it shown as its plain words, then the code as a
- * grey tag. A sentence with no code comes back as the very same text.
+ * grey tag. The pill's other names read as the rule book (D2 review). A
+ * sentence with neither comes back as the very same text.
  */
-export function Plain({ text }: { text?: string | null }) {
-  if (!text) return null;
+export function Plain({ text: said }: { text?: string | null }) {
+  if (!said) return null;
+  const text = ruleBookWords(said);
   const parts = splitCodes(text);
   if (parts.every((p) => p.kind === "text")) return <>{text}</>;
   return (

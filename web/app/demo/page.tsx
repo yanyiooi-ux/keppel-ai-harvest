@@ -12,8 +12,9 @@ export const metadata = { title: "Story mode · Pill Desk" };
  * Story mode (D2): the real app plays the demo by itself, one seat at a time,
  * with a short plain caption for each step. The player presses through the
  * same routes every seat uses; this page only reads where the AI switch
- * stands, each seat's opening line, and "?step=" (jump to a step) and
- * "?ai=switched" (the switch was moved once already).
+ * stands, each seat's opening line, and "?step=" (jump to a step),
+ * "?ai=switched" (the switch was moved once already) and "?ai=picked" (the
+ * viewer picked the switch's position here, so the story keeps it).
  */
 export default async function Demo({
   searchParams,
@@ -35,6 +36,7 @@ export default async function Demo({
         openings={openings}
         startStep={storyStepFromQuery(query.step)}
         aiSwitchTried={query.ai === "switched"}
+        aiPicked={query.ai === "picked"}
       />
     </main>
   );

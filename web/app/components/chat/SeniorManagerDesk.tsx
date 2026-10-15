@@ -2,7 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChatCard } from "./ChatCard";
-import { DeskCardView, LeadCard, StepList, StatusLine, tickLine, zoneOf, type TickDone } from "./TechnicianDesk";
+import {
+  DeskCardView,
+  LeadCard,
+  RerankList,
+  StepList,
+  StatusLine,
+  tickLine,
+  zoneOf,
+  type LeadRef,
+  type TickDone,
+} from "./TechnicianDesk";
 import { bringIntoView } from "./bring-into-view";
 import { CodeTag, Coded, Plain } from "../Plain";
 import { effectStepLead, effectWord, factIdFromLabel, factWord, statusWord } from "../../../lib/plain-words";
@@ -51,6 +61,8 @@ export interface SeniorManagerDeskProps {
   rowRefused?: RefusedPress | null;
   /** The last tick that worked, so the list says what changed (D1 review). */
   done?: TickDone | null;
+  /** Story mode (D2 review): the list as it was before the step's ticks, so the screen shows how it re-ranked. */
+  before?: LeadRef[] | null;
   /** Jobs that came up to the senior manager and have since left the desk (D1 review). */
   movedOn?: string[];
   /** Where the AI switch stands, so the new fix can say why no AI draft shows (D1 review). */
@@ -104,6 +116,7 @@ export function SeniorManagerDesk({
   refused = null,
   rowRefused = null,
   done = null,
+  before = null,
   movedOn = [],
   aiMode,
 }: SeniorManagerDeskProps) {
@@ -167,6 +180,7 @@ export function SeniorManagerDesk({
           onSafety={onSafety}
           refused={refused}
           done={done}
+          before={before}
           aiMode={aiMode}
         />
       ) : null}
@@ -267,6 +281,7 @@ function ManagerJob({
   onSafety,
   refused,
   done,
+  before,
   aiMode,
 }: {
   job: ManagerOpenJob;
@@ -275,6 +290,7 @@ function ManagerJob({
   onSafety: () => void;
   refused: string | null;
   done: TickDone | null;
+  before: LeadRef[] | null;
   aiMode?: AiMode;
 }) {
   const open = job.open;
@@ -370,6 +386,7 @@ function ManagerJob({
           {ticked}
         </p>
       ) : null}
+      {before ? <RerankList before={before} open={open} /> : null}
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={job.editable} />
@@ -516,7 +533,7 @@ function SolutionCard({
         </div>
 
         <p className="saved-line">
-          <Plain text={solution.savedLine} />
+          <SavedLine line={solution.savedLine} />
         </p>
 
         {run ? (
@@ -549,6 +566,20 @@ function SolutionCard({
         </p>
       </ChatCard>
   );
+}
+
+/**
+ * The saved line in plain words (D2 review): "draft v1.1 saved in the runtime
+ * folder · a19bfa5" reads "saved as draft version 1.1 (its code: a19bfa5)", so
+ * the draft's code stays on screen to trace it. Any other line shows as it is.
+ */
+export function savedWords(line: string): string {
+  const m = /^(.*?)draft v(\S+) saved in the runtime folder · ([0-9a-f]{7})$/.exec(line);
+  return m ? `${m[1]}saved as draft version ${m[2]} (its code: ${m[3]}).` : line;
+}
+
+function SavedLine({ line }: { line: string }) {
+  return <Plain text={savedWords(line)} />;
 }
 
 function TypedLine({ name, text, flags }: { name: string; text: string; flags: string[] }) {

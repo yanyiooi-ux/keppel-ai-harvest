@@ -24,9 +24,18 @@ import type { SeatCard, SeatView } from "./seat-view";
 /** The job the story follows: Tower A, Level 23, core. */
 export const STORY_JOB = "2318";
 
+/** The gap after a press's result lands, so a viewer sees each change before the next press. */
+export const STORY_PRESS_PACE_MS = 700;
+
+/** The gap after each self-check answer: long enough to read the question and its answer (D2 review). */
+export const STORY_ANSWER_PACE_MS = 1500;
+
+/** How long a step with something to look at first shows it before its first press. */
+export const STORY_LOOK_MS = 3000;
+
 /** One press, as a seat would make it. */
 export type StoryPress =
-  | { kind: "reset"; label: string }
+  | { kind: "reset"; label: string; show?: StoryFocus[]; paceMs?: number }
   | {
       kind: "action";
       seat: SeatId;
@@ -41,15 +50,21 @@ export type StoryPress =
        */
       needs?: "open-charge" | "red-stop";
       label: string;
+      /** What to outline once this press lands, while the step still runs (else the step's focus). */
+      show?: StoryFocus[];
+      /** A longer gap after this press, so a viewer can read it (else STORY_PRESS_PACE_MS). */
+      paceMs?: number;
     }
-  | { kind: "chat"; seat: SeatId; text: string; job: string; label: string };
+  | { kind: "chat"; seat: SeatId; text: string; job: string; label: string; show?: StoryFocus[]; paceMs?: number };
 
-/** What to outline on the seat's screen once the step has run: the first match, or the last. */
+/** What to outline on the seat's screen: the first match, or the last. */
 export interface StoryFocus {
   selector: string;
   /** Only an element whose text has these words. */
   text?: string;
   last?: boolean;
+  /** The page scrolls to this one (else to the first outlined). */
+  scroll?: boolean;
 }
 
 export interface StoryStep {
@@ -59,7 +74,12 @@ export interface StoryStep {
   title: string;
   caption: string;
   presses: StoryPress[];
-  /** What changed in this step: outlined on screen, and the page scrolls to the first. */
+  /**
+   * What to look at first, before the step's first press, for STORY_LOOK_MS
+   * while the story plays: what is about to change (D2 review).
+   */
+  look?: StoryFocus[];
+  /** What changed in this step: outlined on screen, and the page scrolls to it. */
   focus: StoryFocus[];
 }
 
@@ -79,15 +99,24 @@ const THERMOSTAT = "Thermostat in the wrong spot after a fit-out";
 /** The building manager's reason, word for word as demo-flow types it. */
 const CHARGE_REASON = "Fit-out work is the tenant's own";
 
+/** How the list re-ranked, shown above it after each tick (TechnicianDesk's RerankList). */
+const RERANK: StoryFocus[] = [{ selector: '[data-testid="rerank"]', scroll: true }];
+
+/** A part of the new rule, outlined once its Confirm lands. */
+const part = (id: string): StoryFocus[] => [{ selector: `[data-part="${id}"]`, scroll: true }];
+
+/** The new fix's test result on the senior manager's card. */
+const TEST_RUN = '[data-testid="solution-card"] .test-run';
+
 export const STORY: StoryStep[] = [
   {
     n: 1,
     seat: "tenant",
     title: "The tenant reports it",
     caption:
-      "A tenant on Level 23 says it is too cold. Before anyone visits, Pip asks 5 quick questions, safety first. Then a visit is booked.",
+      "A tenant on Level 23 says it is too cold. Before anyone visits, Pip asks 5 quick questions, safety first. The answers join the open job for that spot, 2318, and a visit is booked.",
     presses: [
-      { kind: "reset", label: "Reset the demo to its made-up start" },
+      { kind: "reset", label: "Start the demo from the beginning" },
       { kind: "action", seat: "tenant", action: "report", payload: { complaint: "too cold" }, label: "Report a problem: Too cold" },
       ...ANSWERS.map(
         ([questionId, answer]): StoryPress => ({
@@ -97,6 +126,8 @@ export const STORY: StoryStep[] = [
           job: "report",
           payload: { questionId, answer },
           label: questionId === "Q0" ? `Is anything unsafe? Answer "${answer}"` : `Answer "${answer}"`,
+          // Slow enough to read each question and its answer as they land (D2 review).
+          paceMs: STORY_ANSWER_PACE_MS,
         })
       ),
     ],
@@ -107,7 +138,7 @@ export const STORY: StoryStep[] = [
     seat: "technician",
     title: "The technician opens the job",
     caption:
-      "The technician opens the job. Pip has already filled in the history: this spot called 5 times in 21 days. The 4 earlier fixes were all a turn of the dial, and every one came back.",
+      "The technician opens the job. Pip has already filled in the history: this spot called 5 times in 30 days. The 4 earlier fixes were all a turn of the dial, and every one came back.",
     presses: [{ kind: "action", seat: "technician", action: "open-job", job: STORY_JOB, label: `Open job ${STORY_JOB}` }],
     focus: [
       { selector: ".card", text: "Calls at this spot" },
@@ -119,7 +150,7 @@ export const STORY: StoryStep[] = [
     seat: "technician",
     title: "Two causes ruled out",
     caption:
-      "Pip lists the likely causes, best bet first. The technician rules out two, and the list re-ranks at once. The thermostat spot is now on top, but few past cases back it, so Pip tells the senior manager.",
+      "Pip lists the likely causes, best bet first. The technician rules out two of them. The thermostat spot moves from 3rd to 1st, but few past cases back it yet.",
     presses: [
       {
         kind: "action",
@@ -128,6 +159,7 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { causeId: "precool", type: "not-this" },
         label: `Not this: "${PRECOOL}"`,
+        show: RERANK,
       },
       {
         kind: "action",
@@ -136,9 +168,10 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { causeId: "min-airflow", type: "not-this" },
         label: `Not this: "${MIN_AIRFLOW}"`,
+        show: RERANK,
       },
     ],
-    focus: [{ selector: '[data-testid="lead-card"]' }, { selector: 'details[data-list="ruled-out"]' }],
+    focus: [...RERANK, { selector: '[data-testid="lead-card"]' }],
   },
   {
     n: 4,
@@ -163,7 +196,7 @@ export const STORY: StoryStep[] = [
     seat: "senior-manager",
     title: "The real cause, and a new rule",
     caption:
-      "The senior manager finds the real cause: since the renovation, the thermostat sits in the wrong spot. The AI drafts the new rule from a saved real answer. The senior manager checks each part. All 23 tests pass, so it goes to head office.",
+      "The senior manager finds the real cause: since the renovation, the thermostat sits in the wrong spot. They type the fix, and the AI drafts the rule: a saved real answer from Tencent's Hunyuan AI. They check each part. All 23 tests that apply pass, so it goes to head office.",
     presses: [
       {
         kind: "action",
@@ -172,6 +205,7 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { causeId: "thermostat-spot", type: "found" },
         label: `Found it: "${THERMOSTAT}"`,
+        show: [{ selector: ".tick-done", scroll: true }, { selector: '[data-testid="lead-card"]' }],
       },
       {
         kind: "action",
@@ -179,7 +213,8 @@ export const STORY: StoryStep[] = [
         action: "log-new-solution",
         job: STORY_JOB,
         payload: { fixLine: DEMO_FIX_LINE, whyLine: DEMO_WHY_LINE },
-        label: "Write the new fix in the demo's own words",
+        label: "Type the fix. The AI drafts the rule from it (a saved real Hunyuan answer)",
+        show: [{ selector: '[data-testid="solution-card"]', scroll: true }],
       },
       {
         kind: "action",
@@ -188,6 +223,7 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { part: "rule-text", value: DEMO_FIX_LINE },
         label: "Confirm the rule's words",
+        show: part("rule-text"),
       },
       {
         kind: "action",
@@ -196,6 +232,7 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { part: "fact", value: "fit-out-12m" },
         label: `Confirm when it applies: ${factWord("fit-out-12m")}`,
+        show: part("fact"),
       },
       {
         kind: "action",
@@ -204,6 +241,7 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { part: "effect-1", value: "block:25" },
         label: `Confirm what it changes: ${effectWord("block:25")}`,
+        show: part("effect-1"),
       },
       {
         kind: "action",
@@ -212,22 +250,39 @@ export const STORY: StoryStep[] = [
         job: STORY_JOB,
         payload: { part: "effect-2", value: "put-first:21" },
         label: `Confirm what it changes: ${effectWord("put-first:21")}`,
+        show: part("effect-2"),
       },
-      { kind: "action", seat: "senior-manager", action: "run-tests", job: STORY_JOB, label: "Run the tests" },
+      {
+        kind: "action",
+        seat: "senior-manager",
+        action: "run-tests",
+        job: STORY_JOB,
+        label: "Run the tests",
+        show: [{ selector: TEST_RUN, scroll: true }],
+      },
       { kind: "action", seat: "senior-manager", action: "send-to-hq", job: STORY_JOB, label: "Send it to head office" },
     ],
-    focus: [{ selector: '[data-testid="solution-card"]' }],
+    // It ends on the test result and the send, so the "23 pass" is on screen for the whole hold (D2 review).
+    focus: [
+      { selector: TEST_RUN, scroll: true },
+      { selector: '[data-testid="solution-card"] .send-line' },
+    ],
   },
   {
     n: 6,
     seat: "hq",
     title: "Head office approves it once",
     caption:
-      "Head office approves it once. Every building now runs version 1.1 at the same time. Building B now checks the thermostat first.",
+      "Head office approves it once. The rule book every building shares is now version 1.1. Building B now checks the thermostat first, and nobody there had to do anything.",
     presses: [
       { kind: "action", seat: "hq", action: "approve-solution", job: STORY_JOB, label: "Approve and send to all buildings" },
     ],
-    focus: [{ selector: '[data-testid="hq-payoff"]' }, { selector: '[data-testid="hq-building-b"]' }],
+    // First the new fix waiting for head office, then Building B's list once it is approved (D2 review).
+    look: [{ selector: '[data-testid^="hq-solution-"]', scroll: true }],
+    focus: [
+      { selector: '[data-testid="hq-building-b"] .card-intro', scroll: true },
+      { selector: '[data-testid="hq-building-b"] [data-testid="lead-card"]' },
+    ],
   },
   {
     n: 7,
@@ -246,14 +301,16 @@ export const STORY: StoryStep[] = [
         label: "Decide who pays: the tenant, a made-up S$350",
       },
     ],
-    focus: [{ selector: '[data-testid="aom-meter"]' }, { selector: '[data-testid^="aom-charge-"]' }],
+    // First the cost, before and with Pill Desk, then the decision (D2 review).
+    look: [{ selector: '[data-testid="aom-meter-compare"]', scroll: true }],
+    focus: [{ selector: '[data-testid="charge-decision"]', scroll: true }, { selector: '[data-testid="aom-meter-compare"]' }],
   },
   {
     n: 8,
     seat: "tenant",
     title: "Safety comes first",
     caption:
-      'Safety always comes first. Typing "water dripping near the lights" brings up the stop in the building\'s own approved words. No AI is used. One press raises the stop and locks work on that floor.',
+      'Safety always comes first. Typing "water dripping near the lights" brings up the stop in the building\'s own approved words. No AI is used. One press raises it. Open jobs on that floor are locked, and Pip alerts the senior manager and the building manager.',
     presses: [
       {
         kind: "chat",
@@ -261,13 +318,12 @@ export const STORY: StoryStep[] = [
         text: "water dripping near the lights",
         job: STORY_JOB,
         label: 'Type "water dripping near the lights"',
+        show: [{ selector: ".sent", last: true, scroll: true }, { selector: ".card.is-red", last: true }],
       },
       { kind: "action", seat: "tenant", action: "safety-pick", needs: "red-stop", label: "Raise this stop" },
     ],
-    focus: [
-      { selector: ".sent", last: true },
-      { selector: ".card.is-red", last: true },
-    ],
+    // The card the press made, which says it is raised (D2 review).
+    focus: [{ selector: ".card.is-red", last: true, scroll: true }],
   },
 ];
 
@@ -275,10 +331,7 @@ export const STORY: StoryStep[] = [
 export const STORY_CLOSE =
   "The checklist finds it faster, people approve only what matters, and every fix makes the next one faster.";
 
-/** The gap after a press's result lands, so a viewer sees each change before the next press. */
-export const STORY_PRESS_PACE_MS = 700;
-
-/** About how long the whole story plays, checked against the holds and the presses by a test. */
+/** About how long the whole story plays, checked against storyRunMs by a test. */
 export const STORY_LINK_MINUTES = 2;
 
 /** The link on home and /how. */
@@ -292,23 +345,62 @@ export const STORY_REAL_LINE =
 export const STORY_AI_LINE = `The AI switch is on ${AI_MODE_HINTS.replay}`;
 
 export const STORY_SHARED_LINE =
-  "Good to know: every seat shares one demo memory. Restart and Back reset it for anyone else watching, too.";
+  "One demo runs for everyone. Opening this page, Restart and Back each start it over for anyone else watching, too.";
 
 export const STORY_FOCUS_LINE = "A glowing outline marks what changed in each step.";
 
 /** What a press or a read that failed on the network says: the same words as a seat (SeatChat's NOT_THROUGH). */
 export const STORY_NOT_THROUGH = "That did not go through. Check the connection, then try again.";
 
+/** A press that went through, but the screen after it did not load (D2 review): never reported as a failed press. */
+export const STORY_READ_FAILED =
+  "That press went through, but the new screen did not load. Check the connection, then press Restart.";
+
+/** Said when the story stops: someone else opening Story mode starts the shared demo over. */
+export const STORY_SOMEONE_ELSE =
+  "If someone else opened Story mode just now, the demo started over for everyone, so this step could not go on.";
+
+/** While the story looks at a step's screen before pressing. */
+export const STORY_LOOK_LINE = "First, a look at the screen. The presses start in a moment.";
+
 // ---- Timing ----
 
 const WORD_MS = 250;
 const HOLD_MIN_MS = 6000;
 const HOLD_MAX_MS = 9000;
+/** The shortest time "Pip is checking" shows for a press (SeatChat's MIN_PENDING_MS). */
+const PENDING_MS = 400;
 
 /** How long a step stays on screen once its presses are done: 6 to 9 seconds, longer for a longer caption. */
 export function storyHoldMs(caption: string): number {
   const words = caption.split(/\s+/).filter(Boolean).length;
   return Math.min(HOLD_MAX_MS, Math.max(HOLD_MIN_MS, words * WORD_MS));
+}
+
+/** About how long the whole story plays, with no time for the network: each look, press, pace and hold. */
+export function storyRunMs(): number {
+  return STORY.reduce(
+    (sum, step) =>
+      sum +
+      (step.look ? STORY_LOOK_MS : 0) +
+      step.presses.reduce((s, p) => s + PENDING_MS + (p.paceMs ?? STORY_PRESS_PACE_MS), 0) +
+      storyHoldMs(step.caption),
+    0
+  );
+}
+
+/** The step's last tick press, if it has one: the desk then shows how the list re-ranked. */
+export function storyTickPress(step: StoryStep): Extract<StoryPress, { kind: "action" }> | undefined {
+  return step.presses.filter((p): p is Extract<StoryPress, { kind: "action" }> => p.kind === "action" && p.action === "tick").at(-1);
+}
+
+/**
+ * Where a pick on the AI switch reloads to (D2 review): on /demo, the page
+ * marked "?ai=picked", so the story keeps the viewer's pick instead of moving
+ * the switch back. Elsewhere null: the page just reloads.
+ */
+export function storyAiPickUrl(pathname: string | null | undefined): string | null {
+  return pathname === "/demo" ? "/demo?ai=picked" : null;
 }
 
 /** The step a "?step=" asks for, 1 to 8, or undefined. */
@@ -416,13 +508,39 @@ export async function runStep(
   return { ok: true, message };
 }
 
+/** The element one focus names on the seat's screen, or undefined. */
+function focusPick(root: ParentNode, f: StoryFocus): Element | undefined {
+  const all = Array.from(root.querySelectorAll(f.selector)).filter((el) => !f.text || (el.textContent ?? "").includes(f.text));
+  return f.last ? all.at(-1) : all[0];
+}
+
 /** The elements a step outlines on the seat's screen. */
 export function storyFocusIn(root: ParentNode, focus: StoryFocus[]): Element[] {
   const out: Element[] = [];
   for (const f of focus) {
-    const all = Array.from(root.querySelectorAll(f.selector)).filter((el) => !f.text || (el.textContent ?? "").includes(f.text));
-    const pick = f.last ? all.at(-1) : all[0];
+    const pick = focusPick(root, f);
     if (pick && !out.includes(pick)) out.push(pick);
   }
   return out;
+}
+
+/** The element the page scrolls to: the one marked scroll, else the first outlined. */
+export function storyScrollTarget(root: ParentNode, focus: StoryFocus[]): Element | undefined {
+  for (const f of focus) {
+    if (!f.scroll) continue;
+    const pick = focusPick(root, f);
+    if (pick) return pick;
+  }
+  return storyFocusIn(root, focus)[0];
+}
+
+/**
+ * What to outline right now: the step's look before its first press lands;
+ * after a press lands while the step still runs, that press's own (else the
+ * step's); once the step is done, the step's focus.
+ */
+export function storyFocusNow(step: StoryStep, landed: number, running: boolean): StoryFocus[] {
+  if (!running) return step.focus;
+  if (landed < 0) return step.look ?? [];
+  return step.presses[landed]?.show ?? step.focus;
 }

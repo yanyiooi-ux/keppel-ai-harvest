@@ -37,8 +37,8 @@ import {
   STORY,
   STORY_CLOSE,
   STORY_LINK_MINUTES,
-  STORY_PRESS_PACE_MS,
   storyHoldMs,
+  storyRunMs,
   storyStepFromQuery,
   runPress,
   runStep,
@@ -241,9 +241,10 @@ describe("D2: the story script", () => {
   });
 
   it("says how long the story takes, and the whole run fits in it", () => {
+    // Each look, each press ("Pip is checking" at least 400 ms, then its pace) and each hold.
+    const estimate = storyRunMs();
     const presses = STORY.reduce((sum, s) => sum + s.presses.length, 0);
-    // Each press shows "Pip is checking" at least 400 ms, then the pace before the next.
-    const estimate = STORY.reduce((sum, s) => sum + storyHoldMs(s.caption), 0) + presses * (400 + STORY_PRESS_PACE_MS);
+    expect(estimate).toBeGreaterThan(STORY.reduce((sum, s) => sum + storyHoldMs(s.caption), 0) + presses * 400);
     expect(estimate).toBeLessThanOrEqual(STORY_LINK_MINUTES * 60000);
     expect(estimate).toBeGreaterThan((STORY_LINK_MINUTES - 1) * 60000);
   });
@@ -266,9 +267,14 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
     const memo: StoryMemo = {};
     const pill = loadAndCheckPill("ts-cc", "1.0");
     let aiBefore = 0;
+    // The likely causes before step 3's ticks, and Building B's job before head office approves.
+    let leadsBefore: string[] = [];
+    let buildingBJobBefore = "";
 
     for (const step of STORY) {
       if (step.n === 8) aiBefore = memory.read().aiCalls ?? 0;
+      if (step.n === 3) leadsBefore = leadIds("2318");
+      if (step.n === 6) buildingBJobBefore = JSON.stringify(memory.jobById(memory.read(), "2401"));
       const run = await runStep(step, port, memo);
       expect(run, `step ${step.n}: ${run.message}`).toMatchObject({ ok: true });
       const state = memory.read();
@@ -277,10 +283,13 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
 
       switch (step.n) {
         case 1: {
-          // "A tenant on Level 23 says it is too cold. Before anyone visits, Pip asks 5 quick questions, safety first. Then a visit is booked."
-          expect(nums).toEqual(["23", "5"]);
+          // "A tenant on Level 23 says it is too cold. Before anyone visits, Pip asks 5 quick questions, safety first. The answers join the open job for that spot, 2318, and a visit is booked."
+          expect(nums).toEqual(["23", "5", "2318"]);
           expect(job.floor).toBe(23);
           expect(job.complaint).toBe("too cold");
+          // The report's own job (2319) was folded into the open job at that spot: no second job.
+          expect(memory.jobById(state, "2319")).toBeUndefined();
+          expect(memo.reportJob).toBe("2319");
           const questions = seatView(state, "tenant", "replay", REAL_NOW).messages.flatMap((m) =>
             (m.cards ?? []).filter((c) => c.kind === "question")
           );
@@ -294,19 +303,21 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
           break;
         }
         case 2: {
-          // "... this spot called 5 times in 21 days. The 4 earlier fixes were all a turn of the dial, and every one came back."
-          expect(nums).toEqual(["5", "21", "4"]);
+          // "... this spot called 5 times in 30 days. The 4 earlier fixes were all a turn of the dial, and every one came back."
+          expect(nums).toEqual(["5", "30", "4"]);
           expect(job.status).toBe("in-progress");
+          // Checked against the card this step outlines on the technician's screen (D2 review), word for word.
+          const open = seatView(state, "technician", "replay", REAL_NOW).desk!.open!;
+          const callsCard = open.checklist.find((c) => c.id === "calls")!;
+          expect(callsCard.title).toBe(`${nums[0]} calls at this spot in ${nums[1]} days`);
+          expect(callsCard.lines).toHaveLength(Number(nums[0]));
           const story = whyStory(loadHowSources().tickets, loadHowSources().buildings, loadHowSources().trends)!;
           expect(story.calls).toHaveLength(5);
-          expect(story.days).toBe(21);
           expect(story.dialTurns).toBe(4);
           const closed = story.calls.filter((c) => c.status !== "open");
           expect(closed).toHaveLength(4);
           expect(closed.every((c) => c.dialTurn && c.status === "came-back")).toBe(true);
-          // What the technician's screen shows: the calls card and the past fixes, all failed.
-          const open = seatView(state, "technician", "replay", REAL_NOW).desk!.open!;
-          expect(open.checklist.find((c) => c.id === "calls")!.lines).toHaveLength(5);
+          // What the technician's screen shows: the past fixes, all failed.
           const past = open.checklist.find((c) => c.id === "past-fixes")!.lines!;
           expect(past).toHaveLength(4);
           expect(past.every((l) => l.word === "Failed" && /setpoint/.test(l.text))).toBe(true);
@@ -315,11 +326,13 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
           break;
         }
         case 3: {
-          // "The technician rules out two, and the list re-ranks at once. The thermostat spot is now on top, but few past cases back it, so Pip tells the senior manager."
-          expect(nums).toEqual([]);
+          // "The technician rules out two of them. The thermostat spot moves from 3rd to 1st, but few past cases back it yet."
+          expect(nums).toEqual(["3", "1"]);
           expect(step.caption).toContain("rules out two");
+          expect(leadsBefore.indexOf("thermostat-spot") + 1).toBe(Number(nums[0]));
           const ranked = leadsForJob(state, job, "technician", REAL_NOW);
           expect(ranked.leads.map((l) => l.causeId)).toEqual(["thermostat-spot"]);
+          expect(ranked.leads.findIndex((l) => l.causeId === "thermostat-spot") + 1).toBe(Number(nums[1]));
           expect(ranked.leads[0].tier).toBe("low-confidence");
           const open = seatView(state, "technician", "replay", REAL_NOW).desk!.open!;
           expect(open.ruledOut.map((l) => l.causeId).sort()).toEqual(["min-airflow", "precool"]);
@@ -339,28 +352,37 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
           break;
         }
         case 5: {
-          // "The senior manager finds the real cause: since the renovation, the thermostat sits in the wrong spot. The AI drafts the new rule from a saved real answer. ... All 23 tests pass, so it goes to head office."
+          // "... They type the fix, and the AI drafts the rule: a saved real answer from Tencent's Hunyuan AI. They check each part. All 23 tests that apply pass, so it goes to head office."
           expect(nums).toEqual(["23"]);
           expect(causeLabel("thermostat-spot")).toMatch(/wrong spot after a fit-out/);
           const sm = seatView(state, "senior-manager", "replay", REAL_NOW).manager!;
           const solution = currentSolution(state, "2318")!;
           expect(solution.status).toBe("sent-to-hq");
           expect(solution.parts.every((p) => p.confirmed)).toBe(true);
+          // 23 pass, none fail, and the rest do not apply: the card's "23 passed, 0 failed, 2 not applicable".
           expect(solution.testRun).toMatchObject({ passed: 23, failed: 0, ok: true });
+          expect(sm.open!.solution!.testRun!.counts).toBe("23 passed, 0 failed, 2 not applicable");
+          // The AI drafted the rule: its words are the saved answer's, and the card says it is a saved real answer.
           expect(sm.open!.solution!.aiBanner).toBe(REPLAY_BANNER);
+          expect(solution.parts.find((p) => p.id === "rule-text")).toMatchObject({
+            suggested: JSON.parse(SUGGESTION).ruleText,
+            suggestedBy: "ai",
+          });
           expect(sm.open!.open.leads[0]).toMatchObject({ causeId: "thermostat-spot", tier: "found" });
           // Nothing is live before head office approves.
           expect(state.liveVersionByBuilding).toEqual({ "tower-a": "1.0", "building-b": "1.0" });
           break;
         }
         case 6: {
-          // "Head office approves it once. Every building now runs version 1.1 at the same time. Building B now checks the thermostat first."
+          // "Head office approves it once. The rule book every building shares is now version 1.1. Building B now checks the thermostat first, and nobody there had to do anything."
           expect(nums).toEqual(["1.1"]);
           expect(Object.values(state.liveVersionByBuilding)).toEqual(["1.1", "1.1"]);
           expect(leadIds("2401")[0]).toBe("thermostat-spot");
           const b = seatView(state, "hq", "replay", REAL_NOW).hq!.buildingB!;
           expect(b.version).toBe("1.1");
           expect(b.leads[0].causeId).toBe("thermostat-spot");
+          // Nobody in Building B did anything: its job is exactly as it was before the approval.
+          expect(JSON.stringify(memory.jobById(state, "2401"))).toBe(buildingBJobBefore);
           expect(job.status).toBe("pending-30-day");
           break;
         }
@@ -378,8 +400,18 @@ describe("D2: the story runs the real app, step by step, and every caption is tr
           break;
         }
         case 8: {
-          // "Typing "water dripping near the lights" brings up the stop in the building's own approved words. No AI is used. One press raises the stop and locks work on that floor."
+          // "Typing "water dripping near the lights" brings up the stop in the building's own approved words. No AI is used. One press raises it. Open jobs on that floor are locked, and Pip alerts the senior manager and the building manager."
           expect(nums).toEqual([]);
+          // Every open job on that floor is locked, and only those.
+          const onFloor = state.jobs.filter((j) => j.building === "tower-a" && j.floor === 23).map((j) => j.id);
+          expect(state.openRedStops[0].lockedJobIds.slice().sort()).toEqual(onFloor.slice().sort());
+          expect(state.openRedStops[0].lockedJobIds).toContain("2318");
+          // The senior manager and the building manager have the alert, marked raised by the tenant.
+          for (const seat of ["senior-manager", "aom-tower-a"]) {
+            const alerts = state.notices.filter((n) => n.seat === seat && n.kind === "alert" && n.stopId === "RS-04");
+            expect(alerts, seat).toHaveLength(1);
+            expect(alerts[0].raisedBy, seat).toBe("tenant");
+          }
           const live = loadAndCheckPill("ts-cc", "1.1");
           const rs04 = live.red_stops.find((s) => s.id === "RS-04")!;
           expect(rs04).toEqual(pill.red_stops.find((s) => s.id === "RS-04"));

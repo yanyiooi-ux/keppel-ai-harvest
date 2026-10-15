@@ -65,7 +65,7 @@ export function HowStory({ view }: { view: HowView }) {
           <a href="/demo">{STORY_LINK_WORDS}</a>. The real app plays the whole demo by itself, one seat at a time.
         </p>
         <p className="lede">
-          {`Pill Desk gives ${view.seats.length} people their own chat with Pip, all on one brain: the signed rules, a list of likely causes and past cases. Code ranks and routes, the AI only puts things into plain words, and people approve only ${view.approvals.length} kinds of decision.`}
+          {`Pill Desk gives ${view.seats.length} people their own chat with Pip, all on one shared rule book: the signed rules, a list of likely causes and past cases. Code ranks and routes, the AI only puts things into plain words, and people approve only ${view.approvals.length} kinds of decision.`}
         </p>
         <p className="lede how-pill">{PILL_MEANS}</p>
         <nav className="how-nav" aria-label="On this page">
@@ -221,17 +221,17 @@ function WhatSection({ view }: { view: HowView }) {
   return (
     <section id="what" className="how-section" aria-labelledby="what-title">
       <p className="how-kicker">2 · What</p>
-      <h2 id="what-title">{`${view.seats.length} seats around one brain`}</h2>
+      <h2 id="what-title">{`${view.seats.length} seats around one rule book`}</h2>
       <p>
-        Each person gets their own chat with Pip. Under every chat sits one brain: the live pill version, the cause list
-        and the case library. Building B is a card, not a seat. Tap a seat to open its chat alone.
+        Each person gets their own chat with Pip. Under every chat sits one rule book: the live pill version, the cause
+        list and the case library. Building B is a card, not a seat. Tap a seat to open its chat alone.
       </p>
 
       <div className="brain-ring" data-testid="brain-ring">
         <div className="brain-core">
           <PipAvatar size={64} />
-          <b>One brain</b>
-          <span>The rule book for too-cold and too-hot calls</span>
+          <b>One rule book</b>
+          <span>The steps and rules for too-cold and too-hot calls</span>
           <span>{`Pill ${brain.pill} v${brain.version}`}</span>
           <span>{`${brain.causes} causes · ${brain.cases} past cases`}</span>
         </div>
@@ -246,7 +246,7 @@ function WhatSection({ view }: { view: HowView }) {
           </a>
         ))}
         <div className="ring-b">
-          <span className="card-from">Another building, same brain</span>
+          <span className="card-from">Another building, same rule book</span>
           <span className="seat-name">{view.buildingB.title}</span>
           <span className="seat-line">{`Live version v${view.buildingB.version}. ${view.buildingB.line}`}</span>
         </div>
@@ -267,7 +267,7 @@ function WhatSection({ view }: { view: HowView }) {
         ))}
       </ul>
       <p>
-        No approval: the tenant&apos;s self-check, the technician&apos;s checklist and ticks, a fix already in the brain,
+        No approval: the tenant&apos;s self-check, the technician&apos;s checklist and ticks, a fix already in the rule book,
         and saving a solved job as a case. Safety is a stop, not an approval.
       </p>
 

@@ -301,6 +301,54 @@ export const BUILDING_B_INTRO =
 /** What "pill" means, said where a judge first meets the word. */
 export const PILL_MEANS = "The pill is the rule book: the signed steps and rules Pip follows for too-cold and too-hot calls.";
 
+// ---- One name for the pill (D2 review) ----
+
+/**
+ * The thing that is fixed once and sent to every building has one name on
+ * screen: the rule book. The engine's own words call it the pill, the brain or
+ * the HQ pill owner's; this says them as the rule book. The receipt's "pill
+ * v1.0" is the trace code and stays, explained once by PILL_MEANS.
+ */
+export function ruleBookWords(text: string): string {
+  return text
+    .replace(/\bHQ pill owner\b/g, "head office, owner of the rule book")
+    .replace(/\bsame brain\b/g, "same rule book")
+    .replace(/\bof the brain\b/g, "of the rule book");
+}
+
+/**
+ * The line before the Building B card: why it is there, and once a new version
+ * is live, what it changed there. Building B gets a new version the moment head
+ * office approves it (S16), so nobody there does anything.
+ */
+export function buildingBLine(version: string, firstCause: string | null | undefined): string {
+  if (version === "1.0" || !firstCause) return BUILDING_B_INTRO;
+  return `Building B now runs version ${version} of the rule book. Its list starts with "${firstCause}". Nobody in Building B had to do anything.`;
+}
+
+// ---- A raised red stop (D2 review) ----
+
+/**
+ * What a press on a red stop did, said on the stop's card once it is raised.
+ * The same rules as locksForStop and alertsForStop (safety.ts), checked by a
+ * test: RS-10 locks nothing and alerts no one; a button RS-08 locks its zone;
+ * every other stop locks the open jobs on its floor and alerts the senior
+ * manager and the building manager. The stop's own words never change.
+ */
+export function raisedWords(stopId: string): string {
+  if (stopId === "RS-10") return "This stop locks no work and sends no alert.";
+  const where = stopId === "RS-08" ? "in this zone" : "on this floor";
+  return `One press raised this stop. Open jobs ${where} are locked until someone clears it. Pip alerted the senior manager and the building manager.`;
+}
+
+/** On a typed-words card whose stop was raised after it, in place of its Raise this stop button. */
+export const RAISED_BELOW = "This stop was raised: see the card below.";
+
+/** A check's source file in plain words: "(buildings.json)" reads "(from the building records)". */
+export function sourceWords(text: string): string {
+  return text.replace(/\(buildings\.json\)/g, "(from the building records)");
+}
+
 /**
  * A seat's opening line with its two notice names in plain words. The line
  * itself (seat-opening.ts) is left as it is.
@@ -328,8 +376,8 @@ export const AI_MODE_WORDS = {
 
 /** One short line on what the switch's position does right now. */
 export const AI_MODE_HINTS = {
-  live: "Live: Pip asks Hunyuan now, a new AI call each time.",
-  replay: "Saved answers: real Hunyuan answers saved earlier. No new AI call is made.",
+  live: "Live: Pip asks Tencent's Hunyuan AI now, a new AI call each time.",
+  replay: "Saved answers: real answers from Tencent's Hunyuan AI, saved earlier. No new AI call is made.",
   off: "Off: no AI at all. Every card shows the code's own words.",
 } as const;
 

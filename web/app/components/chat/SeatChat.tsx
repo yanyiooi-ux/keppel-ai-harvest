@@ -4,13 +4,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PipAvatar } from "../PipAvatar";
 import { ChatCard } from "./ChatCard";
 import { QuestRail } from "./QuestRail";
-import { TechnicianDesk, barIsShown } from "./TechnicianDesk";
+import { TechnicianDesk, barIsShown, type LeadRef, type TickDone } from "./TechnicianDesk";
 import { SeniorManagerDesk, managerBarIsShown, managerRowHolds, type RefusedPress } from "./SeniorManagerDesk";
 import { HqDesk, hqHolds } from "./HqDesk";
 import { AomDesk, aomHolds, AOM_DESK_NOTICE_KINDS } from "./AomDesk";
 import { bringIntoView } from "./bring-into-view";
 import { CodeTag, Plain } from "../Plain";
-import { SPEAK_FIRST_MEANS, noticeWord, pipNeverLine, plainOpening, seatLabelWords, seatWord } from "../../../lib/plain-words";
+import {
+  RAISED_BELOW,
+  SPEAK_FIRST_MEANS,
+  noticeWord,
+  pipNeverLine,
+  plainOpening,
+  raisedWords,
+  seatLabelWords,
+  seatWord,
+} from "../../../lib/plain-words";
 import type { RailNode } from "./QuestRail";
 import type { AiMode } from "../../../lib/ai-mode";
 
@@ -70,6 +79,17 @@ export interface SeatChatProps {
   locked?: boolean;
   /** Story mode (D2): "Pip is checking" while the story's own press is on its way. */
   pending?: boolean;
+  /**
+   * Story mode (D2 review): the story's last tick that worked, and the list as
+   * it was before the step's ticks, so the desk shows how the list re-ranked.
+   */
+  storyTick?: StoryTick | null;
+}
+
+/** A tick the story made, and the list of likely causes as it stood before the step's ticks. */
+export interface StoryTick {
+  done: TickDone;
+  before: LeadRef[];
 }
 
 const SAFETY_WORD = "safety";
@@ -172,6 +192,7 @@ export function SeatChat({
   view,
   locked = false,
   pending = false,
+  storyTick = null,
 }: SeatChatProps) {
   const [held, setState] = useState<SeatState | null>(initial ?? null);
   // Story mode (D2) hands the view in; otherwise the chat shows what it read itself.
@@ -431,6 +452,12 @@ export function SeatChat({
   // (solved, or a fix approved): their old notices show as done, and the empty
   // job list says the work moved on instead of "nothing came up" (D1 review).
   const movedOn = jobsMovedOn(state);
+  // Story mode presses for the chat (D2 review): its tick says what it did, as one made here would.
+  const tickShown = controlled ? (storyTick?.done ?? null) : done;
+  const tickBefore = controlled ? (storyTick?.before ?? null) : null;
+  // A typed-words card whose stop a later press raised: it says so instead of
+  // offering Raise this stop again (D2 review). Read from the messages only.
+  const raisedFrom = raisedAfter(state?.messages ?? []);
 
   // Once the followed press's or Safety's first new item is on screen, scroll
   // it to the top of the view, once.
@@ -490,7 +517,8 @@ export function SeatChat({
               onSafety={() => void say(SAFETY_WORD, true)}
               onShow={showOnDesk}
               refused={refusedInBar ? refusedText : null}
-              done={done}
+              done={tickShown}
+              before={tickBefore}
             />
           ) : null}
 
@@ -502,7 +530,8 @@ export function SeatChat({
               onShow={showOnDesk}
               refused={refusedInBar ? refusedText : null}
               rowRefused={refusedInRow ? refused : null}
-              done={done}
+              done={tickShown}
+              before={tickBefore}
               movedOn={movedOn}
               aiMode={aiMode}
             />
@@ -543,7 +572,7 @@ export function SeatChat({
                 </div>
               ) : (
                 <div className="msg" key={`m-${i}`} data-item={i}>
-                  <Cards cards={message.cards ?? []} press={press} jobId={activeJob} />
+                  <Cards cards={message.cards ?? []} press={press} jobId={activeJob} raised={raisedFrom.get(i)} />
                 </div>
               )
             ),
@@ -643,7 +672,49 @@ export function SeatChat({
   );
 }
 
-function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; jobId?: string }) {
+/**
+ * A red card from a press (a Safety list pick or Raise this stop) has no Raise
+ * button of its own: the press stored it after the stop was raised (S11).
+ */
+function isRaisedCard(card: ServerCard): boolean {
+  return card.kind === "red-stop" && Boolean(card.stopId) && !card.raiseStopId;
+}
+
+/**
+ * For each message, the stops a later message shows as raised: a typed-words
+ * card for one of them no longer offers Raise this stop (D2 review).
+ */
+export function raisedAfter(messages: { cards?: ServerCard[] }[]): Map<number, Set<string>> {
+  const out = new Map<number, Set<string>>();
+  const later = new Set<string>();
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (later.size > 0) out.set(i, new Set(later));
+    for (const card of messages[i].cards ?? []) if (isRaisedCard(card)) later.add(card.stopId!);
+  }
+  return out;
+}
+
+function RaisedLine({ text }: { text: string }) {
+  return (
+    <p className="raised-line">
+      <span className="badge red">Raised</span>
+      <span>{text}</span>
+    </p>
+  );
+}
+
+function Cards({
+  cards,
+  press,
+  jobId,
+  raised,
+}: {
+  cards: ServerCard[];
+  press: Press;
+  jobId?: string;
+  /** Stops a later message shows as raised. */
+  raised?: Set<string>;
+}) {
   return (
     <>
       {cards.map((card, i) => {
@@ -698,16 +769,24 @@ function Cards({ cards, press, jobId }: { cards: ServerCard[]; press: Press; job
         const isRed = card.kind === "red-stop" || card.kind === "refusal";
         // A typed red card opens no stop on its own; its Raise this stop
         // button (safety-pick) does, on the job the words were typed about,
-        // else the seat's job (S11, S19).
+        // else the seat's job (S11, S19). Once a later card shows the stop
+        // raised, it says so instead (D2 review). A raised card says what the
+        // press did. The stop's own words never change.
         const raise =
           card.kind === "red-stop" && card.raiseStopId ? (
-            <button
-              className="raise-btn"
-              aria-label={`Raise this stop: ${card.raiseStopId}`}
-              onClick={() => void press("safety-pick", card.jobId ?? jobId, { stopId: card.raiseStopId })}
-            >
-              Raise this stop
-            </button>
+            raised?.has(card.raiseStopId) ? (
+              <RaisedLine text={RAISED_BELOW} />
+            ) : (
+              <button
+                className="raise-btn"
+                aria-label={`Raise this stop: ${card.raiseStopId}`}
+                onClick={() => void press("safety-pick", card.jobId ?? jobId, { stopId: card.raiseStopId })}
+              >
+                Raise this stop
+              </button>
+            )
+          ) : isRaisedCard(card) ? (
+            <RaisedLine text={raisedWords(card.stopId!)} />
           ) : null;
         return (
           <ChatCard

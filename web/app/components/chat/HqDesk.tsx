@@ -6,6 +6,7 @@ import { LeadCard } from "./TechnicianDesk";
 import { CodeTag, Coded, Plain } from "../Plain";
 import {
   BUILDING_B_INTRO,
+  buildingBLine,
   effectStepLead,
   effectValueFromLabel,
   effectWord,
@@ -13,6 +14,7 @@ import {
   factWord,
   gateWord,
   noticeWord,
+  ruleBookWords,
 } from "../../../lib/plain-words";
 import type { RefusedPress } from "./SeniorManagerDesk";
 import type { HqDesk as HqDeskView, HqSolutionView, HqRequestRow, HqBuildingB } from "../../../lib/hq-desk";
@@ -34,7 +36,7 @@ import type { VersionRow } from "../../../lib/versions";
  * words with the code kept after them as a grey tag (components/Plain.tsx).
  */
 
-/** "A1: version 1 of the brain" reads "Version 1 of the brain"; the A1 code stays as the card label's tag. */
+/** "A1: version 1 of the brain" reads "Version 1 of the rule book" (Plain); the A1 code stays as the card label's tag. */
 function a1Title(title: string): string {
   const rest = title.replace(/^A1:\s*/, "");
   return rest === title ? title : rest.charAt(0).toUpperCase() + rest.slice(1);
@@ -312,7 +314,7 @@ function VersionsCard({
           {versions.map((v) => (
             <li key={v.version}>
               <span className={`badge ${v.colour}`}>{v.statusWord}</span>
-              <span className="version-line">{v.line}</span>
+              <span className="version-line">{ruleBookWords(v.line)}</span>
               <span className="job-status">
                 {v.when ? `Approved ${v.when}` : <Coded word="Experts signed version 1, before the demo" code="A1" />}
                 {v.ruleId ? (
@@ -397,12 +399,22 @@ function RequestCard({ request: r, press, refused }: { request: HqRequestRow; pr
 
 // ---- The Building B card (S21) ----
 
+/**
+ * The line before the Building B card: why it is there, and once a new
+ * version is live, what it changed there, shown as the payoff (D2 review).
+ * Home's Building B card uses the same line.
+ */
+export function BuildingBLine({ version, firstCause }: { version: string; firstCause?: string | null }) {
+  const line = buildingBLine(version, firstCause);
+  return <p className={line === BUILDING_B_INTRO ? "card-intro" : "card-intro payoff-line"}>{line}</p>;
+}
+
 /** Exported so /how's live wall shows the very same card (C10a). */
 export function BuildingBView({ card, press, anchorId }: { card: HqBuildingB; press: Press; anchorId?: string }) {
   return (
     <div className="desk" data-testid="hq-building-b" id={anchorId}>
       <h4 className="desk-sub">Building B card</h4>
-      <p className="card-intro">{BUILDING_B_INTRO}</p>
+      <BuildingBLine version={card.version} firstCause={card.leads[0]?.label} />
       <ChatCard from={card.from} title={card.title} body={`Live version v${card.version}. ${card.ticket}`} aiOff={card.aiOff} receipt={card.receipt}>
         {card.alerts.map((alert, i) => (
           <div className="notice" key={`b-${i}`}>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { CodeTag, Plain } from "../Plain";
-import { statusWord, tierWord } from "../../../lib/plain-words";
+import { sourceWords, statusWord, tierWord } from "../../../lib/plain-words";
 import type {
   TechnicianDesk as Desk,
   DeskCard,
@@ -56,6 +56,8 @@ export interface TechnicianDeskProps {
   refused?: string | null;
   /** The last tick that worked, so the list says what changed (D1 review). */
   done?: TickDone | null;
+  /** Story mode (D2 review): the list as it was before the step's ticks, so the screen shows how it re-ranked. */
+  before?: LeadRef[] | null;
 }
 
 /** A tick that worked: what was pressed, on which job, with what (the same shape as a refused press). */
@@ -63,6 +65,65 @@ export interface TickDone {
   action: string;
   job?: string;
   payload?: Record<string, unknown>;
+}
+
+/** A likely cause as it stood in the list: its id and the label on screen. */
+export interface LeadRef {
+  causeId: string;
+  label: string;
+}
+
+/** 1st, 2nd, 3rd, 4th ... */
+export function ordinal(n: number): string {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
+}
+
+/** One row of the re-rank list: a cause from the list before, and where it is now, in words. */
+export interface RerankRow {
+  causeId: string;
+  label: string;
+  word: string;
+  colour: "green" | "none";
+  out: boolean;
+}
+
+/**
+ * How the list of likely causes changed (D2 review): every cause as it stood
+ * before, in that order, with what happened to it. Read from the view the
+ * press brought back, so it says what the screen shows. Null when nothing on
+ * the list was ruled out.
+ */
+export function rerankRows(before: LeadRef[], open: OpenJobDesk): RerankRow[] | null {
+  const out = new Set(open.ruledOut.map((l) => l.causeId));
+  if (!before.some((b) => out.has(b.causeId))) return null;
+  const now = open.leads.map((l) => l.causeId);
+  return before.map((b, i) => {
+    if (out.has(b.causeId)) return { ...b, word: "Ruled out", colour: "none", out: true };
+    const at = now.indexOf(b.causeId);
+    if (at < 0) return { ...b, word: "Off the list", colour: "none", out: true };
+    if (at === i) return { ...b, word: `Still ${ordinal(at + 1)}`, colour: "none", out: false };
+    return { ...b, word: `Now ${ordinal(at + 1)}, was ${ordinal(i + 1)}`, colour: at < i ? "green" : "none", out: false };
+  });
+}
+
+export function RerankList({ before, open }: { before: LeadRef[]; open: OpenJobDesk }) {
+  const rows = rerankRows(before, open);
+  if (!rows) return null;
+  return (
+    <div className="rerank" data-testid="rerank">
+      <p className="rerank-head">How the list changed</p>
+      <ol className="rerank-list">
+        {rows.map((row) => (
+          <li key={row.causeId} className={row.out ? "is-out" : undefined}>
+            <span className={`badge ${row.colour}`}>{row.word}</span>
+            <span className="rerank-name">{row.label}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 /**
@@ -92,7 +153,7 @@ function trendZone(card: DeskCard): string | null {
   return card.id.startsWith("trend-") ? (/the (\w+) zone's/.exec(card.codeLine ?? "")?.[1] ?? null) : null;
 }
 
-export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null, done = null }: TechnicianDeskProps) {
+export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null, done = null, before = null }: TechnicianDeskProps) {
   return (
     <section className="desk" aria-label="Technician desk">
       <article className="card">
@@ -123,7 +184,15 @@ export function TechnicianDesk({ desk, press, onSafety, onShow, refused = null, 
       </article>
 
       {desk.open ? (
-        <OpenJob key={desk.open.jobId} open={desk.open} press={press} onSafety={onSafety} refused={refused} done={done} />
+        <OpenJob
+          key={desk.open.jobId}
+          open={desk.open}
+          press={press}
+          onSafety={onSafety}
+          refused={refused}
+          done={done}
+          before={before}
+        />
       ) : null}
     </section>
   );
@@ -157,7 +226,7 @@ function DeskCardBody({ card }: { card: DeskCard }) {
       colour={card.colour ?? "none"}
       colourWord={card.colourWord}
       title={card.title}
-      body={card.body}
+      body={card.body && card.colour !== "red" ? sourceWords(card.body) : card.body}
       call={card.call}
       receipt={card.receipt}
     >
@@ -172,7 +241,7 @@ function DeskCardBody({ card }: { card: DeskCard }) {
             <li key={i}>
               {line.word ? <span className={`badge ${line.colour ?? "none"}`}>{line.word}</span> : null}
               <span>
-                <Plain text={line.text} />
+                <Plain text={sourceWords(line.text)} />
               </span>
             </li>
           ))}
@@ -274,12 +343,14 @@ function OpenJob({
   onSafety,
   refused,
   done,
+  before,
 }: {
   open: OpenJobDesk;
   press: Press;
   onSafety: () => void;
   refused: string | null;
   done: TickDone | null;
+  before: LeadRef[] | null;
 }) {
   const ticked = tickLine(done, open);
   const jobZone = zoneOf(open);
@@ -315,6 +386,7 @@ function OpenJob({
           {ticked}
         </p>
       ) : null}
+      {before ? <RerankList before={before} open={open} /> : null}
       {open.leads.length === 0 ? <p className="desk-status">No live lead is left on this job.</p> : null}
       {open.leads.map((lead) => (
         <LeadCard key={lead.causeId} lead={lead} jobId={open.jobId} press={press} editable={open.inProgress} />
