@@ -1,8 +1,10 @@
 # The look
 
-**Current look: Neon Quest**
+**Current look: Dark glass**
 
-(Changed 6 Oct 2026 from B. Utilitarian. The decision is in `docs/decisions/2026-10-06-new-look.md`.)
+(Picked by YY on 15 Oct 2026, replacing Neon Quest. Neon Quest replaced B. Utilitarian on 6 Oct; that decision is in
+`docs/decisions/2026-10-06-new-look.md`.) The spec for the current look, its tokens and its rules, is S23 in
+`docs/plan/BUILD-SPEC.md`; if this file and S23 differ, S23 wins.
 
 ## Rules for every look
 - Green, amber and red always mean the same thing: green the technician just does it, amber needs a named yes, red
@@ -14,7 +16,20 @@
 - Every colour, font, border, radius, shadow and spacing value is a CSS variable. No hardcoded colours in components.
 - Rule ids, pill versions and signatures are always visible where advice is shown.
 
-## Neon Quest (current)
+## Dark glass (current)
+
+Matched to YY's reference, a near-black trading dashboard with frosted panels. In short (S23 has every token):
+- Ground: near-black `#08090c` with a soft violet light in the top-left corner. No grid.
+- Panels: frosted glass `rgba(22, 23, 29, 0.62)`, a `1px rgba(255, 255, 255, 0.08)` border, `22px` corners.
+- Type: Geist for every word (Inter as the fallback). Big headings weight 500 with tight letter spacing. Short labels
+  in muted `#8e909b`; body text and every whole sentence `#c9cad1` or brighter.
+- Status pills: green `#4ade80`, amber `#fbbf24`, red `#f87171`, each word on a tint of its own colour.
+- Buttons: the main action is white (`#f4f4f6`) with near-black text; every other button is quiet glass; Safety is
+  the one red-tinted button.
+- A safety card has a soft red glow in its top-left corner.
+- Pip is Bolt Pip: a flat glass robot head with glowing cyan eyes, a small yellow hard hat and a bolt on each side.
+
+## Neon Quest (previous, 6 to 15 Oct 2026)
 
 ### Feel
 An Apple product mixed with a game map: dark, a skill tree path, a voxel character (Pip) walking the whole flow, and

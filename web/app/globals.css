@@ -89,7 +89,7 @@
   --font: var(--font-geist), "Geist", var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-head: var(--font);
   --font-hud: var(--font);
-  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-code: var(--font);
   --head-weight: 500;
   --body-weight: 400;
   --name-weight: 500;
@@ -119,7 +119,7 @@
   --pip-shine: rgba(255, 255, 255, 0.18);
   --pip-visor: #0b0c18;
   --pip-eye: #9af2ff;
-  --pip-glow: rgba(154, 242, 255, 0.28);
+  --pip-glow: rgba(154, 242, 255, 0.9);
   --pip-cheek: rgba(255, 143, 182, 0.55);
   --pip-hat: #fbc24c;
   --pip-brim: #f39b12;
@@ -356,6 +356,12 @@ a {
   box-shadow: var(--av-glow);
 }
 
+/* Bolt Pip's eyes and smile glow: a soft blur in the eye colour, drawn in the
+   SVG's own units so it scales with Pip (the sample's glow filter). */
+.pip-eyes {
+  filter: drop-shadow(0 0 4.4px var(--pip-glow));
+}
+
 .chat-name {
   font-family: var(--font-head);
   font-weight: var(--name-weight);
@@ -516,9 +522,11 @@ a {
   color: var(--r-ink);
 }
 
+/* A whole sentence, so body grey, never the muted label grey (S23: labels are
+   muted, body text on panels is the body token or brighter). */
 .card-mean {
   font-size: 13.5px;
-  color: var(--muted);
+  color: var(--body);
 }
 
 .card .card-title {
@@ -556,6 +564,13 @@ a {
 .card.is-red p,
 .card.is-red .card-title {
   color: var(--red-text);
+}
+
+/* The Stop pill sits in the card's red glow. Its tint is laid on the solid red
+   card, not on the glow, so the word keeps 4.5:1 wherever the glow is
+   strongest (tests/d3-look.test.tsx). */
+.card.is-red .badge.red {
+  background: linear-gradient(var(--red-bg), var(--red-bg)), var(--red-card);
 }
 
 .card.is-red .card-from {
@@ -906,6 +921,8 @@ a {
   font-family: var(--font);
   font-size: 15px;
   min-width: 0;
+  /* The whole height of the box is the place to tap, 44 px on a phone. */
+  min-height: 44px;
 }
 
 .compose input::placeholder {
@@ -1194,7 +1211,16 @@ a {
   margin: 6px 0 0;
   font-family: var(--font-hud);
   font-size: 12.5px;
+}
+
+/* The banner is a short label; the notice is a sentence (why the AI words are
+   missing), so it is body grey. */
+.ai-banner {
   color: var(--muted);
+}
+
+.ai-notice {
+  color: var(--body);
 }
 
 .ai-off {
@@ -1283,7 +1309,7 @@ a {
 .job-status {
   display: block;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--body);
 }
 
 /* Open is the main action on the job list: the white button. */
@@ -1358,16 +1384,19 @@ a {
   font-weight: 500;
 }
 
+/* As in the sample's lead rows: Found it is the white main action, Not this a
+   quiet glass button. Tints are for status pills only, so ruling a lead out
+   never looks like a warning. */
 .tick-row .found-btn {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green);
+  background: var(--main);
+  border-color: transparent;
+  color: var(--main-ink);
 }
 
 .tick-row .not-btn {
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-  color: var(--amber);
+  background: var(--btn-bg);
+  border-color: var(--line-2);
+  color: var(--text);
 }
 
 .desk-details summary {
@@ -1475,16 +1504,18 @@ a {
   text-transform: var(--hud-case);
 }
 
+/* One white main action in the bar (Solved), every other press quiet glass,
+   and Safety red (S23, as in the sample). */
 .job-bar-buttons .solved-btn {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green);
+  background: var(--main);
+  border-color: transparent;
+  color: var(--main-ink);
 }
 
 .job-bar-buttons .not-solved-btn {
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-  color: var(--amber);
+  background: var(--btn-bg);
+  border-color: var(--line-2);
+  color: var(--text);
 }
 
 /* Two classes, like the chip row's, so the bar's Safety stays red. */
@@ -1492,6 +1523,14 @@ a {
   background: var(--red-bg);
   border-color: var(--red-edge);
   color: var(--red);
+}
+
+/* A press whose form is open shows as on, so the form's own white submit is
+   then the one white button in the bar. */
+.job-bar-buttons button[aria-expanded="true"] {
+  background: var(--btn-on);
+  border-color: var(--line-2);
+  color: var(--white);
 }
 
 .job-form {
@@ -1718,9 +1757,9 @@ a {
   min-height: 44px;
   padding: 0 20px;
   border-radius: var(--r-chip);
-  background: var(--green-bg);
-  border: 1px solid var(--green-line);
-  color: var(--green);
+  background: var(--main);
+  border: 1px solid transparent;
+  color: var(--main-ink);
   font-family: var(--font-hud);
   font-size: 14px;
   font-weight: 500;
@@ -1748,23 +1787,20 @@ a {
   margin: 0;
 }
 
+/* The senior manager's bar: Send to HQ is the white main action once a draft
+   exists; Log, Run tests and Ask HQ are quiet glass. */
 .job-bar-buttons .log-btn,
-.job-bar-buttons .run-btn {
-  background: var(--violet-soft);
-  border-color: var(--violet-line);
-  color: var(--violet-ink);
-}
-
+.job-bar-buttons .run-btn,
 .job-bar-buttons .help-btn {
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-  color: var(--amber);
+  background: var(--btn-bg);
+  border-color: var(--line-2);
+  color: var(--text);
 }
 
 .job-bar-buttons .send-hq-btn {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green);
+  background: var(--main);
+  border-color: transparent;
+  color: var(--main-ink);
 }
 
 /* ---------- HQ desk (C8b, S21) ---------- */
@@ -1799,23 +1835,16 @@ a {
   text-transform: var(--hud-case);
 }
 
+/* Approve is the white main action; Decline and Roll back are quiet glass
+   (S23: tints are for status pills, which always carry their word). */
 .approve-btn {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green);
-}
-
-.decline-btn {
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-  color: var(--amber);
+  background: var(--main);
+  border-color: transparent;
+  color: var(--main-ink);
 }
 
 .rollback-btn {
   justify-self: start;
-  background: var(--amber-bg);
-  border-color: var(--amber-line);
-  color: var(--amber);
 }
 
 .version-list .version-line {
@@ -1870,7 +1899,7 @@ a {
   min-height: 44px;
   padding: 0 12px;
   border-radius: var(--r-pill);
-  background: var(--btn-bg);
+  background: transparent;
   border: 1px solid var(--line);
   color: var(--body);
   font-family: var(--font-hud);
@@ -1881,10 +1910,13 @@ a {
   cursor: pointer;
 }
 
+/* The picked view is the only filled tab, like the AI switch's picked option. */
 .meter-tab[aria-selected="true"] {
   background: var(--btn-on);
   border-color: var(--line-2);
   color: var(--white);
+  font-weight: 600;
+  box-shadow: var(--panel-shine);
 }
 
 .card .meter-kind {
@@ -1935,7 +1967,7 @@ a {
 .card .meter-label {
   margin: 10px 0 0;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--body);
 }
 
 /* The decided charge's "Sent to the tenant" label sat flush under the
@@ -2911,7 +2943,7 @@ button:disabled {
   max-width: 340px;
   font-size: 12.5px;
   line-height: 1.35;
-  color: var(--muted);
+  color: var(--body);
 }
 
 /* A line that explains a word or a card, before or under it. */
@@ -2939,8 +2971,12 @@ button:disabled {
   margin-right: 6px;
 }
 
+/* A done note steps back with a quieter frame, not with opacity: fading the
+   whole note took its grey code tag under 4.5:1 on the dark glass. The green
+   Done pill carries the word. */
 .notice.is-done {
-  opacity: 0.85;
+  background: transparent;
+  border-style: dashed;
 }
 
 /* A red stop's short forms, explained under the stop's own words. */
@@ -3000,7 +3036,7 @@ button:disabled {
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--muted);
+  color: var(--body);
 }
 
 /* HQ, once approved: Building B's new first cause, the payoff of the story. */

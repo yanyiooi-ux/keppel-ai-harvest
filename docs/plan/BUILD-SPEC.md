@@ -1130,7 +1130,7 @@ already used, mapped onto dark glass, so each component re-skins through the tok
   --font: var(--font-geist), "Geist", var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-head: var(--font);
   --font-hud: var(--font);
-  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-code: var(--font);
   --head-weight: 500;
   --body-weight: 400;
   --name-weight: 500;
@@ -1160,7 +1160,7 @@ already used, mapped onto dark glass, so each component re-skins through the tok
   --pip-shine: rgba(255, 255, 255, 0.18);
   --pip-visor: #0b0c18;
   --pip-eye: #9af2ff;
-  --pip-glow: rgba(154, 242, 255, 0.28);
+  --pip-glow: rgba(154, 242, 255, 0.9);
   --pip-cheek: rgba(255, 143, 182, 0.55);
   --pip-hat: #fbc24c;
   --pip-brim: #f39b12;
@@ -1198,16 +1198,20 @@ already used, mapped onto dark glass, so each component re-skins through the tok
   the glass as it looks over the near-black, so the contrast tests read the real colour.
 - Type: Geist from `next/font` for every word, Inter as the fallback (loaded, not preloaded); Chakra Petch is gone.
   Headings weight 500 with tight letter spacing; the big page headings (home, /how) and the /how stat numbers fade
-  from white to grey as in the sample. Labels are sentence case in muted `#8e909b`; body text on panels is `#c9cad1`
-  or brighter.
+  from white to grey as in the sample. Labels are sentence case in muted `#8e909b`, short labels only; body text on
+  panels is `#c9cad1` or brighter, and so is every whole sentence (a card's meaning line, the meter's note, HQ's check
+  reasons, the AI notice, the AI switch's hint). Code tags are Geist too.
 - Pills: a status badge is a round pill, its word on a tint of its own colour (green, amber, red); a plain badge is
-  neutral glass. The main action of a screen (a card's action, a form's submit, Send, Report a problem, Open) is a
-  white button with near-black text. Other buttons are quiet glass pills; status buttons (Found it, Solved, Approve,
-  Not this, Not solved, Decline) are tinted pills with their word; Safety is a red-tinted pill.
+  neutral glass. As in the sample's lead rows, the main action is a white button with near-black text: a card's
+  action, a form's submit, Send, Report a problem, Open, Found it, Solved, Confirm, Approve and Send to HQ. Every other
+  button is a quiet glass pill (Not this, Not solved, Send with the cause, Log new solution, Run tests, Ask HQ,
+  Decline, Roll back), and a press whose form is open shows as on, so the form's submit is the one white button in
+  the bar. Safety is the only tinted button, a red-tinted pill; tints are otherwise for status pills, which carry
+  their word.
 - A safety card is the panel with a soft red glow in its top-left corner; its words keep their own colours.
 - Pip is Bolt Pip (`PipAvatar.tsx`): a glass robot head with glowing cyan eyes, a small yellow hard hat and a bolt on
-  each side. Every fill and stroke is a `--pip-*` token; the sample's gradients are flat token fills and its eye glow
-  a soft halo, so several Pips on one page need no SVG ids.
+  each side. Every fill and stroke is a `--pip-*` token and Pip stays flat, so the sample's gradients are flat token
+  fills; its eye glow is a CSS blur on `.pip-eyes` in `--pip-glow`, so several Pips on one page need no SVG ids.
 - Keep the status tokens in `globals.css` (`--g`, `--a`, `--r`) and map them to `--green`, `--amber`, `--red`. Status
   text needs a contrast of 4.5:1 or more on its card; the five pairs are checked in `tests/c5a.test.tsx`. Each status
   word also clears 4.5:1 on its own tinted pill and under the violet light, and a safety card's words inside its red

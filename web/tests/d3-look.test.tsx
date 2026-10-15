@@ -143,6 +143,45 @@ describe("D3: pills, buttons and safety", () => {
     expect(contrast(parse(token("main-ink")), parse(token("main")))).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("as in the sample, Found it, Solved, Approve, Confirm and Send to HQ are white and the other choice is quiet glass", () => {
+    const white = [".tick-row .found-btn", ".job-bar-buttons .solved-btn", ".job-bar-buttons .send-hq-btn", ".approve-btn", ".confirm-btn"];
+    for (const sel of white) {
+      const rule = blocks(sel).join("\n");
+      expect(rule, sel).toMatch(/background:\s*var\(--main\)/);
+      expect(rule, sel).toMatch(/color:\s*var\(--main-ink\)/);
+    }
+    const glass = [".tick-row .not-btn", ".job-bar-buttons .not-solved-btn", ".job-bar-buttons .help-btn", ".job-bar-buttons .log-btn"];
+    for (const sel of glass) {
+      const rule = blocks(sel).join("\n");
+      expect(rule, sel).toMatch(/background:\s*var\(--btn-bg\)/);
+      expect(rule, sel).toMatch(/color:\s*var\(--text\)/);
+    }
+    // A tint on a button is only for Safety: no other press is green, amber or violet.
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const re = /([^{}]+)\{([^{}]*)\}/g;
+    let m: RegExpExecArray | null;
+    let checked = 0;
+    while ((m = re.exec(bare))) {
+      const sel = m[1].trim();
+      if (!/btn\b/.test(sel) || /safety-btn/.test(sel)) continue;
+      checked += 1;
+      expect(m[2], sel).not.toMatch(/var\(--(green|amber|violet)-(bg|line|soft)\)/);
+    }
+    expect(checked).toBeGreaterThanOrEqual(12);
+    // An open form's press shows as on, so the form's white submit is the only white button.
+    expect(blocks('.job-bar-buttons button[aria-expanded="true"]').join("\n")).toMatch(/background:\s*var\(--btn-on\)/);
+  });
+
+  it("the picked impact meter tab is the only filled one", () => {
+    expect(blocks(".meter-tab").join("\n")).toMatch(/background:\s*transparent/);
+    expect(blocks('.meter-tab[aria-selected="true"]').join("\n")).toMatch(/background:\s*var\(--btn-on\)/);
+  });
+
+  it("a code tag is set in Geist, like every other word", () => {
+    expect(token("font-code")).toBe("var(--font)");
+    expect(blocks(".code-tag").join("\n")).toMatch(/font-family:\s*var\(--font-code\)/);
+  });
+
   it("gives a safety card a soft red glow", () => {
     expect(token("glow-red")).toMatch(/^radial-gradient\(.*var\(--red-glow\)/);
     expect(token("red-glow")).toMatch(/^rgba\(239, 68, 68, /);
@@ -194,13 +233,51 @@ describe("D3: readability first", () => {
     }
   });
 
+  it("the red Stop pill on a safety card clears 4.5:1 even where the glow is strongest", () => {
+    // Over the glow at full strength the see-through tint would give about 4.2:1,
+    // so this check bites if the pill goes back to a bare tint.
+    const glowed = over(parse(token("red-glow")), parse(token("red-card")));
+    expect(contrast(parse(token("red")), over(parse(token("red-bg")), glowed))).toBeLessThan(4.5);
+    // The pill lays its tint on the solid red card, which hides the glow behind it.
+    const rule = blocks(".card.is-red .badge.red").join("\n");
+    expect(rule).toMatch(/background:\s*linear-gradient\(var\(--red-bg\),\s*var\(--red-bg\)\),\s*var\(--red-card\)/);
+    const pill = over(parse(token("red-bg")), parse(token("red-card")));
+    expect(contrast(parse(token("red")), pill)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("whole sentences use the body grey, never the muted label grey", () => {
+    for (const sel of [".card-mean", ".card .meter-label", ".job-status", ".demo-words-line", ".ai-notice", ".ai-switch-hint"]) {
+      const rule = blocks(sel).join("\n");
+      expect(rule, sel).toMatch(/color:\s*var\(--body\)/);
+      expect(rule, sel).not.toMatch(/color:\s*var\(--muted\)/);
+    }
+    expect(token("body")).toBe("#c9cad1");
+  });
+
+  it("a done note is not faded, so its grey code tag keeps 4.5:1", () => {
+    const done = blocks(".notice.is-done").join("\n");
+    expect(done.length).toBeGreaterThan(0);
+    expect(done).not.toMatch(/opacity/);
+    expect(contrast(parse(token("muted")), parse(token("card-2")))).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("every seat switcher link is a 44 px touch target, phone included", () => {
     const rules = blocks(".topbar nav a");
     expect(rules.length).toBeGreaterThanOrEqual(1);
+    // Every rule for the links, the phone's included, names its own min-height,
+    // so a dropped one fails here instead of passing silently.
     for (const rule of rules) {
       const h = /min-height:\s*(\d+)px/.exec(rule);
-      if (h) expect(Number(h[1])).toBeGreaterThanOrEqual(44);
+      expect(h, rule).not.toBeNull();
+      expect(Number(h![1])).toBeGreaterThanOrEqual(44);
+      expect(rule).not.toMatch(/(^|[^-])height:\s*([0-3]?\d|4[0-3])px/);
     }
+  });
+
+  it("the Message Pip box is a 44 px tap target", () => {
+    const h = /min-height:\s*(\d+)px/.exec(blocks(".compose input").join("\n"));
+    expect(h).not.toBeNull();
+    expect(Number(h![1])).toBeGreaterThanOrEqual(44);
   });
 });
 
@@ -215,7 +292,13 @@ describe("D3: Pip is Bolt Pip", () => {
     expect(count("visor")).toBe(1);
     expect(count("eye", "rect")).toBe(2);
     expect(count("eye", "path")).toBe(1);
-    expect(count("glow")).toBeGreaterThanOrEqual(2);
+    // The eyes and the smile glow together: one group with a soft blur in a Pip token.
+    const eyes = svg.querySelector("g.pip-eyes")!;
+    expect(eyes).not.toBeNull();
+    expect(eyes.querySelectorAll('rect[fill="var(--pip-eye)"]')).toHaveLength(2);
+    expect(eyes.querySelectorAll('path[fill="var(--pip-eye)"]')).toHaveLength(1);
+    expect(blocks(".pip-eyes").join("\n")).toMatch(/filter:\s*drop-shadow\([^;]*var\(--pip-glow\)\)/);
+    expect(() => parse(token("pip-glow"))).not.toThrow();
     expect(count("bolt", "circle")).toBe(2);
     expect(count("hat", "path")).toBe(1);
     expect(count("brim")).toBe(1);
