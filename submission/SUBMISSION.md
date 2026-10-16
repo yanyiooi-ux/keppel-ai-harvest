@@ -18,7 +18,7 @@ against the repo; the check log sits with the staging copy of this file, outside
 | 5 | Cover image, 16:9, about 380 x 216 px | Required | ready | `submission/assets/cover.png` (380 x 216); `submission/assets/cover@2x.png` (760 x 432) |
 | 6 | Solution diagram answering Keppel's 8 questions | Required for this track | ready | below, field 6; `docs/solution/README.md`; the app's `/how` and `/flow` |
 | 7 | Live demo walkthrough | Required for this track | ready | below, field 7 |
-| 8 | Demo video, 5 to 8 min | Optional in the form, **required for us** | ready: 6 min 12 s, live | https://eternal-wreath-5ceq.here.now/ |
+| 8 | Demo video, 5 to 8 min | Optional in the form, **required for us** | ready: 6 min 19 s, live | https://eternal-wreath-5ceq.here.now/ |
 | 9 | Project link (live URL, earns bonus points) | Optional | ready: live | http://43.160.222.54 |
 | 10 | GitHub repo link (this repo) | Required for this track | private until submission | https://github.com/yanyiooi-ux/keppel-ai-harvest |
 
@@ -64,7 +64,7 @@ form.
 **Paste:**
 
 ```text
-Pill Desk
+Pip the Pill Desk
 ```
 
 **For YY:** nothing open. The app's top bar now reads just "Pill Desk", with no tag after it
@@ -288,7 +288,7 @@ onto the server before the app was built there, so the home page plays it.
 
 ```text
 https://eternal-wreath-5ceq.here.now/
-A 6 min 12 s one-take film of the real Pill Desk app, read by an AI narrator voice, with captions in the picture: the problem, the five seats and the fix that reaches every building. It ends with how we built it, with Tencent CodeBuddy and another AI coding assistant, and one tip.
+A 6 min 19 s one-take film of the real Pill Desk app, read by an AI narrator voice, with captions in the picture: the problem, the five seats and the fix that reaches every building. It ends with how we built it, with Tencent CodeBuddy and another AI coding assistant, and one tip.
 The film was made before the final seat names: its "senior engineer" is the app's Senior manager, and its "asset manager" is the Asset Operations Manager. Its test screen shows an earlier run (1,174 passed).
 ```
 
